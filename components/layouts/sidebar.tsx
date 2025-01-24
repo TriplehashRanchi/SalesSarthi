@@ -33,6 +33,8 @@ import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authenticat
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
 import { usePathname } from 'next/navigation';
 import { getTranslation } from '@/i18n';
+import IconLaptop from '../icon/icon-laptop';
+import IconNotes from '../icon/icon-notes';
 
 const Sidebar = () => {
     const dispatch = useDispatch();
@@ -91,7 +93,7 @@ const Sidebar = () => {
                     <div className="flex items-center justify-between px-4 py-3">
                         <Link href="/" className="main-logo flex shrink-0 items-center">
                             <img className="ml-[5px] w-8 flex-none" src="/assets/images/logo.svg" alt="logo" />
-                            <span className="align-middle text-2xl font-semibold ltr:ml-1.5 rtl:mr-1.5 dark:text-white-light lg:inline">VRISTO</span>
+                            <span className="align-middle text-2xl font-semibold ltr:ml-1.5 rtl:mr-1.5 dark:text-white-light lg:inline">Sales sarthi</span>
                         </Link>
 
                         <button
@@ -127,14 +129,45 @@ const Sidebar = () => {
                                         <li>
                                             <Link href="/finance">{t('finance')}</Link>
                                         </li>
-                                        <li>
+                                        {/* <li>
                                             <Link href="/crypto">{t('crypto')}</Link>
-                                        </li>
+                                        </li> */}
                                     </ul>
                                 </AnimateHeight>
                             </li>
+                            <li className="menu nav-item">
+                            <Link href="/addlead">{t('Add Lead')}</Link>
+                            </li>
+                            <li className="menu nav-item">
 
-                            <h2 className="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
+                            <Link href="/leadtable">{t('My Leads')}</Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/calc">
+                                    <div className="flex items-center">
+                                        <IconMenuCharts className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Fin Health Calculator')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/banner">
+                                    <div className="flex items-center">
+                                        <IconLaptop className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/notes">
+                                    <div className="flex items-center">
+                                        <IconNotes className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('To do')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
+                            {/* <h2 className="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
                                 <IconMinus className="hidden h-5 w-4 flex-none" />
                                 <span>{t('apps')}</span>
                             </h2>
@@ -708,13 +741,13 @@ const Sidebar = () => {
                             </h2>
 
                             <li className="menu nav-item">
-                                <Link href="https://vristo.sbthemes.com" target="_blank" className="nav-link group">
+                                <Link href="https://triplehash.in" target="_blank" className="nav-link group">
                                     <div className="flex items-center">
                                         <IconMenuDocumentation className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('documentation')}</span>
                                     </div>
                                 </Link>
-                            </li>
+                            </li> */}
                         </ul>
                     </PerfectScrollbar>
                 </div>

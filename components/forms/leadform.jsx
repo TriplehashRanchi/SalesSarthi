@@ -1,16 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2'; 
 
-const LeadForm = ({ existingLead, onClose }) => {
+const LeadForm = ({ existingLead }) => {
   const [formData, setFormData] = useState({
-    id: existingLead ? existingLead.id : Date.now(),
+    id: existingLead ? existingLead.id : Math.floor(Math.random() * 100000000),
     full_name: existingLead ? existingLead.full_name : '',
     email: existingLead ? existingLead.email : '',
     phone_number: existingLead ? existingLead.phone_number : '',
     lead_status: existingLead ? existingLead.lead_status : '',
     gender: existingLead ? existingLead.gender : '',
-    date_of_birth: existingLead ? existingLead.date_of_birth : '',
+    date_of_birth: existingLead ? new Date(existingLead.date_of_birth).toLocaleDateString('en-CA') : '',
+
     address: existingLead ? existingLead.address : '',
     insurance_type: existingLead ? existingLead.insurance_type : '',
     policy_number: existingLead ? existingLead.policy_number : '',
@@ -23,56 +27,60 @@ const LeadForm = ({ existingLead, onClose }) => {
     notes: existingLead ? existingLead.notes : '',
   });
 
-  const loadLeadsFromLocalStorage = () => {
-    const storedLeads = localStorage.getItem('leads');
-    return storedLeads ? JSON.parse(storedLeads) : [];
-  };
+  const router = useRouter();
 
-  const saveLeadsToLocalStorage = (leads) => {
-    localStorage.setItem('leads', JSON.stringify(leads));
-  };
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Replace with your actual API URL
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  console.log(formData);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    try {
+      if (existingLead) {
+        // Update existing lead (PUT request)
+        await axios.put(`${API_URL}/api/leads/${formData.id}`, formData);
+        Swal.fire('Success', 'Lead updated successfully!', 'success').then(() => {
+          router.push('/leadtable'); // Redirect to the lead table
+        });
+      } else {
+        // Add new lead (POST request)
+        await axios.post(`${API_URL}/api/leads`, formData);
+        Swal.fire('Success', 'Lead added successfully!', 'success').then(() => {
+          router.push('/leadtable'); // Redirect to the lead table
+        });
+      }
+  
+      setFormData({
+        id: Math.floor(Math.random() * 100000000),
+        full_name: '',
+        email: '',
+        phone_number: '',
+        lead_status: '',
+        gender: '',
+        date_of_birth: '',
+        address: '',
+        insurance_type: '',
+        policy_number: '',
+        coverage_amount: '',
+        preferred_plan: '',
+        next_follow_up_date: '',
+        source: '',
+        company_name: '',
+        referrer: '',
+        notes: '',
+      });
 
-    const currentLeads = loadLeadsFromLocalStorage();
 
-    if (existingLead) {
-      const updatedLeads = currentLeads.map((lead) =>
-        lead.id === formData.id ? formData : lead
-      );
-      saveLeadsToLocalStorage(updatedLeads);
-    } else {
-      const newLeads = [...currentLeads, formData];
-      saveLeadsToLocalStorage(newLeads);
-      alert('Lead added successfully!');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      Swal.fire('Error', 'There was an error submitting the form. Please try again later.', 'error');
     }
-
-    setFormData({
-      id: Date.now(),
-      full_name: '',
-      email: '',
-      phone_number: '',
-      lead_status: '',
-      gender: '',
-      date_of_birth: '',
-      address: '',
-      insurance_type: '',
-      policy_number: '',
-      coverage_amount: '',
-      preferred_plan: '',
-      next_follow_up_date: '',
-      source: '',
-      company_name: '',
-      referrer: '',
-      notes: '',
-    });
-    onClose();
   };
 
   return (
@@ -112,9 +120,6 @@ const LeadForm = ({ existingLead, onClose }) => {
             className="form-input w-full"
             required
           />
-          <span className="text-gray-600 text-sm inline-block mt-1">
-            We'll never share your email with anyone else.
-          </span>
         </div>
 
         <div>
@@ -144,7 +149,7 @@ const LeadForm = ({ existingLead, onClose }) => {
             required
           >
             <option value="">Select Lead Status</option>
-            <option value="New">New</option>
+            <option value="new">New</option>
             <option value="Contacted">Contacted</option>
             <option value="Qualified">Qualified</option>
             <option value="Lost">Lost</option>
@@ -180,16 +185,7 @@ const LeadForm = ({ existingLead, onClose }) => {
           />
         </div>
 
-        {/* Add other input fields similarly */}
-
         <div className="col-span-1 lg:col-span-3 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-secondary"
-          >
-            Cancel
-          </button>
           <button type="submit" className="btn btn-primary">
             {existingLead ? 'Update Lead' : 'Add Lead'}
           </button>
