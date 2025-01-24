@@ -1,4 +1,4 @@
-import ComponentsDatatablesMultiColumn from '@/components/leadtable/leadtable';
+import ComponentsDatatablesMultiColumn from '@/components/Leadtable/leadtable';
 import IconBell from '@/components/icon/icon-bell';
 import React from 'react';
 import IconFacebook from '@/components/icon/icon-facebook';
