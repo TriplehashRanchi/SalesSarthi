@@ -1,4 +1,5 @@
-import ComponentsDatatablesMultiColumn from '@/components/Leadtable/leadtable';
+"use client";
+import Customertable from '@/components/Leadtable/customerTable';
 import IconBell from '@/components/icon/icon-bell';
 import React from 'react';
 import IconFacebook from '@/components/icon/icon-facebook';
@@ -30,7 +31,7 @@ const MultiColumn = () => {
                     <button className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">CSV Bulk Upload</button>
                 </div>
             </div>
-            <ComponentsDatatablesMultiColumn />
+            <Customertable />
         </div>
     );
 };

@@ -151,6 +151,22 @@ const Sidebar = () => {
                                 </Link>
                             </li>
                             <li className="menu nav-item">
+                                <Link href="/customers">
+                                    <div className="flex items-center">
+                                        <IconNotes className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/appointments">
+                                    <div className="flex items-center">
+                                        <IconNotes className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Appointments')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
                                 <Link href="/banner">
                                     <div className="flex items-center">
                                         <IconLaptop className="shrink-0 group-hover:!text-primary" />

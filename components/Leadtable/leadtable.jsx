@@ -46,7 +46,7 @@ const LeadTable = () => {
         try {
             const response = await axios.get(`${API_URL}/api/followups/${leadId}`);
             setFollowupHistory(response.data);
-    
+
             // Determine the latest next_follow_up_date and followup_status
             const latestFollowup = response.data[0]; // Assuming the API returns sorted data (latest first)
             setLeads((prevLeads) =>
@@ -57,14 +57,13 @@ const LeadTable = () => {
                               next_follow_up_date: latestFollowup?.follow_up_date || null,
                               followup_status: latestFollowup?.purpose || 'No Follow-up',
                           }
-                        : lead
-                )
+                        : lead,
+                ),
             );
         } catch (error) {
             console.error('Error fetching follow-up history:', error);
         }
     };
-    
 
     const openFollowupDrawer = async (lead) => {
         setSelectedLead(lead);
@@ -86,19 +85,16 @@ const LeadTable = () => {
     const sendWhatsappMessage = (phoneNumber) => {
         // Add country code if not present
         const formattedPhoneNumber = phoneNumber.startsWith('+91') ? phoneNumber : `+91${phoneNumber}`;
-        
-        
+
         // Encode the message for WhatsApp
-        const message = encodeURIComponent("Hello, this is a message from our platform!");
-        
+        const message = encodeURIComponent('Hello, this is a message from our platform!');
+
         // Construct the WhatsApp URL
         const link = `https://wa.me/${formattedPhoneNumber}?text=${message}`;
-        
+
         // Open WhatsApp Web with the pre-filled message
         window.open(link, '_blank');
     };
-    
-    
 
     const handleEditFollowup = (followup) => {
         setExistingFollowUp(followup);
@@ -111,19 +107,16 @@ const LeadTable = () => {
     useEffect(() => {
         const filteredLeads = leads.filter((item) => {
             return (
-                item.full_name.toLowerCase().includes(search.toLowerCase()) ||
-                item.email.toLowerCase().includes(search.toLowerCase()) ||
-                item.phone_number.toLowerCase().includes(search.toLowerCase())
+                item.full_name.toLowerCase().includes(search.toLowerCase()) || item.email.toLowerCase().includes(search.toLowerCase()) || item.phone_number.toLowerCase().includes(search.toLowerCase())
             );
         });
-    
+
         const sortedLeads = sortBy(filteredLeads, sortStatus.columnAccessor);
         const finalSortedLeads = sortStatus.direction === 'desc' ? sortedLeads.reverse() : sortedLeads;
-    
+
         setRecordsData(finalSortedLeads);
         setPage(1);
     }, [search, leads, sortStatus]);
-    
 
     useEffect(() => {
         const from = (page - 1) * pageSize;
@@ -143,18 +136,25 @@ const LeadTable = () => {
         return `${day}/${month}/${year} ${formattedHours}:${minutes} ${ampm}`;
     };
 
+    const convertLeadToCustomer = async (lead) => {
+        try {
+            await axios.post(`${API_URL}/api/leads/${lead.id}/convert`);
+    
+            // Optionally remove the lead from the table after conversion
+            setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
+        } catch (error) {
+            console.error('Error converting lead to customer:', error);
+        }
+    };
+    
+    
+
     return (
         <div className="panel mt-6">
             <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
                 <h5 className="text-lg font-semibold dark:text-white-light">Lead Table</h5>
                 <div className="ltr:ml-auto rtl:mr-auto">
-                    <input
-                        type="text"
-                        className="form-input w-auto"
-                        placeholder="Search..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                    <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
             </div>
             <div className="datatables">
@@ -174,16 +174,14 @@ const LeadTable = () => {
                         {
                             accessor: 'next_follow_up_date',
                             title: 'Next Follow-up Date',
-                            render: ({ next_follow_up_date }) => (
-                                <div>{next_follow_up_date ? formatDateWithTime(next_follow_up_date) : 'N/A'}</div>
-                            ),
+                            render: ({ next_follow_up_date }) => <div>{next_follow_up_date ? formatDateWithTime(next_follow_up_date) : 'N/A'}</div>,
                         },
                         {
                             accessor: 'followup_actions',
                             title: 'Follow-Up',
                             render: (record) => (
-                                <Button variant='transparent' onClick={() => openFollowupDrawer(record)}>
-                                   <IconPhoneCall/>
+                                <Button variant="transparent" onClick={() => openFollowupDrawer(record)}>
+                                    <IconPhoneCall />
                                 </Button>
                             ),
                         },
@@ -194,13 +192,26 @@ const LeadTable = () => {
                                 <Menu withinPortal shadow="md" width={200}>
                                     <Menu.Target>
                                         <Button variant="transparent" compact>
-                                            <IconListCheck/>
+                                            <IconListCheck />
                                         </Button>
                                     </Menu.Target>
                                     <Menu.Dropdown>
-                                        <Menu.Item  onClick={() => handleEditLead(record)}> <div className="flex gap-2"> <IconPencil/> Edit </div></Menu.Item>
-                                        <Menu.Item  onClick={() => sendWhatsappMessage(record.phone_number)}>
-                                           <div className="flex gap-2"><IconChatDot/> Send Whatsapp</div>
+                                        <Menu.Item onClick={() => handleEditLead(record)}>
+                                            {' '}
+                                            <div className="flex gap-2">
+                                                {' '}
+                                                <IconPencil /> Edit{' '}
+                                            </div>
+                                        </Menu.Item>
+                                        <Menu.Item onClick={() => sendWhatsappMessage(record.phone_number)}>
+                                            <div className="flex gap-2">
+                                                <IconChatDot /> Send Whatsapp
+                                            </div>
+                                        </Menu.Item>
+                                        <Menu.Item onClick={() => convertLeadToCustomer(record)}>
+                                            <div className="flex gap-2">
+                                                <IconListCheck /> Convert to Customer
+                                            </div>
                                         </Menu.Item>
                                     </Menu.Dropdown>
                                 </Menu>
@@ -215,9 +226,7 @@ const LeadTable = () => {
                     onRecordsPerPageChange={setPageSize}
                     sortStatus={sortStatus}
                     onSortStatusChange={setSortStatus}
-                    paginationText={({ from, to, totalRecords }) =>
-                        `Showing ${from} to ${to} of ${totalRecords} entries`
-                    }
+                    paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} entries`}
                 />
             </div>
 
@@ -264,12 +273,7 @@ const LeadTable = () => {
                             }}
                         >
                             {followupHistory.map((followup, index) => (
-                                <Timeline.Item
-                                    key={index}
-                                    bullet={<IconMessage size={18} />}
-                                    title={followup.purpose}
-                                    onClick={() => handleEditFollowup(followup)}
-                                >
+                                <Timeline.Item key={index} bullet={<IconMessage size={18} />} title={followup.purpose} onClick={() => handleEditFollowup(followup)}>
                                     <div>
                                         <Text size="sm" color="dimmed">
                                             {new Date(followup.follow_up_date).toLocaleString()}
@@ -295,7 +299,7 @@ const LeadTable = () => {
                             overflowY: 'auto',
                         }}
                     >
-                        <FollowupForm leadId={selectedLead?.id} existingFollowUp={existingFollowUp}  onFollowupChange={() => fetchFollowupHistory(selectedLead?.id)}  />
+                        <FollowupForm leadId={selectedLead?.id} existingFollowUp={existingFollowUp} onFollowupChange={() => fetchFollowupHistory(selectedLead?.id)} />
                     </div>
                 </div>
             </Drawer>
