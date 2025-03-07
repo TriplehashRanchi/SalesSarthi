@@ -33,9 +33,10 @@ const LeadTable = () => {
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+    const admin_id = 'ADM001';
     const fetchLeads = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/leads`);
+            const response = await axios.get(`${API_URL}/api/leads/all/${admin_id}`);
             setLeads(response.data);
         } catch (error) {
             console.error('Error fetching leads:', error);
