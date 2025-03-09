@@ -20,10 +20,14 @@ const LeadTable = () => {
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
     const [recordsData, setRecordsData] = useState(leads);
     const [search, setSearch] = useState('');
+    const [selectedLeads, setSelectedLeads] = useState([]);
     const [sortStatus, setSortStatus] = useState({
         columnAccessor: 'full_name',
         direction: 'asc',
     });
+    const [showAssignDrawer, setShowAssignDrawer] = useState(false);
+    const [employees, setEmployees] = useState([]);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
 
     const [showDrawer, setShowDrawer] = useState(false);
     const [selectedLead, setSelectedLead] = useState(null);
@@ -31,13 +35,49 @@ const LeadTable = () => {
     const [existingFollowUp, setExistingFollowUp] = useState(null);
     const router = useRouter();
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/';
 
-    const admin_id = 'ADM001';
+    const fetchEmployees = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/api/users/${admin_id}`);
+            setEmployees(response.data);
+        } catch (error) {
+            console.error('Error fetching employees:', error);
+        }
+    };
+
+    const handleAssignLeads = async () => {
+        if (!selectedEmployee || selectedLeads.length === 0) return;
+
+        try {
+            await Promise.all(
+                selectedLeads.map((leadId) =>
+                    axios.put(`${API_URL}/api/leads/${leadId}`, {
+                        assigned_to: selectedEmployee,
+                    }),
+                ),
+            );
+
+            setSelectedLeads([]);
+            setShowAssignDrawer(false);
+            setSelectedEmployee(null);
+            fetchLeads();
+        } catch (error) {
+            console.error('Error assigning leads:', error);
+        }
+    };
+
+    const handleSelectLead = (leadId) => {
+        setSelectedLeads((prev) => (prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]));
+    };
+
+    // const admin_id = 'ADM001';
+    const admin_id = 'ADM6442';
     const fetchLeads = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/leads/all/${admin_id}`);
+            const response = await axios.get(`${API_URL}/api/leads/all/admin_id:${admin_id}`);
             setLeads(response.data);
+            console.log(response.data);
         } catch (error) {
             console.error('Error fetching leads:', error);
         }
@@ -48,7 +88,6 @@ const LeadTable = () => {
             const response = await axios.get(`${API_URL}/api/followups/${leadId}`);
             setFollowupHistory(response.data);
 
-            // Determine the latest next_follow_up_date and followup_status
             const latestFollowup = response.data[0]; // Assuming the API returns sorted data (latest first)
             setLeads((prevLeads) =>
                 prevLeads.map((lead) =>
@@ -103,6 +142,7 @@ const LeadTable = () => {
 
     useEffect(() => {
         fetchLeads();
+        fetchEmployees();
     }, []);
 
     useEffect(() => {
@@ -140,22 +180,27 @@ const LeadTable = () => {
     const convertLeadToCustomer = async (lead) => {
         try {
             await axios.post(`${API_URL}/api/leads/${lead.id}/convert`);
-    
+
             // Optionally remove the lead from the table after conversion
             setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
         } catch (error) {
             console.error('Error converting lead to customer:', error);
         }
     };
-    
-    
 
     return (
         <div className="panel mt-6">
             <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
                 <h5 className="text-lg font-semibold dark:text-white-light">Lead Table</h5>
-                <div className="ltr:ml-auto rtl:mr-auto">
-                    <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                <div className="flex items-center gap-4">
+                    {selectedLeads.length > 0 && (
+                        <Button variant="filled" color="blue" onClick={() => setShowAssignDrawer(true)}>
+                            Assign {selectedLeads.length} Lead(s)
+                        </Button>
+                    )}
+                    <div className="ltr:ml-auto rtl:mr-auto">
+                        <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                    </div>
                 </div>
             </div>
             <div className="datatables">
@@ -163,6 +208,8 @@ const LeadTable = () => {
                     highlightOnHover
                     className="table-hover whitespace-nowrap"
                     records={recordsData}
+                    selectedRecords={selectedLeads}
+                    onSelectedRecordsChange={setSelectedLeads}
                     columns={[
                         { accessor: 'full_name', title: 'Name', sortable: true },
                         { accessor: 'email', title: 'Email', sortable: true },
@@ -302,6 +349,33 @@ const LeadTable = () => {
                     >
                         <FollowupForm leadId={selectedLead?.id} existingFollowUp={existingFollowUp} onFollowupChange={() => fetchFollowupHistory(selectedLead?.id)} />
                     </div>
+                </div>
+            </Drawer>
+
+            {/* Assign Leads Drawer */}
+            <Drawer
+                opened={showAssignDrawer}
+                onClose={() => {
+                    setShowAssignDrawer(false);
+                    setSelectedEmployee(null);
+                }}
+                title="Assign Leads to Employee"
+                position="right"
+                padding="md"
+            >
+                <div className="flex flex-col gap-4">
+                    <Text>Selected Leads: {selectedLeads.length}</Text>
+                    <select className="form-select" value={selectedEmployee || ''} onChange={(e) => setSelectedEmployee(e.target.value)}>
+                        <option value="">Select an Employee</option>
+                        {employees.map((employee) => (
+                            <option key={employee.id} value={employee.id}>
+                                {employee.first_name} {employee.last_name}
+                            </option>
+                        ))}
+                    </select>
+                    <Button onClick={handleAssignLeads} disabled={!selectedEmployee || selectedLeads.length === 0} color="blue">
+                        Assign Leads
+                    </Button>
                 </div>
             </Drawer>
         </div>
