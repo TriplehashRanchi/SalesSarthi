@@ -19,7 +19,7 @@ const ComponentsAuthLoginForm = () => {
         setError("");
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            router.push("/dashboard");
+            router.push("/");
         } catch (err) {
             setError(err.message);
         }
@@ -28,7 +28,7 @@ const ComponentsAuthLoginForm = () => {
     const handleGoogleLogin = async () => {
         try {
             await signInWithPopup(auth, googleProvider);
-            router.push("/dashboard");
+            router.push("/");
         } catch (err) {
             setError(err.message);
         }

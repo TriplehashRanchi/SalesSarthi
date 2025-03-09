@@ -16,12 +16,15 @@ const DefaultLayout = ({ children }) => {
     const { user, loading } = useAuth();
     const router = useRouter();
 
+
     useEffect(() => {
         if (!loading) {
             if (!user) {
                 router.push("/login"); // Redirect if not logged in
-            } else if (user?.role !== "admin") {
-                router.push("/userdashboard"); // Redirect users to their dashboard
+            } else if (user?.role !== "Salesperson" && user?.role !== "Manager") {
+                router.push("/");
+                // console.log(user.role);  
+                // Redirect users to their dashboard
             }
         }
     }, [user, loading, router]);
