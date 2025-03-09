@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
 import { useRouter } from 'next/navigation';
-import { Menu, Button, Drawer, Timeline, Divider, Text, ScrollArea, Badge } from '@mantine/core';
+import { Menu, Button, Drawer, Timeline, Divider, Text, ScrollArea, Badge, Checkbox, Select } from '@mantine/core';
 import IconMessage from '../icon/icon-message';
 import FollowupForm from '@/components/forms/followupform';
 import IconPhoneCall from '../icon/icon-phone-call';
@@ -20,64 +20,28 @@ const LeadTable = () => {
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
     const [recordsData, setRecordsData] = useState(leads);
     const [search, setSearch] = useState('');
-    const [selectedLeads, setSelectedLeads] = useState([]);
     const [sortStatus, setSortStatus] = useState({
         columnAccessor: 'full_name',
         direction: 'asc',
     });
-    const [showAssignDrawer, setShowAssignDrawer] = useState(false);
-    const [employees, setEmployees] = useState([]);
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
 
     const [showDrawer, setShowDrawer] = useState(false);
     const [selectedLead, setSelectedLead] = useState(null);
     const [followupHistory, setFollowupHistory] = useState([]);
     const [existingFollowUp, setExistingFollowUp] = useState(null);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [selectedLeads, setSelectedLeads] = useState([]);
+    const [selectedTeamMember, setSelectedTeamMember] = useState(null);
+
     const router = useRouter();
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-    const fetchEmployees = async () => {
-        try {
-            const response = await axios.get(`${API_URL}/api/users/${admin_id}`);
-            setEmployees(response.data);
-        } catch (error) {
-            console.error('Error fetching employees:', error);
-        }
-    };
-
-    const handleAssignLeads = async () => {
-        if (!selectedEmployee || selectedLeads.length === 0) return;
-
-        try {
-            await Promise.all(
-                selectedLeads.map((leadId) =>
-                    axios.put(`${API_URL}/api/leads/${leadId}`, {
-                        assigned_to: selectedEmployee,
-                    }),
-                ),
-            );
-
-            setSelectedLeads([]);
-            setShowAssignDrawer(false);
-            setSelectedEmployee(null);
-            fetchLeads();
-        } catch (error) {
-            console.error('Error assigning leads:', error);
-        }
-    };
-
-    const handleSelectLead = (leadId) => {
-        setSelectedLeads((prev) => (prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]));
-    };
-
-    // const admin_id = 'ADM001';
-    const admin_id = 'ADM6442';
+    const admin_id = 'ADM001';
     const fetchLeads = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/leads/all/admin_id:${admin_id}`);
+            const response = await axios.get(`${API_URL}/api/leads/all/${admin_id}`);
             setLeads(response.data);
-            console.log(response.data);
         } catch (error) {
             console.error('Error fetching leads:', error);
         }
@@ -88,6 +52,7 @@ const LeadTable = () => {
             const response = await axios.get(`${API_URL}/api/followups/${leadId}`);
             setFollowupHistory(response.data);
 
+            // Determine the latest next_follow_up_date and followup_status
             const latestFollowup = response.data[0]; // Assuming the API returns sorted data (latest first)
             setLeads((prevLeads) =>
                 prevLeads.map((lead) =>
@@ -142,7 +107,6 @@ const LeadTable = () => {
 
     useEffect(() => {
         fetchLeads();
-        fetchEmployees();
     }, []);
 
     useEffect(() => {
@@ -165,6 +129,41 @@ const LeadTable = () => {
         setRecordsData(leads.slice(from, to));
     }, [page, pageSize, leads]);
 
+    useEffect(() => {
+        setTeamMembers([
+            { id: 'TM001', name: 'Kunal Kumar' },
+            { id: 'TM002', name: 'Narottam Singh' },
+            { id: 'TM003', name: 'Raechal Zane' },
+        ]);
+    }, []);
+
+    const toggleLeadSelection = (leadId) => {
+        setSelectedLeads((prev) =>
+            prev.includes(leadId) ? prev.filter(id => id !== leadId) : [...prev, leadId]
+        );
+    };
+
+    const assignLeadsToTeamMember = () => {
+        if (!selectedTeamMember) {
+            alert("Please select a team member!");
+            return;
+        }
+        if (selectedLeads.length === 0) {
+            alert("Please select at least one lead!");
+            return;
+        }
+    
+        console.log(`Leads: ${selectedLeads} assigned to ${selectedTeamMember}`);
+        alert(`Leads ${selectedLeads.join(", ")} assigned to ${selectedTeamMember}`);
+        
+        // Reset after assignment
+        setSelectedLeads([]);
+        setSelectedTeamMember(null);
+    };
+    
+    
+    
+
     const formatDateWithTime = (date) => {
         const dt = new Date(date);
         const day = dt.getDate().toString().padStart(2, '0');
@@ -180,37 +179,61 @@ const LeadTable = () => {
     const convertLeadToCustomer = async (lead) => {
         try {
             await axios.post(`${API_URL}/api/leads/${lead.id}/convert`);
-
+    
             // Optionally remove the lead from the table after conversion
             setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
         } catch (error) {
             console.error('Error converting lead to customer:', error);
         }
     };
+    
+    
 
     return (
         <div className="panel mt-6">
             <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
                 <h5 className="text-lg font-semibold dark:text-white-light">Lead Table</h5>
-                <div className="flex items-center gap-4">
-                    {selectedLeads.length > 0 && (
-                        <Button variant="filled" color="blue" onClick={() => setShowAssignDrawer(true)}>
-                            Assign {selectedLeads.length} Lead(s)
-                        </Button>
-                    )}
-                    <div className="ltr:ml-auto rtl:mr-auto">
-                        <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                    </div>
+                <div className="ltr:ml-auto rtl:mr-auto">
+                    <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
+                <div className="flex gap-4 mb-4">
+    <Select
+        data={teamMembers.map(tm => ({ value: tm.id, label: tm.name }))}
+        value={selectedTeamMember}
+        onChange={setSelectedTeamMember}
+        placeholder="Select Team Member"
+    />
+    <Button onClick={assignLeadsToTeamMember} disabled={!selectedTeamMember || selectedLeads.length === 0}>
+        Assign Leads
+    </Button>
+</div>
+
             </div>
             <div className="datatables">
                 <DataTable
                     highlightOnHover
                     className="table-hover whitespace-nowrap"
                     records={recordsData}
-                    selectedRecords={selectedLeads}
-                    onSelectedRecordsChange={setSelectedLeads}
                     columns={[
+                        {
+                            accessor: 'select',
+                            title: (
+                                <Checkbox
+                                    onChange={(e) => {
+                                        setSelectedLeads(e.currentTarget.checked ? leads.map(lead => lead.id) : []);
+                                    }}
+                                    checked={selectedLeads.length === leads.length && leads.length > 0}
+                                    indeterminate={selectedLeads.length > 0 && selectedLeads.length < leads.length}
+                                />
+                            ),
+                            render: (record) => (
+                                <Checkbox
+                                    checked={selectedLeads.includes(record.id)}
+                                    onChange={() => toggleLeadSelection(record.id)}
+                                />
+                            ),
+                        },
+                        
                         { accessor: 'full_name', title: 'Name', sortable: true },
                         { accessor: 'email', title: 'Email', sortable: true },
                         { accessor: 'phone_number', title: 'Phone', sortable: true },
@@ -349,33 +372,6 @@ const LeadTable = () => {
                     >
                         <FollowupForm leadId={selectedLead?.id} existingFollowUp={existingFollowUp} onFollowupChange={() => fetchFollowupHistory(selectedLead?.id)} />
                     </div>
-                </div>
-            </Drawer>
-
-            {/* Assign Leads Drawer */}
-            <Drawer
-                opened={showAssignDrawer}
-                onClose={() => {
-                    setShowAssignDrawer(false);
-                    setSelectedEmployee(null);
-                }}
-                title="Assign Leads to Employee"
-                position="right"
-                padding="md"
-            >
-                <div className="flex flex-col gap-4">
-                    <Text>Selected Leads: {selectedLeads.length}</Text>
-                    <select className="form-select" value={selectedEmployee || ''} onChange={(e) => setSelectedEmployee(e.target.value)}>
-                        <option value="">Select an Employee</option>
-                        {employees.map((employee) => (
-                            <option key={employee.id} value={employee.id}>
-                                {employee.first_name} {employee.last_name}
-                            </option>
-                        ))}
-                    </select>
-                    <Button onClick={handleAssignLeads} disabled={!selectedEmployee || selectedLeads.length === 0} color="blue">
-                        Assign Leads
-                    </Button>
                 </div>
             </Drawer>
         </div>
