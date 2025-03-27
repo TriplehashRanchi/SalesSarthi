@@ -12,8 +12,9 @@ import IconPhoneCall from '../icon/icon-phone-call';
 import IconListCheck from '../icon/icon-list-check';
 import IconChatDot from '../icon/icon-chat-dot';
 import IconPencil from '../icon/icon-pencil';
+import { getAuth } from 'firebase/auth'; // 🔹 Firebase Auth
 
-const LeadTable = () => {
+const LeadTable = ({userId}) => {
     const [leads, setLeads] = useState([]);
     const [page, setPage] = useState(1);
     const PAGE_SIZES = [10, 20, 30, 50, 100];
@@ -37,10 +38,22 @@ const LeadTable = () => {
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-    const admin_id = 'ADM001';
     const fetchLeads = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/leads/all/${admin_id}`);
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) {
+                alert('You must be logged in!');
+                return;
+            }
+            const token = await user.getIdToken();
+            const response = await axios.get(`${API_URL}/api/leads/all`,{
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
             setLeads(response.data);
         } catch (error) {
             console.error('Error fetching leads:', error);
@@ -109,60 +122,122 @@ const LeadTable = () => {
         fetchLeads();
     }, []);
 
-    useEffect(() => {
-        const filteredLeads = leads.filter((item) => {
-            return (
-                item.full_name.toLowerCase().includes(search.toLowerCase()) || item.email.toLowerCase().includes(search.toLowerCase()) || item.phone_number.toLowerCase().includes(search.toLowerCase())
-            );
-        });
+    
 
+    useEffect(() => {
+        // Step 1: Filter by userId (if provided)
+        let filteredLeads = userId 
+            ? leads.filter((item) => item.user_id === userId) 
+            : leads;
+    
+        // Step 2: Apply search filtering
+        filteredLeads = filteredLeads.filter((item) =>
+            item.full_name.toLowerCase().includes(search.toLowerCase()) ||
+            item.email.toLowerCase().includes(search.toLowerCase()) ||
+            item.phone_number.toLowerCase().includes(search.toLowerCase())
+        );
+    
+        // Step 3: Sort the results
         const sortedLeads = sortBy(filteredLeads, sortStatus.columnAccessor);
         const finalSortedLeads = sortStatus.direction === 'desc' ? sortedLeads.reverse() : sortedLeads;
-
-        setRecordsData(finalSortedLeads);
-        setPage(1);
-    }, [search, leads, sortStatus]);
-
-    useEffect(() => {
+    
+        // Step 4: Apply pagination
         const from = (page - 1) * pageSize;
         const to = from + pageSize;
-        setRecordsData(leads.slice(from, to));
-    }, [page, pageSize, leads]);
+        setRecordsData(finalSortedLeads.slice(from, to));
+    
+    }, [search, userId, sortStatus, page, pageSize, leads]);
+    
+
+    const fetchTeamMembers = async () => {
+        try {
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) {
+                alert('You must be logged in!');
+                return;
+            }
+
+            const token = await user.getIdToken();
+
+            const response = await fetch(`${API_URL}/api/admin/users`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch users.');
+            }
+
+            const data = await response.json();
+            setTeamMembers(data); // Assuming API returns an array of team members
+        } catch (error) {
+            console.error('Error fetching team members:', error);
+        }
+    };
 
     useEffect(() => {
-        setTeamMembers([
-            { id: 'TM001', name: 'Kunal Kumar' },
-            { id: 'TM002', name: 'Narottam Singh' },
-            { id: 'TM003', name: 'Raechal Zane' },
-        ]);
+        fetchTeamMembers();
     }, []);
 
     const toggleLeadSelection = (leadId) => {
-        setSelectedLeads((prev) =>
-            prev.includes(leadId) ? prev.filter(id => id !== leadId) : [...prev, leadId]
-        );
+        setSelectedLeads((prev) => (prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]));
     };
 
-    const assignLeadsToTeamMember = () => {
-        if (!selectedTeamMember) {
-            alert("Please select a team member!");
-            return;
+    const assignLeads = async () => {
+        try {
+            const auth = getAuth();
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert('You must be logged in!');
+                return;
+            }
+
+            if (!user_id) {
+                alert('Please select a valid user to assign leads.');
+                return;
+            }
+
+            // Validate leads selection
+            if (!selectedLeads || selectedLeads.length === 0) {
+                alert('No leads selected for assignment.');
+                return;
+            }
+
+            // Get Firebase token
+            const token = await user.getIdToken();
+
+            // Make API request
+            const response = await fetch('http://localhost:5000/api/admin/assign', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ user_id: selectedTeamMember, leads: selectedLeads }),
+            });
+
+            if (!response.ok) {
+                // Handle API errors
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to assign leads.');
+            }
+
+            // Success
+            const data = await response.json();
+            alert('Leads assigned successfully!');
+            setSelectedLeads([]);
+            setSelectedTeamMember(null);
+            console.log('Response:', data);
+        } catch (error) {
+            console.error('Error assigning leads:', error);
+            alert(error.message || 'Something went wrong. Please try again.');
         }
-        if (selectedLeads.length === 0) {
-            alert("Please select at least one lead!");
-            return;
-        }
-    
-        console.log(`Leads: ${selectedLeads} assigned to ${selectedTeamMember}`);
-        alert(`Leads ${selectedLeads.join(", ")} assigned to ${selectedTeamMember}`);
-        
-        // Reset after assignment
-        setSelectedLeads([]);
-        setSelectedTeamMember(null);
     };
-    
-    
-    
 
     const formatDateWithTime = (date) => {
         const dt = new Date(date);
@@ -179,15 +254,13 @@ const LeadTable = () => {
     const convertLeadToCustomer = async (lead) => {
         try {
             await axios.post(`${API_URL}/api/leads/${lead.id}/convert`);
-    
+
             // Optionally remove the lead from the table after conversion
             setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
         } catch (error) {
             console.error('Error converting lead to customer:', error);
         }
     };
-    
-    
 
     return (
         <div className="panel mt-6">
@@ -197,17 +270,16 @@ const LeadTable = () => {
                     <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
                 <div className="flex gap-4 mb-4">
-    <Select
-        data={teamMembers.map(tm => ({ value: tm.id, label: tm.name }))}
-        value={selectedTeamMember}
-        onChange={setSelectedTeamMember}
-        placeholder="Select Team Member"
-    />
-    <Button onClick={assignLeadsToTeamMember} disabled={!selectedTeamMember || selectedLeads.length === 0}>
-        Assign Leads
-    </Button>
-</div>
-
+                    <Select
+                        data={teamMembers.map((tm) => ({ value: tm.id, label: `${tm.username} (${tm.role}) ` }))}
+                        value={selectedTeamMember}
+                        onChange={setSelectedTeamMember}
+                        placeholder="Select Team Member"
+                    />
+                    <Button onClick={assignLeads} disabled={!selectedTeamMember || selectedLeads.length === 0}>
+                        Assign Leads
+                    </Button>
+                </div>
             </div>
             <div className="datatables">
                 <DataTable
@@ -220,23 +292,23 @@ const LeadTable = () => {
                             title: (
                                 <Checkbox
                                     onChange={(e) => {
-                                        setSelectedLeads(e.currentTarget.checked ? leads.map(lead => lead.id) : []);
+                                        setSelectedLeads(e.currentTarget.checked ? leads.map((lead) => lead.id) : []);
                                     }}
                                     checked={selectedLeads.length === leads.length && leads.length > 0}
                                     indeterminate={selectedLeads.length > 0 && selectedLeads.length < leads.length}
                                 />
                             ),
-                            render: (record) => (
-                                <Checkbox
-                                    checked={selectedLeads.includes(record.id)}
-                                    onChange={() => toggleLeadSelection(record.id)}
-                                />
-                            ),
+                            render: (record) => <Checkbox checked={selectedLeads.includes(record.id)} onChange={() => toggleLeadSelection(record.id)} />,
                         },
-                        
+
                         { accessor: 'full_name', title: 'Name', sortable: true },
                         { accessor: 'email', title: 'Email', sortable: true },
                         { accessor: 'phone_number', title: 'Phone', sortable: true },
+                        { accessor: 'assigned_to', title: 'Assigned To', render: ({ user_id }) => {
+                            // Find the team member using assigned_to (user_id)
+                            const assignedUser = teamMembers.find((user) => user.id === user_id);
+                            return <div>{assignedUser ? assignedUser.username : 'Unassigned'}</div>;
+                        }, },
                         {
                             accessor: 'followup_status',
                             title: 'Current Follow-up Status',

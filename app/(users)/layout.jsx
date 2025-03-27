@@ -11,6 +11,7 @@ import Portals from '@/components/portals';
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import UserSide from '@/components/layouts/UserSide';
 
 const DefaultLayout = ({ children }) => {
     const { user, loading } = useAuth();
@@ -44,7 +45,7 @@ const DefaultLayout = ({ children }) => {
 
                 <MainContainer>
                     {/* BEGIN SIDEBAR */}
-                    <Sidebar />
+                    <UserSide />        
                     {/* END SIDEBAR */}
                     <div className="main-content flex min-h-screen flex-col">
                         {/* BEGIN TOP NAVBAR */}

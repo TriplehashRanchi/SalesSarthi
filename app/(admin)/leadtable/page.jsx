@@ -30,7 +30,7 @@ const MultiColumn = () => {
                     <button className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">CSV Bulk Upload</button>
                 </div>
             </div>
-            <ComponentsDatatablesMultiColumn />
+            <ComponentsDatatablesMultiColumn  userId = {null}/>
         </div>
     );
 };

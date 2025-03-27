@@ -35,6 +35,11 @@ import { usePathname } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
 import IconNotes from '../icon/icon-notes';
+import IconPlusCircle from '../icon/icon-plus-circle';
+import IconUsers from '../icon/icon-users';
+import IconListCheck from '../icon/icon-list-check';
+import IconUserPlus from '../icon/icon-user-plus';
+import IconTrendingUp from '../icon/icon-trending-up';
 
 const Sidebar = () => {
     const dispatch = useDispatch();
@@ -136,17 +141,43 @@ const Sidebar = () => {
                                 </AnimateHeight>
                             </li>
                             <li className="menu nav-item">
-                            <Link href="/addlead">{t('Add Lead')}</Link>
+                                <Link href="/addlead">
+                                    <div className="flex items-center">
+                                        <IconUserPlus className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Add Leads')}</span>
+                                    </div>
+                                </Link>
                             </li>
-                            <li className="menu nav-item">
 
-                            <Link href="/leadtable">{t('My Leads')}</Link>
+                            <li className="menu nav-item">
+                                <Link href="/leadtable">
+                                    <div className="flex items-center">
+                                        <IconListCheck className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('All leads')}</span>
+                                    </div>
+                                </Link>
                             </li>
                             <li className="menu nav-item">
                                 <Link href="/calc">
                                     <div className="flex items-center">
                                         <IconMenuCharts className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Fin Health Calculator')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/adduser">
+                                    <div className="flex items-center">
+                                        <IconPlusCircle className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Team craetion')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/view-user">
+                                    <div className="flex items-center">
+                                        <IconUsers className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('My Team')}</span>
                                     </div>
                                 </Link>
                             </li>
@@ -165,6 +196,35 @@ const Sidebar = () => {
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Appointments')}</span>
                                     </div>
                                 </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <button type="button" className={`${currentMenu === 'report' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('report')}>
+                                    <div className="flex items-center">
+                                        <IconTrendingUp className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Reports')}</span>
+                                    </div>
+
+                                    <div className={currentMenu !== 'report' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                        <IconCaretDown />
+                                    </div>
+                                </button>
+
+                                <AnimateHeight duration={300} height={currentMenu === 'report' ? 'auto' : 0}>
+                                    <ul className="sub-menu text-gray-500">
+                                        <li>
+                                            <Link href="/reports">{t('Report')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/reports/weekly">{t('weekly')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/reports//monthly">{t('monthly')}</Link>
+                                        </li>
+                                        {/* <li>
+                                            <Link href="/crypto">{t('crypto')}</Link>
+                                        </li> */}
+                                    </ul>
+                                </AnimateHeight>
                             </li>
                             <li className="menu nav-item">
                                 <Link href="/banner">

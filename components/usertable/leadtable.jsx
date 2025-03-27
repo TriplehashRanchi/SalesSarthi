@@ -12,6 +12,7 @@ import IconPhoneCall from '../icon/icon-phone-call';
 import IconListCheck from '../icon/icon-list-check';
 import IconChatDot from '../icon/icon-chat-dot';
 import IconPencil from '../icon/icon-pencil';
+import { getAuth } from 'firebase/auth';
 
 const LeadTable = () => {
     const [leads, setLeads] = useState([]);
@@ -33,16 +34,28 @@ const LeadTable = () => {
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-    const admin_id = 'ADM001';
+
     const fetchLeads = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/leads/all/${admin_id}`);
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) {
+                alert('You must be logged in!');
+                return;
+            }
+            const token = await user.getIdToken();
+            const response = await axios.get(`${API_URL}/api/users/leads`,{
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
             setLeads(response.data);
         } catch (error) {
             console.error('Error fetching leads:', error);
         }
     };
-
     const fetchFollowupHistory = async (leadId) => {
         try {
             const response = await axios.get(`${API_URL}/api/followups/${leadId}`);
