@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ReactApexChart from "react-apexcharts";
 import Link from "next/link";
 import IconCalendar from "@/components/icon/icon-calendar";
 import IconMail from "@/components/icon/icon-mail";
 import IconChatDot from "@/components/icon/icon-chat-dot";
+import dynamic from "next/dynamic";
+
+// Dynamically import ReactApexChart with SSR disabled
+const ReactApexChart = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+});
 
 const ReportingDashboard = () => {
   const [dashboardData, setDashboardData] = useState({

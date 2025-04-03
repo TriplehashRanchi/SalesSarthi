@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import ReactApexChart from "react-apexcharts";
+import dynamic from "next/dynamic";
+
+// Dynamically import ReactApexChart with SSR disabled
+const ReactApexChart = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+});
 
 const WeeklyReports = () => {
   const [weeklyData, setWeeklyData] = useState([
