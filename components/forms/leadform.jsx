@@ -3,19 +3,31 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import Swal from 'sweetalert2'; 
+import Swal from 'sweetalert2';
+import { getAuth } from 'firebase/auth'; // 🔐 Firebase auth
 
 const LeadForm = ({ existingLead }) => {
+  // Define status options for the Lead Status dropdown.
+  const statusOptions = [
+    { value: 'Cold Lead', label: 'Cold Lead' },
+    { value: 'Hot Lead', label: 'Hot Lead' },
+    { value: 'Qualified Lead', label: 'Qualified Lead' },
+    { value: 'Lost Lead', label: 'Lost Lead' },
+    { value: 'Follow-up', label: 'Follow-up' },
+  ];
+
+  // Extended form data including most of the fields from your leads table.
   const [formData, setFormData] = useState({
     id: existingLead ? existingLead.id : Math.floor(Math.random() * 100000000),
+    admin_id: existingLead ? existingLead.admin_id : 'ADM6442',
     full_name: existingLead ? existingLead.full_name : '',
     email: existingLead ? existingLead.email : '',
     phone_number: existingLead ? existingLead.phone_number : '',
     lead_status: existingLead ? existingLead.lead_status : '',
     gender: existingLead ? existingLead.gender : '',
-    admin_id: existingLead ? existingLead.admin_id : 'ADM6442',
-    date_of_birth: existingLead ? new Date(existingLead.date_of_birth).toLocaleDateString('en-CA') : '',
-
+    date_of_birth: existingLead
+      ? new Date(existingLead.date_of_birth).toLocaleDateString('en-CA')
+      : '',
     address: existingLead ? existingLead.address : '',
     insurance_type: existingLead ? existingLead.insurance_type : '',
     policy_number: existingLead ? existingLead.policy_number : '',
@@ -29,36 +41,50 @@ const LeadForm = ({ existingLead }) => {
   });
 
   const router = useRouter();
-
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Replace with your actual API URL
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  console.log(formData);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
     try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        Swal.fire('Unauthorized', 'You must be logged in to submit this form.', 'error');
+        return;
+      }
+
+      const token = await user.getIdToken(); // 🔑 Firebase token
+      // Create payload from formData (you may remove fields you don't want to send)
+      const payload = { ...formData };
+      // If you need to remove specific fields (like admin_id) or handle them differently, do it here
+      delete payload.admin_id;
+
       if (existingLead) {
-        // Update existing lead (PUT request)
-        await axios.put(`${API_URL}/api/leads/${formData.id}`, formData);
+        await axios.put(`${API_URL}/api/leads/${formData.id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         Swal.fire('Success', 'Lead updated successfully!', 'success').then(() => {
-          router.push('/leadtable'); // Redirect to the lead table
+          router.push('/leadtable');
         });
       } else {
-        // Add new lead (POST request)
-        await axios.post(`${API_URL}/api/leads`, formData);
+        await axios.post(`${API_URL}/api/leads`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         Swal.fire('Success', 'Lead added successfully!', 'success').then(() => {
-          router.push('/leadtable'); // Redirect to the lead table
+          router.push('/leadtable');
         });
       }
-  
+      
+      // Reset the form after submission.
       setFormData({
         id: Math.floor(Math.random() * 100000000),
+        admin_id: 'ADM6442',
         full_name: '',
         email: '',
         phone_number: '',
@@ -76,8 +102,6 @@ const LeadForm = ({ existingLead }) => {
         referrer: '',
         notes: '',
       });
-
-
     } catch (error) {
       console.error('Error submitting form:', error);
       Swal.fire('Error', 'There was an error submitting the form. Please try again later.', 'error');
@@ -89,10 +113,8 @@ const LeadForm = ({ existingLead }) => {
       <h2 className="text-xl font-semibold text-gray-800 mb-6">
         {existingLead ? 'Edit Lead' : 'Add New Lead'}
       </h2>
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Full Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Full Name
@@ -108,6 +130,7 @@ const LeadForm = ({ existingLead }) => {
           />
         </div>
 
+        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Email
@@ -123,6 +146,7 @@ const LeadForm = ({ existingLead }) => {
           />
         </div>
 
+        {/* Phone Number */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Phone Number
@@ -138,6 +162,7 @@ const LeadForm = ({ existingLead }) => {
           />
         </div>
 
+        {/* Lead Status with custom options */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Lead Status
@@ -150,13 +175,15 @@ const LeadForm = ({ existingLead }) => {
             required
           >
             <option value="">Select Lead Status</option>
-            <option value="new">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Qualified">Qualified</option>
-            <option value="Lost">Lost</option>
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
 
+        {/* Gender */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Gender
@@ -173,6 +200,7 @@ const LeadForm = ({ existingLead }) => {
           </select>
         </div>
 
+        {/* Date of Birth */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Date of Birth
@@ -186,6 +214,155 @@ const LeadForm = ({ existingLead }) => {
           />
         </div>
 
+        {/* Address */}
+        <div className="col-span-1 lg:col-span-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Address
+          </label>
+          <textarea
+            name="address"
+            placeholder="Enter Address"
+            value={formData.address}
+            onChange={handleInputChange}
+            className="form-textarea w-full"
+          />
+        </div>
+
+        {/* Insurance Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Insurance Type
+          </label>
+          <input
+            type="text"
+            name="insurance_type"
+            placeholder="Enter Insurance Type"
+            value={formData.insurance_type}
+            onChange={handleInputChange}
+            className="form-input w-full"
+          />
+        </div>
+
+        {/* Policy Number */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Policy Number
+          </label>
+          <input
+            type="text"
+            name="policy_number"
+            placeholder="Enter Policy Number"
+            value={formData.policy_number}
+            onChange={handleInputChange}
+            className="form-input w-full"
+          />
+        </div>
+
+        {/* Coverage Amount */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Coverage Amount
+          </label>
+          <input
+            type="number"
+            name="coverage_amount"
+            placeholder="Enter Coverage Amount"
+            value={formData.coverage_amount}
+            onChange={handleInputChange}
+            className="form-input w-full"
+            step="0.01"
+          />
+        </div>
+
+        {/* Preferred Plan */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Preferred Plan
+          </label>
+          <input
+            type="text"
+            name="preferred_plan"
+            placeholder="Enter Preferred Plan"
+            value={formData.preferred_plan}
+            onChange={handleInputChange}
+            className="form-input w-full"
+          />
+        </div>
+
+        {/* Next Follow-up Date */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Next Follow-up Date
+          </label>
+          <input
+            type="datetime-local"
+            name="next_follow_up_date"
+            value={formData.next_follow_up_date}
+            onChange={handleInputChange}
+            className="form-input w-full"
+          />
+        </div>
+
+        {/* Source */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Source
+          </label>
+          <input
+            type="text"
+            name="source"
+            placeholder="Enter Lead Source"
+            value={formData.source}
+            onChange={handleInputChange}
+            className="form-input w-full"
+          />
+        </div>
+
+        {/* Company Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Company Name
+          </label>
+          <input
+            type="text"
+            name="company_name"
+            placeholder="Enter Company Name"
+            value={formData.company_name}
+            onChange={handleInputChange}
+            className="form-input w-full"
+          />
+        </div>
+
+        {/* Referrer */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Referrer
+          </label>
+          <input
+            type="text"
+            name="referrer"
+            placeholder="Enter Referrer"
+            value={formData.referrer}
+            onChange={handleInputChange}
+            className="form-input w-full"
+          />
+        </div>
+
+        {/* Notes */}
+        <div className="col-span-1 lg:col-span-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Notes
+          </label>
+          <textarea
+            name="notes"
+            placeholder="Enter any notes about the lead"
+            value={formData.notes}
+            onChange={handleInputChange}
+            className="form-textarea w-full"
+          />
+        </div>
+
+        {/* Submit Button */}
         <div className="col-span-1 lg:col-span-3 flex justify-end space-x-3">
           <button type="submit" className="btn btn-primary">
             {existingLead ? 'Update Lead' : 'Add Lead'}

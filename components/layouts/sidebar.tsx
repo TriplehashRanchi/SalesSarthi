@@ -31,6 +31,7 @@ import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
+import {IconBrandFacebook, IconBrandWhatsappFilled, IconForms} from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
@@ -40,6 +41,7 @@ import IconUsers from '../icon/icon-users';
 import IconListCheck from '../icon/icon-list-check';
 import IconUserPlus from '../icon/icon-user-plus';
 import IconTrendingUp from '../icon/icon-trending-up';
+import IconBell from '../icon/icon-bell';
 
 const Sidebar = () => {
     const dispatch = useDispatch();
@@ -169,7 +171,7 @@ const Sidebar = () => {
                                 <Link href="/adduser">
                                     <div className="flex items-center">
                                         <IconPlusCircle className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Team craetion')}</span>
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Team creation')}</span>
                                     </div>
                                 </Link>
                             </li>
@@ -186,6 +188,38 @@ const Sidebar = () => {
                                     <div className="flex items-center">
                                         <IconNotes className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/facebook-leads">
+                                    <div className="flex items-center">
+                                        <IconBrandFacebook className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Facebook Leads')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/reminders">
+                                    <div className="flex items-center">
+                                        <IconBell className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Reminders')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/webhook">
+                                    <div className="flex items-center">
+                                        <IconForms className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Lead Form')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/automation">
+                                    <div className="flex items-center">
+                                        <IconBrandWhatsappFilled className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Automation')}</span>
                                     </div>
                                 </Link>
                             </li>
@@ -214,12 +248,12 @@ const Sidebar = () => {
                                         <li>
                                             <Link href="/reports">{t('Report')}</Link>
                                         </li>
-                                        <li>
+                                        {/* <li>
                                             <Link href="/reports/weekly">{t('weekly')}</Link>
                                         </li>
                                         <li>
                                             <Link href="/reports//monthly">{t('monthly')}</Link>
-                                        </li>
+                                        </li> */}
                                         {/* <li>
                                             <Link href="/crypto">{t('crypto')}</Link>
                                         </li> */}

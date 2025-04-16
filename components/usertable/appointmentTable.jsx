@@ -7,6 +7,7 @@ import sortBy from 'lodash/sortBy';
 import { Menu, Button, Badge, Text } from '@mantine/core';
 import IconPencil from '../icon/icon-pencil';
 import AppointmentEditDrawer from './AppointmentEditDrawer'; // To manage appointments
+import { getAuth } from 'firebase/auth';
 
 const AppointmentTable = ({ userId = 1 }) => {
     const [appointments, setAppointments] = useState([]);
@@ -22,7 +23,19 @@ const AppointmentTable = ({ userId = 1 }) => {
 
     const fetchAppointments = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/appointments/${userId}`);
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if(!user){
+                alert('You must be logged in!');
+                return;
+            }
+            const token = await user.getIdToken();
+            const response = await axios.get(`${API_URL}/api/appointments/user`,{
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setAppointments(response.data);
         } catch (error) {
             console.error('Error fetching appointments:', error);

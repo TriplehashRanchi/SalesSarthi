@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { Menu, Button, Drawer, ScrollArea, Text, Divider, Badge } from '@mantine/core';
 import IconPencil from '../icon/icon-pencil';
 import AppointmentDrawer from './AppointmentDrawer'; // New drawer for managing appointments
+import IconMailDot from '../icon/icon-mail-dot';
+import { getAuth } from 'firebase/auth';
 
 const CustomerTable = () => {
 
@@ -30,17 +32,35 @@ const CustomerTable = () => {
 
     const fetchCustomers = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/customers`);
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) {
+              alert('You must be logged in!');
+              return;
+            }
+            const token = await user.getIdToken();
+            const response = await axios.get(`${API_URL}/api/customers`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });   
             setCustomers(response.data);
         } catch (error) {
             console.error('Error fetching customers:', error);
         }
     };
 
+
     const handleManageAppointments = (customer) => {
         setSelectedCustomer(customer);
         setOpenDrawer(true);
     };
+
+    const handleEditCustomer = (customer) => {
+        router.push(`/editcustomer/${customer.id}`);
+    };
+
 
     useEffect(() => {
         fetchCustomers();
@@ -124,8 +144,11 @@ const CustomerTable = () => {
                                         </Button>
                                     </Menu.Target>
                                     <Menu.Dropdown>
+                                        <Menu.Item onClick={() => handleEditCustomer(record)}>
+                                            <div className="flex gap-2"><IconPencil /> Edit Customer</div>
+                                        </Menu.Item>
                                         <Menu.Item onClick={() => handleManageAppointments(record)}>
-                                            <div className="flex gap-2"><IconPencil /> Manage Appointments</div>
+                                            <div className="flex gap-2"><IconMailDot /> Appointments</div>
                                         </Menu.Item>
                                     </Menu.Dropdown>
                                 </Menu>

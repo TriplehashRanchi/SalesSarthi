@@ -162,7 +162,7 @@ const UserSide = () => {
                                 </Link>
                             </li>
                             <li className="menu nav-item">
-                                <Link href="/customers">
+                                <Link href="/usercustomers">
                                     <div className="flex items-center">
                                         <IconNotes className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
@@ -170,7 +170,7 @@ const UserSide = () => {
                                 </Link>
                             </li>
                             <li className="menu nav-item">
-                                <Link href="/appointments">
+                                <Link href="/userappointments">
                                     <div className="flex items-center">
                                         <IconNotes className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('My Appointments')}</span>

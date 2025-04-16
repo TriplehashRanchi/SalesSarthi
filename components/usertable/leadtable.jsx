@@ -13,8 +13,9 @@ import IconListCheck from '../icon/icon-list-check';
 import IconChatDot from '../icon/icon-chat-dot';
 import IconPencil from '../icon/icon-pencil';
 import { getAuth } from 'firebase/auth';
+import { Select } from '@mantine/core';
 
-const LeadTable = () => {
+const LeadTable = ({userId}) => {
     const [leads, setLeads] = useState([]);
     const [page, setPage] = useState(1);
     const PAGE_SIZES = [10, 20, 30, 50, 100];
@@ -30,6 +31,18 @@ const LeadTable = () => {
     const [selectedLead, setSelectedLead] = useState(null);
     const [followupHistory, setFollowupHistory] = useState([]);
     const [existingFollowUp, setExistingFollowUp] = useState(null);
+
+      const [statusFilter, setStatusFilter] = useState('');
+
+    const statusOptions = [
+        { value: 'Cold Lead', label: 'Cold Lead' },
+        { value: 'Hot Lead', label: 'Hot Lead' },
+        { value: 'Qualified Lead', label: 'Qualified Lead' },
+        { value: 'Lost Lead', label: 'Lost Lead' },
+        { value: 'Follow-up', label: 'Follow-up' },
+      ];
+  
+      
     const router = useRouter();
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -79,6 +92,34 @@ const LeadTable = () => {
         }
     };
 
+    const updateLeadStatus = async (lead, newStatus) => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) {
+          alert('You must be logged in!');
+          return;
+        }
+        const token = await user.getIdToken();
+        
+        // Update the lead status on the backend.
+        await axios.put(`${API_URL}/api/leads/${lead.id}`, { lead_status: newStatus }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        });
+        
+        // Update the local state, so that the updated status immediately reflects in your table.
+        setLeads((prevLeads) =>
+          prevLeads.map((l) => (l.id === lead.id ? { ...l, lead_status: newStatus } : l))
+        );
+      } catch (error) {
+        console.error('Error updating lead status:', error);
+        alert(error.message || 'Failed to update status.');
+      }
+    };
+
     const openFollowupDrawer = async (lead) => {
         setSelectedLead(lead);
         await fetchFollowupHistory(lead.id);
@@ -118,19 +159,37 @@ const LeadTable = () => {
         fetchLeads();
     }, []);
 
-    useEffect(() => {
-        const filteredLeads = leads.filter((item) => {
-            return (
-                item.full_name.toLowerCase().includes(search.toLowerCase()) || item.email.toLowerCase().includes(search.toLowerCase()) || item.phone_number.toLowerCase().includes(search.toLowerCase())
-            );
-        });
-
-        const sortedLeads = sortBy(filteredLeads, sortStatus.columnAccessor);
-        const finalSortedLeads = sortStatus.direction === 'desc' ? sortedLeads.reverse() : sortedLeads;
-
-        setRecordsData(finalSortedLeads);
-        setPage(1);
-    }, [search, leads, sortStatus]);
+  useEffect(() => {
+    // Step 1: Filter by userId (if provided)
+    let filteredLeads = userId ? leads.filter((item) => item.user_id === userId) : leads;
+  
+    // Step 2: Apply search filtering
+    filteredLeads = filteredLeads.filter((item) =>
+      item.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      item.email?.toLowerCase().includes(search.toLowerCase()) ||
+      item.phone_number?.toLowerCase().includes(search.toLowerCase())
+    );
+  
+    // NEW: Exclude leads whose status is "customer" (case insensitive)
+    filteredLeads = filteredLeads.filter((item) =>
+      item.lead_status && item.lead_status.toLowerCase() !== 'customer'
+    );
+  
+    // Step 3: Apply additional status filtering if a status is selected
+    if (statusFilter) {
+      filteredLeads = filteredLeads.filter((item) => item.lead_status === statusFilter);
+    }
+  
+    // Step 4: Sort the results
+    const sortedLeads = sortBy(filteredLeads, sortStatus.columnAccessor);
+    const finalSortedLeads = sortStatus.direction === 'desc' ? sortedLeads.reverse() : sortedLeads;
+  
+    // Step 5: Apply pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize;
+    setRecordsData(finalSortedLeads.slice(from, to));
+  }, [search, sortStatus, page, pageSize, leads, statusFilter]);
+  
 
     useEffect(() => {
         const from = (page - 1) * pageSize;
@@ -167,8 +226,21 @@ const LeadTable = () => {
         <div className="panel mt-6">
             <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
                 <h5 className="text-lg font-semibold dark:text-white-light">Lead Table</h5>
-                <div className="ltr:ml-auto rtl:mr-auto">
-                    <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                 <div className="ltr:ml-auto rtl:mr-auto flex items-center gap-4">
+                  <input
+                    type="text"
+                    className="form-input w-auto"
+                    placeholder="Search..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <Select
+                    data={statusOptions}
+                    placeholder="Filter by Status"
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    clearable
+                  />
                 </div>
             </div>
             <div className="datatables">
@@ -180,6 +252,50 @@ const LeadTable = () => {
                         { accessor: 'full_name', title: 'Name', sortable: true },
                         { accessor: 'email', title: 'Email', sortable: true },
                         { accessor: 'phone_number', title: 'Phone', sortable: true },
+                        {
+                            accessor: 'lead_status',
+                            title: 'Status',
+                            render: (record) => (
+                              <Menu withinPortal>
+                                <Menu.Target>
+                                  <Badge
+                                    style={{ cursor: 'pointer' }}
+                                    // Map the status to a color based on your design; adjust as needed.
+                                    color={
+                                      record.lead_status === 'Hot Lead' ? 'red' :
+                                      record.lead_status === 'Cold Lead' ? 'blue' :
+                                      record.lead_status === 'Qualified Lead' ? 'green' :
+                                      record.lead_status === 'Lost Lead' ? 'gray' : 'orange'
+                                    }
+                                    variant="light"
+                                  >
+                                    {record.lead_status || 'Select Status'}
+                                  </Badge>
+                                </Menu.Target>
+                                <Menu.Dropdown>
+                                  {statusOptions.map((option) => (
+                                    <Menu.Item
+                                      key={option.value}
+                                      onClick={() => updateLeadStatus(record, option.value)}
+                                    >
+                                      {option.label}
+                                    </Menu.Item>
+                                  ))}
+                                </Menu.Dropdown>
+                              </Menu>
+                            ),
+                          },
+                          {
+                            accessor: 'source',
+                            title: 'Source',
+                            render: (record) =>
+                              record.source === 'facebook' ? (
+                                <Badge color="blue" variant="light">FB/Meta</Badge>
+                              ) : (
+                                <Badge color="green" variant="light">Manual</Badge>
+                              ),
+                          },
+                          
                         {
                             accessor: 'followup_status',
                             title: 'Current Follow-up Status',

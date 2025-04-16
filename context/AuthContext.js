@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         const token = await getFirebaseToken();
         const role = await fetchUserRole(firebaseUser.uid); // Fetch role from DB
-        setUser({ ...firebaseUser, token, role }); // Store user + role
+        setUser({ ...firebaseUser, token, role: role.role, admin_id: role.admin_id }); // Store user + role
       } else {
         setUser(null);
       }

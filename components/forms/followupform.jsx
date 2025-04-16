@@ -67,8 +67,8 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange }) => {
       if (isUpdating) {
         await axios.put(`${API_URL}/api/followups/${existingFollowUp.id}`, followUpData);
        Swal.fire('Success', 'Follow-up updated successfully!', 'success');
-      } else {
-        await axios.post('${API_URL}/api/followups', followUpData);
+      } else {  
+        await axios.post(`${API_URL}/api/followups`, followUpData);
         Swal.fire('Success', 'Follow-up created successfully!', 'success');
       }
     
