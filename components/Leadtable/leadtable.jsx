@@ -346,36 +346,53 @@ const pollFacebookLeads = async (manualTrigger = false) => {
   }
 };
 
-    // --- Replace the existing initial useEffect with this ---
-    useEffect(() => {
-        const initializeTable = async () => {
-            setLoading(true); // Start overall loading
-            setError(null);
-            let pollSuccess = false;
-            try {
-                // Fetch team members first/concurrently
-                await fetchTeamMembers();
-
-                // Poll only if it hasn't been done initially
-                if (!hasPolledInitially) {
-                    pollSuccess = await pollFacebookLeads(false); // Poll silently
-                    setHasPolledInitially(true);
-                }
-
-                // Fetch leads IF poll wasn't done OR if poll failed
-                if (!hasPolledInitially || (hasPolledInitially && !pollSuccess)) {
-                    await fetchLeads(false); // Fetch without main overlay
-                }
-                // If poll succeeded, fetchLeads was called inside it
-            } catch (err) {
-                setError(err.message || 'Failed to initialize table.');
-            } finally {
-                setLoading(false); // Stop overall loading
-            }
-        };
-        initializeTable();
-    }, []); // Runs ONLY on mount
-    // --- End of replacement ---
+// ⬇️ inside LeadTable – replace the whole initializeTable useEffect
+useEffect(() => {
+    let isMounted = true;                     // avoid setting state after unmount
+  
+    const initializeTable = async () => {
+      setLoading(true);
+      setError(null);
+  
+      try {
+        // 1️⃣ ALWAYS get team list (needed for the “Assigned To” column)
+        await fetchTeamMembers();
+  
+        // 2️⃣ Get whatever is already in your DB FIRST
+        await fetchLeads(false);              // no extra overlay – we already have one
+  
+      } catch (err) {
+        if (isMounted) setError(err.message || 'Failed to load leads');
+      } finally {
+        if (isMounted) setLoading(false);     // let the table render ASAP
+      }
+  
+      // 3️⃣ Kick off FB polling *after* the UI is visible
+      //    We don't await it – the user can start working instantly.
+      pollFacebookLeads(false)
+        .then((success) => {
+          if (success && isMounted) {
+            // Poll found new leads → refresh silently
+            fetchLeads(false);
+          }
+        })
+        .catch((err) => {
+          console.error('FB poll error:', err);
+          // Nice‑to‑have: non‑blocking yellow toast
+          notifications.show({
+            title: 'Facebook sync skipped',
+            message: err.message,
+            color: 'yellow',
+          });
+        });
+    };
+  
+    initializeTable();
+  
+    // cleanup
+    return () => { isMounted = false; };
+  }, []);         // run once on mount
+  
 
     // ** REVISED useEffect for Filtering, Sorting, Pagination **
     useEffect(() => {
