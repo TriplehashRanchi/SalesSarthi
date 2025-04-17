@@ -49,7 +49,7 @@ const DefaultLayout = ({ children }) => {
                     {/* END SIDEBAR */}
                     <div className="main-content flex min-h-screen flex-col">
                         {/* BEGIN TOP NAVBAR */}
-                        <Header />
+                        <Header user={user} />
                         {/* END TOP NAVBAR */}
 
                         {/* BEGIN CONTENT AREA */}

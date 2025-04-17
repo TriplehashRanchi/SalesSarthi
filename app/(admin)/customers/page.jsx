@@ -26,6 +26,7 @@ const MultiColumn = () => {
                         <span className="flex gap-2 align-center">
                             <IconGoogle />
                             Import from Google
+                            
                         </span>
                     </button>
                     <button className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">CSV Bulk Upload</button>

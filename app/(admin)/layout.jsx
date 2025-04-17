@@ -21,7 +21,7 @@ const DefaultLayout = ({ children }) => {
             if (!user) {
                 router.push("/login"); // Redirect if not logged in
             } else if (user?.role !== "admin") {
-                router.push("/userdashboard"); // Redirect users to their dashboard
+                router.push("/user-dashboard"); // Redirect users to their dashboard
             }
         }
     }, [user, loading, router]);
@@ -45,7 +45,7 @@ const DefaultLayout = ({ children }) => {
                     {/* END SIDEBAR */}
                     <div className="main-content flex min-h-screen flex-col">
                         {/* BEGIN TOP NAVBAR */}
-                        <Header />
+                        <Header user={user} />
                         {/* END TOP NAVBAR */}
 
                         {/* BEGIN CONTENT AREA */}

@@ -123,7 +123,7 @@ const UserSide = () => {
                                 <AnimateHeight duration={300} height={currentMenu === 'dashboard' ? 'auto' : 0}>
                                     <ul className="sub-menu text-gray-500">
                                         <li>
-                                            <Link href="/userdashboard">{t('sales')}</Link>
+                                            <Link href="/user-dashboard">{t('sales')}</Link>
                                         </li>
                                         <li>
                                             <Link href="/analytics">{t('analytics')}</Link>
