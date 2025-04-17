@@ -11,7 +11,7 @@ const Sales = () => {
     return (
         <div>
             <ComponentsDashboardFinance />
-            <ComponentsDashboardAnalytics />
+            {/* <ComponentsDashboardAnalytics /> */}
         </div>
     );
 };
