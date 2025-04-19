@@ -68,7 +68,7 @@ const Header = () => {
         const auth = getAuth();
         try {
             await signOut(auth);
-            router.push('/auth/boxed-signin'); // Adjust redirect path as needed
+            router.push('/login'); // Adjust redirect path as needed
         } catch (error) {
             console.error("Error signing out: ", error);
         }
@@ -215,7 +215,7 @@ const Header = () => {
 
                         {/* Show Sign In Button if Logged Out */}
                         {!authLoading && !currentUser && ( // Render only when auth check is done and user is null
-                             <Link href="/auth/boxed-signin" className="btn btn-primary"> Sign In </Link>
+                             <Link href="/login" className="btn btn-primary"> Sign In </Link>
                         )}
 
                          {/* Optional: Show a minimal loading state during auth check */}
