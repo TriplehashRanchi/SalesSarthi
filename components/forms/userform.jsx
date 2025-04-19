@@ -1,93 +1,181 @@
 'use client';
-import { useState } from 'react';
-import { TextInput, Select, Button, PasswordInput } from '@mantine/core';
-import axios from 'axios';
-import { getAuth } from "firebase/auth"; // 🔹 Firebase Auth
 
-const AddUser = () => {
-    const [userData, setUserData] = useState({
+import { useState } from 'react';
+import {
+  TextInput,
+  PasswordInput,
+  Select,
+  Button,
+} from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
+import { getAuth } from 'firebase/auth';
+import axios from 'axios';
+
+export default function AddUser() {
+  const [userData, setUserData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    role: '',
+    password: '',
+    confirm_password: '',
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserData((p) => ({ ...p, [name]: value }));
+  };
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+  const handleSubmit = async () => {
+    const {
+      first_name,
+      last_name,
+      email,
+      phone,
+      role,
+      password,
+      confirm_password,
+    } = userData;
+
+    // Front‑end validation
+    if (
+      !first_name ||
+      !last_name ||
+      !email ||
+      !phone ||
+      !role ||
+      !password ||
+      !confirm_password
+    ) {
+      return showNotification({
+        title: 'Validation error',
+        message: 'All fields are required.',
+        color: 'red',
+      });
+    }
+    if (password !== confirm_password) {
+      return showNotification({
+        title: 'Validation error',
+        message: 'Passwords do not match.',
+        color: 'red',
+      });
+    }
+
+    // Get admin’s Firebase auth token
+    const auth = getAuth();
+    const adminUser = auth.currentUser;
+    if (!adminUser) {
+      return showNotification({
+        title: 'Not authenticated',
+        message: 'You must be logged in to add users.',
+        color: 'red',
+      });
+    }
+    const token = await adminUser.getIdToken();
+
+    try {
+      await axios.post(
+        `${API_URL}/api/users`,
+        { first_name, last_name, email, phone, role, password },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      showNotification({
+        title: 'Success',
+        message: 'User added successfully!',
+        color: 'green',
+      });
+
+      // reset form
+      setUserData({
         first_name: '',
         last_name: '',
         email: '',
         phone: '',
         role: '',
         password: '',
-        confirm_password: ''
-    });
+        confirm_password: '',
+      });
+    } catch (err) {
+      console.error(err);
+      showNotification({
+        title: 'Error',
+        message:
+          err.response?.data?.message ||
+          'An error occurred while adding user.',
+        color: 'red',
+      });
+    }
+  };
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  return (
+    <div className="p-4 max-w-lg mx-auto bg-white rounded shadow">
+      <h2 className="text-xl font-semibold mb-4">Add New User</h2>
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setUserData((prev) => ({ ...prev, [name]: value }));
-    };
+      <div className="grid grid-cols-2 gap-4">
+        <TextInput
+          label="First Name"
+          name="first_name"
+          value={userData.first_name}
+          onChange={handleChange}
+          required
+        />
+        <TextInput
+          label="Last Name"
+          name="last_name"
+          value={userData.last_name}
+          onChange={handleChange}
+          required
+        />
+        <TextInput
+          label="Email"
+          name="email"
+          type="email"
+          value={userData.email}
+          onChange={handleChange}
+          required
+        />
+        <TextInput
+          label="Phone Number"
+          name="phone"
+          value={userData.phone}
+          onChange={handleChange}
+          required
+        />
+        <Select
+          label="Role"
+          name="role"
+          data={['Admin', 'Manager', 'Salesperson']}
+          value={userData.role}
+          onChange={(v) => setUserData((p) => ({ ...p, role: v }))}
+          required
+        />
+        <PasswordInput
+          label="Password"
+          name="password"
+          value={userData.password}
+          onChange={handleChange}
+          required
+        />
+        <PasswordInput
+          label="Confirm Password"
+          name="confirm_password"
+          value={userData.confirm_password}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-    const handleSubmit = async () => {
-        if (userData.password !== userData.confirm_password) {
-            alert('Passwords do not match!');
-            return;
-        }
+      <Button fullWidth className="mt-4" onClick={handleSubmit}>
+        Add User
+      </Button>
+    </div>
+  );
+}
 
-        try {
-            const auth = getAuth();
-            const user = auth.currentUser;
-            if (!user) {
-                alert("You must be logged in!");
-                return;
-            }
-
-            const token = await user.getIdToken(); // ✅ Get Firebase token
-
-            const formData = {
-                first_name: userData.first_name,
-                last_name: userData.last_name,
-                email: userData.email,
-                phone: userData.phone,
-                role: userData.role,
-                password: userData.password
-            };
-
-            await axios.post(`${API_URL}/api/users`, formData, {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            alert('User added successfully!');
-            setUserData({
-                first_name: '',
-                last_name: '',
-                email: '',
-                phone: '',
-                role: '',
-                password: '',
-                confirm_password: ''
-            });
-        } catch (error) {
-            console.error('Error adding user:', error);
-            alert('Failed to add user');
-        }
-    };
-
-    return (
-        <div className="p-4 max-w-lg mx-auto bg-white rounded shadow">
-            <h2 className="text-xl font-semibold mb-4">Add New User</h2>
-            <div className="grid grid-cols-2 gap-4">
-                <TextInput label="First Name" name="first_name" required onChange={handleChange} />
-                <TextInput label="Last Name" name="last_name" required onChange={handleChange} />
-                <TextInput label="Email" name="email" required type="email" onChange={handleChange} />
-                <TextInput label="Phone Number" name="phone" required onChange={handleChange} />
-                <Select label="Role" name="role" data={['Admin', 'Manager', 'Salesperson']} required onChange={(value) => setUserData((prev) => ({ ...prev, role: value }))} />
-                <PasswordInput label="Password" name="password" required onChange={handleChange} />
-                <PasswordInput label="Confirm Password" name="confirm_password" required onChange={handleChange} />
-            </div>
-            <Button className="mt-4 w-full" onClick={handleSubmit}>Add User</Button>
-        </div>
-    );
-};
-
-export default AddUser;
 
 
 //  {
