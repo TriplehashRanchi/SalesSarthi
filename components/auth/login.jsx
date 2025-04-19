@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
+import { showNotification } from "@mantine/notifications";
 import { auth, googleProvider } from "@/utils/firebase";
 import { useAuth } from "@/context/AuthContext";
 import IconLockDots from "@/components/icon/icon-lock-dots";
@@ -33,6 +34,31 @@ const ComponentsAuthLoginForm = () => {
             setError(err.message);
         }
     };
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+          return showNotification({
+            title: "Enter email first",
+            message: "Please type your email address above.",
+            color: "red",
+          });
+        }
+        try {
+          await sendPasswordResetEmail(auth, email);
+          showNotification({
+            title: "Email sent",
+            message: "Check your inbox for the reset link.",
+            color: "green",
+          });
+        } catch (err) {
+          showNotification({
+            title: "Error",
+            message: err.message,
+            color: "red",
+          });
+        }
+      };
+      
 
     return (
         <form className="space-y-5 dark:text-white" onSubmit={handleLogin}>
@@ -71,6 +97,14 @@ const ComponentsAuthLoginForm = () => {
             {error && <p className="text-red-500">{error}</p>}
             <button type="submit" className="btn btn-gradient w-full">Sign in</button>
             <button type="button" onClick={handleGoogleLogin} className="btn btn-google w-full">Sign in with Google</button>
+             <button
+               type="button"
+               onClick={handleForgotPassword}
+               className="mt-2 text-sm text-blue-500 hover:underline"
+             >
+               Forgot password?
+             </button>
+
         </form>
     );
 };
