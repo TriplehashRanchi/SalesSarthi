@@ -240,6 +240,35 @@ const LeadTable = ({ userId }) => {
     }
   };
 
+
+  // ───────── delete selected leads ─────────
+const deleteLeads = async () => {
+  if (!selectedLeads.length) {
+    alert('No leads selected.');
+    return;
+  }
+  if (!confirm(`Delete ${selectedLeads.length} selected lead(s)?`)) return;
+
+  try {
+    const user  = getAuth().currentUser;
+    if (!user) throw new Error('User not authenticated.');
+    const token = await user.getIdToken();
+
+    await axios.post(
+      `${API_URL}/api/leads/bulk-delete`,           // ← create this backend route
+      { lead_ids: selectedLeads },
+      { headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` } }
+    );
+
+    showNotification({ title:'Deleted', message:'Selected leads removed', color:'green' });
+    setLeads(prev => prev.filter(l => !selectedLeads.includes(l.id)));
+    setSelectedLeads([]);
+  } catch (err) {
+    showNotification({ title:'Error', message: err.message, color:'red' });
+  }
+};
+
+
   // ───────── get timeline for a lead ─────────
 const fetchFollowupHistory = async (leadId) => {
     if (!leadId) return;
@@ -377,6 +406,14 @@ const fetchFollowupHistory = async (leadId) => {
           <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
             Assign ({selectedLeads.length})
           </Button>
+          <Button
+             color="red"
+             variant="outline"
+             onClick={deleteLeads}
+             disabled={!selectedLeads.length}
+           >
+             Delete ({selectedLeads.length})
+           </Button>
         </div>
       )}
 
