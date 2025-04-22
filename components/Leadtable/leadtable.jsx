@@ -240,6 +240,35 @@ const LeadTable = ({ userId }) => {
     }
   };
 
+  const updateLeadStatus = async (lead, newStatus) => {
+    // No changes needed here
+    if (!lead || !lead.id) return; // Basic validation
+    try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated.');
+        const token = await user.getIdToken();
+
+        await axios.put(`
+            ${API_URL}/api/leads/${lead.id}`,
+            { lead_status: newStatus },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            },
+        );
+
+        // Update local state immediately
+        setLeads((prevLeads) => prevLeads.map((l) => (l.id === lead.id ? { ...l, lead_status: newStatus } : l)));
+    } catch (error) {
+        console.error('Error updating lead status:', error);
+        alert(error.response?.data?.message || error.message || 'Failed to update status.');
+    }
+};
+
+
 
   // ───────── delete selected leads ─────────
 const deleteLeads = async () => {

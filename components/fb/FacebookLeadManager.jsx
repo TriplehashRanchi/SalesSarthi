@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
+import { showNotification } from '@mantine/notifications';
 
 // --- Mock Icons (Replace with your actual icon components) ---
 const IconLoader = () => <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
@@ -314,6 +315,48 @@ const FacebookLeadManager = () => {
     }
   }, [firebaseUser, savedSelections, API_URL]);
 
+  const handleFacebookDisconnect = async () => {
+    if (!firebaseUser) return;
+    try {
+      // 1. Remove from your backend DB
+      const firebaseToken = await firebaseUser.getIdToken();
+      await axios.post(
+        `${API_URL}/api/admin/updateFbToken`,
+        { fbToken: null, fbExpiry: null },
+        { headers: { Authorization: `Bearer ${firebaseToken}` } }
+      );
+
+      await axios.delete(
+        `${API_URL}/api/leads/savefbpages`,
+        { headers: { Authorization: `Bearer ${firebaseToken}` } }
+      );
+  
+      // 2. Remove from localStorage and reset UI state
+      localStorage.removeItem('fbAccessToken');
+      setFbToken(null);
+      setTokenSource(null);
+      setSavedSelections([]);
+      setAvailablePages([]);
+      setShowAvailablePagesSection(false);
+      setError(null);
+      setPollResult(null);
+  
+      showNotification({
+        title: 'Disconnected',
+        message: 'Facebook integration has been removed.',
+        color: 'green',
+      });
+    } catch (err) {
+      console.error('Error disconnecting Facebook:', err);
+      showNotification({
+        title: 'Error',
+        message: 'Could not disconnect Facebook. Please try again.',
+        color: 'red',
+      });
+    }
+  };
+  
+
   // --- Render Logic ---
 
   if (authLoading) {
@@ -377,6 +420,7 @@ const FacebookLeadManager = () => {
                     <button onClick={fetchAvailablePages} className="btn btn-outline-primary btn-sm" disabled={loadingAvailablePages}>
                         {loadingAvailablePages ? <><IconLoader/> Loading...</> : <><IconPlus/> Add / Manage Pages</>}
                     </button>
+                    <button onClick={handleFacebookDisconnect} className="btn btn-danger btn-sm ml-2"> Disconnect Facebook </button>
                 </div>
             )}
         </div>
