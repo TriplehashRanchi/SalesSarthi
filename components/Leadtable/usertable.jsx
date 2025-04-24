@@ -141,7 +141,7 @@ export default function UserListPro() {
         />
         <Select
           placeholder="Filter by Role"
-          data={['All Roles', 'Admin', 'Manager', 'Salesperson']}
+          data={['All Roles', 'Manager', 'Salesperson']}
           value={filterRole}
           onChange={setFilterRole}
           icon={<IconFilter size={16} />}
@@ -182,7 +182,7 @@ export default function UserListPro() {
                   <td>{user.email}</td>
                   <td>
                     <Select
-                      data={[user.role, 'Admin', 'Manager', 'Salesperson'].filter((v, i, a) => a.indexOf(v) === i)}
+                      data={[user.role, 'Manager', 'Salesperson'].filter((v, i, a) => a.indexOf(v) === i)}
                       value={user.role}
                       onChange={v => handleRoleChange(user.id, v)}
                       size="xs"

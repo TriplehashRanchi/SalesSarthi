@@ -26,7 +26,6 @@ export default function ViewUsers() {
           className="w-1/4 p-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300"
         >
           <option value="">All Roles</option>
-          <option value="Admin">Admin</option>
           <option value="Manager">Manager</option>
           <option value="Salesperson">Salesperson</option>
         </select>

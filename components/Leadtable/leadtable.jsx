@@ -8,6 +8,9 @@ import { useRouter } from 'next/navigation';
 import {
   Menu, Button, Drawer, Timeline, Divider, Text, ScrollArea,
   Badge, Checkbox, Select, LoadingOverlay, Alert,
+  Modal,
+  Textarea,
+  Group,
 } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
 import { IconAlertCircle, IconListCheck } from '@tabler/icons-react';
@@ -53,6 +56,13 @@ const LeadTable = ({ userId }) => {
   const [isPolling, setIsPolling]               = useState(false);
   const [hasPolledInitially, setHasPolledInit]  = useState(false);
 
+  const [noteEditor, setNoteEditor] = useState({
+    open : false,
+    lead   : null,     // whole lead object
+    text : '',       // working text
+  });
+  
+
   const router   = useRouter();
   const API_URL  = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -62,6 +72,7 @@ const LeadTable = ({ userId }) => {
     { value: 'Qualified Lead', label: 'Qualified Lead' },
     { value: 'Lost Lead',      label: 'Lost Lead' },
     { value: 'Follow-up',      label: 'Follow-up' },
+    { value:'Fin Health Checkup Done', label:'Fin Health Checkup Done' },
   ];
 
   /* ───────────────────── helpers ───────────────────── */
@@ -262,11 +273,33 @@ const LeadTable = ({ userId }) => {
 
         // Update local state immediately
         setLeads((prevLeads) => prevLeads.map((l) => (l.id === lead.id ? { ...l, lead_status: newStatus } : l)));
+        showNotification({ title:'Success', message:'Lead status updated successfully', color:'green' });
     } catch (error) {
         console.error('Error updating lead status:', error);
         alert(error.response?.data?.message || error.message || 'Failed to update status.');
     }
 };
+
+
+// ───────── helpers ─────────
+const updateLeadNotes = async (lead, newNote) => {
+    if (!lead?.id) return;
+    try {
+      const token = await getAuth().currentUser.getIdToken();
+      await axios.put(`${API_URL}/api/leads/${lead.id}`,       // ⬅ same endpoint
+        { notes: newNote },
+        { headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json'} }
+      );
+      setLeads(prev =>
+        prev.map(l => (l.id === lead.id ? { ...l, notes: newNote } : l))
+      );
+      showNotification({ title:'Success', message:'Notes updated successfully', color:'green' });
+    } catch (err) {
+      console.error(err);
+      showNotification({ title:'Error', message: err.message, color:'red' });
+    }
+  };
+  
 
 
 
@@ -366,269 +399,345 @@ const fetchFollowupHistory = async (leadId) => {
   const someSel = currentIds.length && currentIds.some(id => selectedLeads.includes(id));
 
   return (
-    <div className="panel mt-6 relative">
-      <LoadingOverlay visible={loading || isPolling} overlayBlur={2} />
+      <div className="panel mt-6 relative">
+          <LoadingOverlay visible={loading || isPolling} overlayBlur={2} />
 
-      {error && (
-        <Alert
-          icon={<IconAlertCircle size="1rem" />}
-          title="Error!"
-          color="red"
-          withCloseButton
-          onClose={() => setError(null)}
-          mb="md"
-        >
-          {error}
-        </Alert>
-      )}
+          {error && (
+              <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" withCloseButton onClose={() => setError(null)} mb="md">
+                  {error}
+              </Alert>
+          )}
 
-      {/* top controls */}
-      <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
-        <h5 className="text-lg font-semibold dark:text-white-light">Lead Management</h5>
+          {/* top controls */}
+          <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
+              <h5 className="text-lg font-semibold dark:text-white-light">Lead Management</h5>
 
-        {/* search + filter */}
-        <div className="ltr:ml-auto rtl:mr-auto flex flex-col sm:flex-row gap-4">
-          <input
-            className="form-input w-auto"
-            placeholder="Search Name, Email, Phone..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-          />
-          <Select
-            data={statusOptions}
-            placeholder="Filter by Status"
-            value={statusFilter}
-            onChange={v => { setStatusFilter(v); setPage(1); }}
-            clearable searchable
-          />
-        </div>
+              {/* search + filter */}
+              <div className="ltr:ml-auto rtl:mr-auto flex flex-col sm:flex-row gap-4">
+                  <input
+                      className="form-input w-auto"
+                      placeholder="Search Name, Email, Phone..."
+                      value={search}
+                      onChange={(e) => {
+                          setSearch(e.target.value);
+                          setPage(1);
+                      }}
+                  />
+                  <Select
+                      data={statusOptions}
+                      placeholder="Filter by Status"
+                      value={statusFilter}
+                      onChange={(v) => {
+                          setStatusFilter(v);
+                          setPage(1);
+                      }}
+                      clearable
+                      searchable
+                  />
+              </div>
 
-        {/* facebook + csv buttons */}
-        <button
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
-          onClick={() => pollFacebookLeads(true)}
-          disabled={isPolling}
-        >
-          <span className="flex gap-2 items-center">
-            <IconFacebook /> Import from Facebook
-          </span>
-        </button>
+              {/* facebook + csv buttons */}
+              <button className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50" onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
+                  <span className="flex gap-2 items-center">
+                      <IconFacebook /> Import from Facebook
+                  </span>
+              </button>
 
-        <button
-          onClick={() => setCsvOpen(true)}
-          className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg"
-        >
-          CSV Bulk Upload
-        </button>
-      </div>
+              <button onClick={() => setCsvOpen(true)} className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">
+                  CSV Bulk Upload
+              </button>
+          </div>
 
-      {/* assign dropdown */}
-      {teamMembers.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
-          <Select
-            data={teamMembers.map(u => ({ value:u.id.toString(), label:`${u.username} (${u.role})` }))}
-            value={selectedTeamMember}
-            onChange={setSelectedTM}
-            placeholder="Assign selected to..."
-            searchable clearable style={{ minWidth:'200px' }}
-          />
-          <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
-            Assign ({selectedLeads.length})
-          </Button>
-          <Button
-             color="red"
-             variant="outline"
-             onClick={deleteLeads}
-             disabled={!selectedLeads.length}
-           >
-             Delete ({selectedLeads.length})
-           </Button>
-        </div>
-      )}
+          {/* assign dropdown */}
+          {teamMembers.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
+                  <Select
+                      data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
+                      value={selectedTeamMember}
+                      onChange={setSelectedTM}
+                      placeholder="Assign selected to..."
+                      searchable
+                      clearable
+                      style={{ minWidth: '200px' }}
+                  />
+                  <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
+                      Assign ({selectedLeads.length})
+                  </Button>
+                  <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
+                      Delete ({selectedLeads.length})
+                  </Button>
+              </div>
+          )}
 
-      {/* table */}
-      <div className="datatables">
-        <DataTable
-          withBorder striped highlightOnHover borderRadius="sm"
-          className="table-hover whitespace-nowrap"
-          records={recordsData}
-          columns={[
-            {
-              accessor:'select', width:'5%',
-              title: (
-                <Checkbox
-                  checked={allSel}
-                  indeterminate={someSel && !allSel}
-                  onChange={e => {
-                    const checked = e.currentTarget.checked;
-                    setSelectedLeads(prev =>
-                      checked
-                        ? [...new Set([...prev, ...currentIds])]
-                        : prev.filter(id => !currentIds.includes(id))
-                    );
-                  }}
-                  aria-label="Select all"
-                />
-              ),
-              render: r => (
-                <Checkbox
-                  aria-label={`Select ${r.full_name}`}
-                  checked={selectedLeads.includes(r.id)}
-                  onChange={() =>
-                    setSelectedLeads(prev =>
-                      prev.includes(r.id) ? prev.filter(id => id !== r.id) : [...prev, r.id]
-                    )
-                  }
-                />
-              ),
-              textAlign:'center',
-            },
-            { accessor:'full_name',    title:'Name',  sortable:true },
-            { accessor:'email',        title:'Email', sortable:true },
-            { accessor:'phone_number', title:'Phone', sortable:true },
-            {
-              accessor:'lead_status', title:'Status', sortable:true,
-              render: record => (
-                <Menu withinPortal shadow="md" position="bottom-start">
-                  <Menu.Target>
-                    <Badge
-                      style={{ cursor:'pointer', minWidth:'100px' }}
-                      color={
-                        record.lead_status === 'Hot Lead'      ? 'red'
-                      : record.lead_status === 'Cold Lead'     ? 'blue'
-                      : record.lead_status === 'Qualified Lead'? 'green'
-                      : record.lead_status === 'Lost Lead'     ? 'gray'
-                      : 'orange'
-                      }
-                      variant="light"
-                    >
-                      {record.lead_status || 'Select Status'}
-                    </Badge>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    {statusOptions.map(o => (
-                      <Menu.Item key={o.value} onClick={() => updateLeadStatus(record,o.value)}>
-                        {o.label}
-                      </Menu.Item>
-                    ))}
-                  </Menu.Dropdown>
-                </Menu>
-              ),
-            },
-            {
-              accessor:'source', title:'Source', sortable:true,
-              render: r =>
-                r.source === 'facebook' ? (
-                  <Badge color="blue"  variant="light">FB/Meta</Badge>
-                ) : (
-                  <Badge color="green" variant="light">{r.source || 'Manual'}</Badge>
-                ),
-            },
-            {
-              accessor:'user_id', title:'Assigned To', sortable:true,
-              render: ({ user_id }) => {
-                const u = teamMembers.find(t => t.id === user_id);
-                return u ? u.username : <Text color="dimmed">Unassigned</Text>;
-              },
-            },
-            {
-              accessor:'actions', title:'Actions', textAlign:'right',
-              render: record => (
-                <Menu withinPortal shadow="md" width={200} position="bottom-end">
-                  <Menu.Target>
-                    <Button variant="light" size="xs" compact><IconListCheck size={16}/></Button>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item onClick={() => router.push(`/editlead/${record.id}`)} icon={<IconPencil size={14}/>}>
-                      Edit Lead
-                    </Menu.Item>
-                    <Menu.Item onClick={() => {
-                      /* sendWhatsApp */
-                      const num = record.phone_number || '';
-                      if (/^[6-9]\d{9}$/.test(num.replace(/^91/,''))) {
-                        window.open(`https://wa.me/${num.startsWith('91')?num:'91'+num}?text=Hello,`, '_blank');
-                      } else alert('Invalid phone number');
-                    }} icon={<IconChatDot size={14}/>}>
-                      Send WhatsApp
-                    </Menu.Item>
-                    {/* <Menu.Item onClick={() => { setSelectedLead(record); setShowDrawer(true); fetchFollowupHistory(record.id); }} icon={<IconPhoneCall size={14}/>}>
+          {/* table */}
+          <div className="datatables">
+              <DataTable
+                  withBorder
+                  striped
+                  highlightOnHover
+                  borderRadius="sm"
+                  className="table-hover whitespace-nowrap"
+                  records={recordsData}
+                  columns={[
+                      {
+                          accessor: 'select',
+                          width: '5%',
+                          title: (
+                              <Checkbox
+                                  checked={allSel}
+                                  indeterminate={someSel && !allSel}
+                                  onChange={(e) => {
+                                      const checked = e.currentTarget.checked;
+                                      setSelectedLeads((prev) => (checked ? [...new Set([...prev, ...currentIds])] : prev.filter((id) => !currentIds.includes(id))));
+                                  }}
+                                  aria-label="Select all"
+                              />
+                          ),
+                          render: (r) => (
+                              <Checkbox
+                                  aria-label={`Select ${r.full_name}`}
+                                  checked={selectedLeads.includes(r.id)}
+                                  onChange={() => setSelectedLeads((prev) => (prev.includes(r.id) ? prev.filter((id) => id !== r.id) : [...prev, r.id]))}
+                              />
+                          ),
+                          textAlign: 'center',
+                      },
+                      { accessor: 'full_name', title: 'Name', sortable: true },
+                      { accessor: 'email', title: 'Email', sortable: true },
+                      { accessor: 'phone_number', title: 'Phone', sortable: true },
+                      {
+                          accessor: 'lead_status',
+                          title: 'Status',
+                          sortable: true,
+                          render: (record) => (
+                              <Menu withinPortal shadow="md" position="bottom-start">
+                                  <Menu.Target>
+                                      <Badge
+                                          style={{ cursor: 'pointer', minWidth: '100px' }}
+                                          color={
+                                              record.lead_status === 'Hot Lead'
+                                                  ? 'red'
+                                                  : record.lead_status === 'Cold Lead'
+                                                    ? 'blue'
+                                                    : record.lead_status === 'Qualified Lead'
+                                                      ? 'green'
+                                                      : record.lead_status === 'Lost Lead'
+                                                        ? 'gray'
+                                                        : record.lead_status === 'Follow-up'
+                                                          ? 'lime'
+                                                          : record.lead_status === 'Fin Health Checkup Done'
+                                                            ? 'teal'
+                                                            : 'orange'
+                                          }
+                                          variant="light"
+                                      >
+                                          {record.lead_status || 'Select Status'}
+                                      </Badge>
+                                  </Menu.Target>
+                                  <Menu.Dropdown>
+                                      {statusOptions.map((o) => (
+                                          <Menu.Item key={o.value} onClick={() => updateLeadStatus(record, o.value)}>
+                                              {o.label}
+                                          </Menu.Item>
+                                      ))}
+                                  </Menu.Dropdown>
+                              </Menu>
+                          ),
+                      },
+                      {
+                          accessor: 'source',
+                          title: 'Source',
+                          sortable: true,
+                          render: (r) =>
+                              r.source === 'facebook' ? (
+                                  <Badge color="blue" variant="light">
+                                      FB/Meta
+                                  </Badge>
+                              ) : (
+                                  <Badge color="green" variant="light">
+                                      {r.source || 'Manual'}
+                                  </Badge>
+                              ),
+                      },
+                      {
+                          accessor: 'notes',
+                          title: 'Notes',
+                          width: '10%',
+                          render: (record) => (
+                              <Button variant="subtle" size="xs" onClick={() => setNoteEditor({ open: true, lead: record, text: record.notes || '' })}>
+                                  {/* show up to 15 chars as preview, or “Add” if empty */}
+                                  {record.notes ? `${record.notes.slice(0, 15)}…` : 'Add'}
+                              </Button>
+                          ),
+                      },
+                      {
+                          accessor: 'user_id',
+                          title: 'Assigned To',
+                          sortable: true,
+                          render: ({ user_id }) => {
+                              const u = teamMembers.find((t) => t.id === user_id);
+                              return u ? u.username : <Text color="dimmed">Unassigned</Text>;
+                          },
+                      },
+                      {
+                          accessor: 'actions',
+                          title: 'Actions',
+                          textAlign: 'right',
+                          render: (record) => (
+                              <Menu withinPortal shadow="md" width={200} position="bottom-end">
+                                  <Menu.Target>
+                                      <Button variant="light" size="xs" compact>
+                                          <IconListCheck size={16} />
+                                      </Button>
+                                  </Menu.Target>
+                                  <Menu.Dropdown>
+                                      <Menu.Item onClick={() => router.push(`/editlead/${record.id}`)} icon={<IconPencil size={14} />}>
+                                          Edit Lead
+                                      </Menu.Item>
+                                      <Menu.Item
+                                          onClick={() => {
+                                              /* sendWhatsApp */
+                                              const num = record.phone_number || '';
+                                              if (/^[6-9]\d{9}$/.test(num.replace(/^91/, ''))) {
+                                                  window.open(`https://wa.me/${num.startsWith('91') ? num : '91' + num}?text=Hello,`, '_blank');
+                                              } else alert('Invalid phone number');
+                                          }}
+                                          icon={<IconChatDot size={14} />}
+                                      >
+                                          Send WhatsApp
+                                      </Menu.Item>
+                                      <Menu.Item
+                                          icon={<IconListCheck size={14} />}
+                                          onClick={() => {
+                                              const qs = new URLSearchParams({
+                                                  id: record.id,
+                                                  name: record.full_name,
+                                                  phone: record.phone_number,
+                                                  email: record.email,
+                                              }).toString();
+
+                                              router.push(`/calc?${qs}`);
+                                          }}
+                                      >
+                                          Financial Health Check-up
+                                      </Menu.Item>
+                                      {/* <Menu.Item onClick={() => { setSelectedLead(record); setShowDrawer(true); fetchFollowupHistory(record.id); }} icon={<IconPhoneCall size={14}/>}>
                       Follow‑ups
                     </Menu.Item> */}
-                    <Menu.Divider/>
-                    <Menu.Item color="teal" onClick={() => convertLeadToCustomer(record)} icon={<IconListCheck size={14}/>}>
-                      Convert to Customer
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              ),
-            },
-          ]}
-          totalRecords={totalFilteredRecords}
-          recordsPerPage={pageSize}
-          page={page}
-          onPageChange={setPage}
-          recordsPerPageOptions={PAGE_SIZES}
-          onRecordsPerPageChange={size => { setPageSize(size); setPage(1); }}
-          sortStatus={sortStatus}
-          onSortStatusChange={setSortStatus}
-          minHeight={200}
-          noRecordsText="No leads found"
-          fetching={loading || isPolling}
-          paginationText={({from,to,totalRecords}) => `Showing ${from} to ${to} of ${totalRecords} leads`}
-        />
-      </div>
-
-      {/* follow up drawer */}
-      <Drawer
-        opened={showDrawer}
-        onClose={() => { setShowDrawer(false); setSelectedLead(null); setFollowupHistory([]); setExisting(null); }}
-        title={`Follow‑ups for ${selectedLead?.full_name}`}
-        position="right" size="lg" padding="md" shadow="md"
-        styles={{ header:{background:'#f8f9fa',borderBottom:'1px solid #dee2e6'} }}
-      >
-        {selectedLead ? (
-          <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-            <ScrollArea style={{ flexGrow:1, padding:'1rem' }}>
-              <Text size="lg" weight={600} mb="md">Follow‑up Timeline</Text>
-              {followupHistory.length ? (
-                <Timeline active={followupHistory.length} bulletSize={24} lineWidth={2}>
-                  {followupHistory.map((f,i) => (
-                    <Timeline.Item key={f.id || i} bullet={<IconMessage size={14}/>} title={f.purpose || 'Follow‑up'}>
-                      <Text size="xs" color="dimmed">
-                        {f.follow_up_date ? new Date(f.follow_up_date).toLocaleString() : 'No Date'}
-                      </Text>
-                      <Badge color={f.status==='Pending'?'yellow':'green'} size="sm" mt={4}>
-                        {f.status || 'N/A'}
-                      </Badge>
-                      <Text size="sm" mt={4}>{f.notes || '-'}</Text>
-                    </Timeline.Item>
-                  ))}
-                </Timeline>
-              ) : (
-                <Text align="center" color="dimmed" mt="xl">No follow‑up history found.</Text>
-              )}
-            </ScrollArea>
-
-            <Divider/>
-            <div style={{ padding:'1rem', borderTop:'1px solid #dee2e6', flexShrink:0 }}>
-              <FollowupForm
-                leadId={selectedLead.id}
-                existingFollowUp={existingFollowUp}
-                onFollowupChange={() => { fetchFollowupHistory(selectedLead.id); setExisting(null); }}
-                onCancel   ={() => setExisting(null)}
+                                      <Menu.Divider />
+                                      <Menu.Item color="teal" onClick={() => convertLeadToCustomer(record)} icon={<IconListCheck size={14} />}>
+                                          Convert to Customer
+                                      </Menu.Item>
+                                  </Menu.Dropdown>
+                              </Menu>
+                          ),
+                      },
+                  ]}
+                  totalRecords={totalFilteredRecords}
+                  recordsPerPage={pageSize}
+                  page={page}
+                  onPageChange={setPage}
+                  recordsPerPageOptions={PAGE_SIZES}
+                  onRecordsPerPageChange={(size) => {
+                      setPageSize(size);
+                      setPage(1);
+                  }}
+                  sortStatus={sortStatus}
+                  onSortStatusChange={setSortStatus}
+                  minHeight={200}
+                  noRecordsText="No leads found"
+                  fetching={loading || isPolling}
+                  paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} leads`}
               />
-            </div>
           </div>
-        ) : null}
-      </Drawer>
 
-      {/* csv modal */}
-      <CsvBulkUpload
-        opened={csvOpen}
-        onClose={() => setCsvOpen(false)}
-        onSuccess={() => { setCsvOpen(false); fetchLeads(); }}
-      />
-    </div>
+          {/* follow up drawer */}
+          <Drawer
+              opened={showDrawer}
+              onClose={() => {
+                  setShowDrawer(false);
+                  setSelectedLead(null);
+                  setFollowupHistory([]);
+                  setExisting(null);
+              }}
+              title={`Follow‑ups for ${selectedLead?.full_name}`}
+              position="right"
+              size="lg"
+              padding="md"
+              shadow="md"
+              styles={{ header: { background: '#f8f9fa', borderBottom: '1px solid #dee2e6' } }}
+          >
+              {selectedLead ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                      <ScrollArea style={{ flexGrow: 1, padding: '1rem' }}>
+                          <Text size="lg" weight={600} mb="md">
+                              Follow‑up Timeline
+                          </Text>
+                          {followupHistory.length ? (
+                              <Timeline active={followupHistory.length} bulletSize={24} lineWidth={2}>
+                                  {followupHistory.map((f, i) => (
+                                      <Timeline.Item key={f.id || i} bullet={<IconMessage size={14} />} title={f.purpose || 'Follow‑up'}>
+                                          <Text size="xs" color="dimmed">
+                                              {f.follow_up_date ? new Date(f.follow_up_date).toLocaleString() : 'No Date'}
+                                          </Text>
+                                          <Badge color={f.status === 'Pending' ? 'yellow' : 'green'} size="sm" mt={4}>
+                                              {f.status || 'N/A'}
+                                          </Badge>
+                                          <Text size="sm" mt={4}>
+                                              {f.notes || '-'}
+                                          </Text>
+                                      </Timeline.Item>
+                                  ))}
+                              </Timeline>
+                          ) : (
+                              <Text align="center" color="dimmed" mt="xl">
+                                  No follow‑up history found.
+                              </Text>
+                          )}
+                      </ScrollArea>
+
+                      <Divider />
+                      <div style={{ padding: '1rem', borderTop: '1px solid #dee2e6', flexShrink: 0 }}>
+                          <FollowupForm
+                              leadId={selectedLead.id}
+                              existingFollowUp={existingFollowUp}
+                              onFollowupChange={() => {
+                                  fetchFollowupHistory(selectedLead.id);
+                                  setExisting(null);
+                              }}
+                              onCancel={() => setExisting(null)}
+                          />
+                      </div>
+                  </div>
+              ) : null}
+          </Drawer>
+
+          {/* csv modal */}
+          <CsvBulkUpload
+              opened={csvOpen}
+              onClose={() => setCsvOpen(false)}
+              onSuccess={() => {
+                  setCsvOpen(false);
+                  fetchLeads();
+              }}
+          />
+
+          {/* ───────── Notes Modal ───────── */}
+          <Modal opened={noteEditor.open} onClose={() => setNoteEditor({ open: false, lead: null, text: '' })} title={`Notes – ${noteEditor.lead?.full_name || ''}`} centered size="md">
+              <Textarea minRows={4} autosize placeholder="Type your note…" value={noteEditor.text} onChange={(e) => setNoteEditor((prev) => ({ ...prev, text: e.target.value }))} />
+
+              <Group position="right" mt="md">
+                  <Button
+                      onClick={() => {
+                          updateLeadNotes(noteEditor.lead, noteEditor.text.trim());
+                          setNoteEditor({ open: false, lead: null, text: '' });
+                      }}
+                  >
+                      Save
+                  </Button>
+              </Group>
+          </Modal>
+      </div>
   );
 };
 

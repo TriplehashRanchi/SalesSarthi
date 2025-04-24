@@ -11,7 +11,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
     phone_number: customerData ? customerData.phone_number : '',
     gender: customerData ? customerData.gender : '',
     date_of_birth: customerData ? new Date(customerData.date_of_birth).toLocaleDateString('en-CA') : '',
-    anniversary: customerData ? customerData.anniversary : '',
+    anniversary: customerData ?new Date(customerData.anniversary).toLocaleDateString('en-CA') : '',
     address: customerData ? customerData.address : '',
     company_name: customerData ? customerData.company_name : '',
     product_name: customerData ? customerData.product_name : '',
@@ -24,6 +24,8 @@ const CustomerForm = ({ customerData, onSubmit }) => {
     referrer: customerData ? customerData.referrer : '',
     notes: customerData ? customerData.notes : '',
   });
+
+  console.log(customerData)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

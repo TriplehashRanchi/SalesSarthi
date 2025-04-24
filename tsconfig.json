@@ -24,6 +24,6 @@
             }
         ]
     },
-    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "ni18n.config.ts.js", "components/auth/login.jsx", "app/(admin)/layout.jsx", "components/dashboard/superdash.jsx", "components/Video/VideoExporter.jsx", "app/(admin)/reports/page.jsx", "app/(admin)/reports/test/page.jsx"],
+    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "ni18n.config.ts.js", "components/auth/login.jsx", "app/(admin)/layout.jsx", "components/dashboard/superdash.jsx", "components/Video/VideoExporter.jsx", "app/(admin)/reports/page.jsx", "app/(admin)/reports/test/page.jsx", "components/UserProfileForm.jsx"],
     "exclude": ["node_modules"]
 }

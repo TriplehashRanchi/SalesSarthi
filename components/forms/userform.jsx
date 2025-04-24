@@ -122,7 +122,7 @@ export default function AddUserPage() {
             <Select
               label="Role"
               name="role"
-              data={['Admin', 'Manager', 'Salesperson']}
+              data={['Manager', 'Salesperson']}
               value={userData.role}
               onChange={(v) => setUserData((p) => ({ ...p, role: v }))}
               required
