@@ -136,13 +136,13 @@ const Header = () => {
                      </div>
 
                     {/* Quick Action Icons */}
-                     <div className="hidden ltr:mr-2 rtl:ml-2 sm:block">
+                     {/* <div className="hidden ltr:mr-2 rtl:ml-2 sm:block">
                          <ul className="flex items-center space-x-2 rtl:space-x-reverse dark:text-[#d0d2d6]">
                              <li> <Link href="/apps/calendar" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"> <IconCalendar /> </Link> </li>
                              <li> <Link href="/apps/todolist" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"> <IconEdit /> </Link> </li>
                              <li> <Link href="/apps/chat" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60"> <IconChatNotification /> </Link> </li>
                          </ul>
-                     </div>
+                     </div> */}
 
                     {/* Right Side Header Items */}
                     <div className="flex items-center space-x-1.5 ltr:ml-auto rtl:mr-auto rtl:space-x-reverse dark:text-[#d0d2d6] sm:flex-1 ltr:sm:ml-0 sm:rtl:mr-0 lg:space-x-2">
@@ -159,7 +159,7 @@ const Header = () => {
                         {!authLoading && currentUser && ( // Render only when auth check is done and user exists
                             <>
                                 {/* Messages Dropdown - RESTORED */}
-                                <div className="dropdown shrink-0">
+                                {/* <div className="dropdown shrink-0">
                                     <Dropdown offset={[0, 8]} placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`} btnClassName="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60" button={<IconMailDot />} >
                                         <ul className="w-[300px] !py-0 text-xs text-dark dark:text-white-dark sm:w-[375px]">
                                             <li className="mb-5" onClick={(e) => e.stopPropagation()}> <div className="relative !h-[68px] w-full overflow-hidden rounded-t-md p-5 text-white hover:!bg-transparent"> <div className="bg- absolute inset-0 h-full w-full bg-[url(/assets/images/menu-heade.jpg)] bg-cover bg-center bg-no-repeat"></div> <h4 className="relative z-10 text-lg font-semibold">Messages</h4> </div> </li>
@@ -171,10 +171,10 @@ const Header = () => {
                                             )}
                                         </ul>
                                     </Dropdown>
-                                </div>
+                                </div> */}
 
                                 {/* Notifications Dropdown - RESTORED */}
-                                <div className="dropdown shrink-0">
+                                {/* <div className="dropdown shrink-0">
                                     <Dropdown offset={[0, 8]} placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`} btnClassName="relative block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60" button={ <span> <IconBellBing /> <span className="absolute top-0 flex h-3 w-3 ltr:right-0 rtl:left-0"> <span className="absolute -top-[3px] inline-flex h-full w-full animate-ping rounded-full bg-success/50 opacity-75 ltr:-left-[3px] rtl:-right-[3px]"></span> <span className="relative inline-flex h-[6px] w-[6px] rounded-full bg-success"></span> </span> </span> } >
                                         <ul className="w-[300px] divide-y !py-0 text-dark dark:divide-white/10 dark:text-white-dark sm:w-[350px]">
                                             <li onClick={(e) => e.stopPropagation()}> <div className="flex items-center justify-between px-4 py-2 font-semibold"> <h4 className="text-lg">Notification</h4> {notifications.length ? <span className="badge bg-primary/80">{notifications.length} New</span> : ''} </div> </li>
@@ -186,7 +186,7 @@ const Header = () => {
                                             )}
                                         </ul>
                                     </Dropdown>
-                                </div>
+                                </div> */}
 
                                 {/* Profile Dropdown */}
                                 <div className="dropdown flex shrink-0">
