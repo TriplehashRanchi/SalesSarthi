@@ -15,7 +15,7 @@ const FinancialHealthCalculator = () => {
         debtManagementEmi: 0,
         monthlySavings: 0,
         housingCost: 0,
-        marriageFundGoal: 0,
+        marriageFundGoal: 50000,
         taxPlanning: '',
         hufAccount: '',
         familyGoals: '',
@@ -104,7 +104,7 @@ const FinancialHealthCalculator = () => {
             },
             {
                 item: 'Marriage Fund',
-                target: 0, // This will be the goal input by the user
+                target: 50000, // This will be the goal input by the user
                 currentStatus: 0, // This will be the current value input by the user
                 score: 0, // Score to be calculated based on currentStatus and target
                 calculationInput: 'marriageFundGoal', // Input for marriage fund goal
@@ -472,6 +472,29 @@ const FinancialHealthCalculator = () => {
                     <input type="date" name="date" value={formData.date} onChange={handleInputChange} className="form-input w-full" required />
                 </div>
 
+                <div className="relative">
+                                <input type="number" name="annualIncome" value={formData.annualIncome} onChange={handleInputChange} className="form-input w-full" />
+                                {!formData.annualIncome && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Annual Income</span>}
+                </div>
+
+                <div className="relative">
+                                <input type="number" name="childEducationFundGoal" value={formData.childEducationFundGoal} className="form-input w-full" onChange={handleInputChange} />
+                                {!formData.childEducationFundGoal && (
+                                    <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Child Education Fund Goal</span>
+                                )}
+                </div>
+                <div className="relative">
+                                <input
+                                    type="number"
+                                    name="monthlyExpenses"
+                                    placeholder=""
+                                    value={formData.monthlyExpenses}
+                                    onChange={handleInputChange}
+                                    className="form-input w-full"
+                                />
+                                {!formData.monthlyExpenses && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Monthly Expenses</span>}
+                            </div>
+
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Family Members</label>
                     <input
@@ -507,10 +530,7 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Income Protection</td>
                         <td className="border px-4 py-2">
-                            <div className="relative">
-                                <input type="number" name="annualIncome" value={formData.annualIncome} onChange={handleInputChange} className="form-input w-full" />
-                                {!formData.annualIncome && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Annual Income</span>}
-                            </div>
+                           
                         </td>
                         <td className="border px-4 py-2">{formData.checklist[0].target}</td>
                         <td className="border px-4 py-2">
@@ -529,17 +549,7 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Emergency Fund</td>
                         <td className="border px-4 py-2">
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    name="monthlyExpenses"
-                                    placeholder="Enter Monthly Expenses"
-                                    value={formData.monthlyExpenses}
-                                    onChange={handleInputChange}
-                                    className="form-input w-full"
-                                />
-                                {!formData.monthlyExpenses && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Monthly Expenses</span>}
-                            </div>
+                          
                         </td>
                         <td className="border px-4 py-2">{formData.checklist[1].target}</td>
                         <td className="border px-4 py-2">
@@ -648,12 +658,7 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Child Education Fund</td>
                         <td className="border px-4 py-2">
-                            <div className="relative">
-                                <input type="number" name="childEducationFundGoal" value={formData.childEducationFundGoal} className="form-input w-full" onChange={handleInputChange} />
-                                {!formData.childEducationFundGoal && (
-                                    <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Child Education Fund Goal</span>
-                                )}
-                            </div>
+                           
                         </td>
                         <td className="border px-4 py-2">{formData.checklist[6].target}</td>
                         <td className="border px-4 py-2">
@@ -671,8 +676,12 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Debt Management</td>
                         <td className="border px-4 py-2">
-                            {/* Input for debtManagementEmi */}
-                            <div className="relative">
+                          
+                        </td>
+                        <td className="border px-4 py-2">{formData.checklist[7].target}</td>
+                        <td className="border px-4 py-2">
+                              {/* Input for debtManagementEmi */}
+                              <div className="relative">
                                 <input
                                     type="number"
                                     name="debtManagementEmi"
@@ -692,11 +701,6 @@ const FinancialHealthCalculator = () => {
                                 {!formData.debtManagementEmi && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter EMI</span>}
                             </div>
                         </td>
-                        <td className="border px-4 py-2">{formData.checklist[7].target}</td>
-                        <td className="border px-4 py-2">
-                            {/* Disabled input for currentStatus */}
-                            <input type="number" value={formData.checklist[7].currentStatus} disabled className="form-input w-full bg-gray-100" />
-                        </td>
                         <td className="border px-4 py-2">{Math.max(0, formData.checklist[7].target - formData.checklist[7].currentStatus).toFixed(2)}</td>
                         <td className="border px-4 py-2">{formData.checklist[7].score}</td>
                     </tr>
@@ -707,7 +711,11 @@ const FinancialHealthCalculator = () => {
                         <td className="border px-4 py-2">Wealth Planning</td>
                         <td className="border px-4 py-2">
                             {/* Input for monthly savings */}
-                            <div className="relative">
+                           
+                        </td>
+                        <td className="border px-4 py-2">{formData.checklist[8].target.toFixed(2)}</td>
+                        <td className="border px-4 py-2">
+                        <div className="relative">
                                 <input
                                     type="number"
                                     name="monthlySavings"
@@ -727,11 +735,6 @@ const FinancialHealthCalculator = () => {
                                 {!formData.monthlySavings && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Monthly Savings </span>}
                             </div>
                         </td>
-                        <td className="border px-4 py-2">{formData.checklist[8].target.toFixed(2)}</td>
-                        <td className="border px-4 py-2">
-                            {/* Disabled input for currentStatus */}
-                            <input type="number" value={formData.checklist[8].currentStatus} disabled className="form-input w-full bg-gray-100" />
-                        </td>
                         <td className="border px-4 py-2">{Math.max(0, formData.checklist[8].target - formData.checklist[8].currentStatus).toFixed(2)}</td>
                         <td className="border px-4 py-2">{formData.checklist[8].score}</td>
                     </tr>
@@ -739,8 +742,12 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Home Loan or Rent</td>
                         <td className="border px-4 py-2">
-                            {/* Input for housing cost */}
-                            <div className="relative">
+                           
+                        </td>
+                        <td className="border px-4 py-2">{formData.checklist[9].target.toFixed(2)}</td>
+                        <td className="border px-4 py-2">
+                             {/* Input for housing cost */}
+                             <div className="relative">
                                 <input
                                     type="number"
                                     name="housingCost"
@@ -760,11 +767,6 @@ const FinancialHealthCalculator = () => {
                                 {!formData.housingCost && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Housing Cost</span>}
                             </div>
                         </td>
-                        <td className="border px-4 py-2">{formData.checklist[9].target.toFixed(2)}</td>
-                        <td className="border px-4 py-2">
-                            {/* Disabled input for currentStatus */}
-                            <input type="number" value={formData.checklist[9].currentStatus} disabled className="form-input w-full bg-gray-100" />
-                        </td>
                         <td className="border px-4 py-2">{Math.max(0, formData.checklist[9].target - formData.checklist[9].currentStatus).toFixed(2)}</td>
                         <td className="border px-4 py-2">{formData.checklist[9].score}</td>
                     </tr>
@@ -772,6 +774,10 @@ const FinancialHealthCalculator = () => {
                     {/* cibil */}
                     <tr>
                         <td className="border px-4 py-2">CIBIL Score</td>
+                        <td className="border px-4 py-2">
+                           
+                        </td>
+                        <td className="border px-4 py-2">750</td>
                         <td className="border px-4 py-2">
                             {/* Input for current CIBIL score */}
                             <div className="relative">
@@ -796,11 +802,6 @@ const FinancialHealthCalculator = () => {
                                 )}
                             </div>
                         </td>
-                        <td className="border px-4 py-2">750</td>
-                        <td className="border px-4 py-2">
-                            {/* Disabled input for currentStatus */}
-                            <input type="number" value={formData.checklist[10]?.currentStatus || 0} disabled className="form-input w-full bg-gray-100" />
-                        </td>
                         <td className="border px-4 py-2">{Math.max(0, 750 - (formData.checklist[10]?.currentStatus || 0)).toFixed(2)}</td>
                         <td className="border px-4 py-2">{formData.checklist[10]?.score || 0}</td>
                     </tr>
@@ -810,7 +811,7 @@ const FinancialHealthCalculator = () => {
                         <td className="border px-4 py-2">Marriage Fund</td>
                         <td className="border px-4 py-2">
                             {/* Input for marriage fund goal */}
-                            <div className="relative">
+                            {/* <div className="relative">
                                 <input
                                     type="number"
                                     name="marriageFundGoal"
@@ -827,7 +828,7 @@ const FinancialHealthCalculator = () => {
                                 {!formData.marriageFundGoal && (
                                     <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Enter Marriage Fund Goal</span>
                                 )}
-                            </div>
+                            </div> */}
                         </td>
                         <td className="border px-4 py-2">
                             {/* Display the target (Marriage Fund Goal) */}
@@ -866,6 +867,10 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Budget Planning</td>
                         <td className="border px-4 py-2">
+                           
+                        </td>
+                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
+                        <td className="border px-4 py-2">
                             {/* Dropdown for budget planning */}
                             <div className="relative">
                                 <select
@@ -896,11 +901,6 @@ const FinancialHealthCalculator = () => {
                                 </select>
                             </div>
                         </td>
-                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
-                        <td className="border px-4 py-2">
-                            {/* Current status is dynamically updated */}
-                            {formData.checklist.find((row) => row.item === 'Budget Planning')?.currentStatus || 'N/A'}
-                        </td>
                         <td className="border px-4 py-2">N/A</td> {/* Gap is not applicable */}
                         <td className="border px-4 py-2">
                             {/* Display the calculated score */}
@@ -911,6 +911,10 @@ const FinancialHealthCalculator = () => {
                     {/* wealth planning */}
                     <tr>
                         <td className="border px-4 py-2">Estate Planning</td>
+                        <td className="border px-4 py-2">
+                           
+                        </td>
+                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
                         <td className="border px-4 py-2">
                             {/* Dropdown for Estate Planning */}
                             <div className="relative">
@@ -937,11 +941,6 @@ const FinancialHealthCalculator = () => {
                                 </select>
                             </div>
                         </td>
-                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
-                        <td className="border px-4 py-2">
-                            {/* Current status is dynamically updated */}
-                            {formData.checklist.find((row) => row.item === 'Estate Planning')?.currentStatus || 'N/A'}
-                        </td>
                         <td className="border px-4 py-2">N/A</td> {/* Gap is not applicable */}
                         <td className="border px-4 py-2">
                             {/* Display the calculated score */}
@@ -953,8 +952,12 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Legacy Fund</td>
                         <td className="border px-4 py-2">
-                            {/* Dropdown for Legacy Fund */}
-                            <div className="relative">
+                          
+                        </td>
+                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
+                        <td className="border px-4 py-2">
+                             {/* Dropdown for Legacy Fund */}
+                             <div className="relative">
                                 <select
                                     name="legacyFund"
                                     value={formData.legacyFund}
@@ -977,11 +980,6 @@ const FinancialHealthCalculator = () => {
                                     <option value="No">No</option>
                                 </select>
                             </div>
-                        </td>
-                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
-                        <td className="border px-4 py-2">
-                            {/* Current status is dynamically updated */}
-                            {formData.checklist.find((row) => row.item === 'Legacy Fund')?.currentStatus || 'N/A'}
                         </td>
                         <td className="border px-4 py-2">N/A</td> {/* Gap is not applicable */}
                         <td className="border px-4 py-2">
@@ -1081,8 +1079,19 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Investment Diversification</td>
                         <td className="border px-4 py-2">
-                            {/* Options for Investment Diversification */}
-                            <div className="grid grid-cols-2 gap-2">
+                          
+                        </td>
+                        <td className="border px-4 py-2">
+                            {/* Display Target (Balanced 50% Risk / 50% Guaranteed) */}
+                            Balanced (50% - 50% )
+                        </td>
+                        <td className="border px-4 py-2">
+                            {/* Display Current Status */}
+                            {`Risk: ${formData.checklist.find((row) => row.item === 'Investment Diversification').risk}%, Guaranteed: ${
+                                formData.checklist.find((row) => row.item === 'Investment Diversification').guaranteed
+                            }%`}
+                              {/* Options for Investment Diversification */}
+                              <div className="grid grid-cols-2 gap-2">
                                 {/* Risk Options */}
                                 <label>
                                     <input
@@ -1142,16 +1151,6 @@ const FinancialHealthCalculator = () => {
                                 </label>
                             </div>
                         </td>
-                        <td className="border px-4 py-2">
-                            {/* Display Target (Balanced 50% Risk / 50% Guaranteed) */}
-                            Balanced (50% - 50% )
-                        </td>
-                        <td className="border px-4 py-2">
-                            {/* Display Current Status */}
-                            {`Risk: ${formData.checklist.find((row) => row.item === 'Investment Diversification').risk}%, Guaranteed: ${
-                                formData.checklist.find((row) => row.item === 'Investment Diversification').guaranteed
-                            }%`}
-                        </td>
                         <td className="border px-4 py-2">N/A</td>
                         <td className="border px-4 py-2">
                             {/* Display Calculated Score */}
@@ -1162,7 +1161,10 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">HUF Account</td>
                         <td className="border px-4 py-2">
-                            {/* Dropdown for HUF Account */}
+                          
+                        </td>
+                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
+                        <td className="border px-4 py-2">  {/* Dropdown for HUF Account */}
                             <div className="relative">
                                 <select
                                     name="hufAccount"
@@ -1185,10 +1187,7 @@ const FinancialHealthCalculator = () => {
                                     <option value="No">No</option>
                                 </select>
                                 {/* {!formData.hufAccount && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Select Yes or No</span>} */}
-                            </div>
-                        </td>
-                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
-                        <td className="border px-4 py-2">{formData.checklist.find((row) => row.item === 'HUF Account')?.currentStatus || 'N/A'}</td>
+                            </div></td>
                         <td className="border px-4 py-2">N/A</td> {/* No gap for Yes/No */}
                         <td className="border px-4 py-2">{formData.checklist.find((row) => row.item === 'HUF Account')?.score}</td>
                     </tr>
@@ -1196,7 +1195,10 @@ const FinancialHealthCalculator = () => {
                     <tr>
                         <td className="border px-4 py-2">Family Goals</td>
                         <td className="border px-4 py-2">
-                            {/* Dropdown for Family Goals */}
+                          
+                        </td>
+                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
+                        <td className="border px-4 py-2">  {/* Dropdown for Family Goals */}
                             <div className="relative">
                                 <select
                                     name="familyGoals"
@@ -1219,10 +1221,7 @@ const FinancialHealthCalculator = () => {
                                     <option value="No">No</option>
                                 </select>
                                 {/* {!formData.familyGoals && <span className="absolute ms-8 top-1/2 left-2 transform -translate-y-1/2 text-gray-500 pointer-events-none">Select Yes or No</span>} */}
-                            </div>
-                        </td>
-                        <td className="border px-4 py-2">Yes</td> {/* Target is always "Yes" */}
-                        <td className="border px-4 py-2">{formData.checklist.find((row) => row.item === 'Family Goals')?.currentStatus || 'N/A'}</td>
+                            </div></td>
                         <td className="border px-4 py-2">N/A</td> {/* No gap for Yes/No */}
                         <td className="border px-4 py-2">{formData.checklist.find((row) => row.item === 'Family Goals')?.score}</td>
                     </tr>

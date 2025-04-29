@@ -1,4 +1,4 @@
-import Calc from '@/components/forms/calcform2';
+import Calc from '@/components/forms/calcform3';
 import IconBell from '@/components/icon/icon-bell';
 import React from 'react';
 

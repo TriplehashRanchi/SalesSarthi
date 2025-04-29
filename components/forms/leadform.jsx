@@ -19,7 +19,7 @@ const LeadForm = ({ existingLead }) => {
   // Extended form data including most of the fields from your leads table.
   const [formData, setFormData] = useState({
     id: existingLead ? existingLead.id : Math.floor(Math.random() * 100000000),
-    admin_id: existingLead ? existingLead.admin_id : 'ADM6442',
+    admin_id: existingLead ? existingLead.admin_id : '',
     full_name: existingLead ? existingLead.full_name : '',
     email: existingLead ? existingLead.email : '',
     phone_number: existingLead ? existingLead.phone_number : '',
@@ -84,7 +84,7 @@ const LeadForm = ({ existingLead }) => {
       // Reset the form after submission.
       setFormData({
         id: Math.floor(Math.random() * 100000000),
-        admin_id: 'ADM6442',
+        admin_id: '',
         full_name: '',
         email: '',
         phone_number: '',

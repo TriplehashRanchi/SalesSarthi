@@ -22,7 +22,7 @@ import IconFacebook  from '@/components/icon/icon-facebook';
 import IconPencil    from '../icon/icon-pencil';
 
 import FollowupForm  from '@/components/forms/followupform';
-import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUpload';
+import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUploadUser';
 
 import { getAuth } from 'firebase/auth';
 
@@ -53,8 +53,6 @@ const LeadTable = ({ userId }) => {
   const [loading, setLoading]           = useState(true);
   const [error,   setError]             = useState(null);
 
-  const [isPolling, setIsPolling]               = useState(false);
-  const [hasPolledInitially, setHasPolledInit]  = useState(false);
 
   const [noteEditor, setNoteEditor] = useState({
     open : false,
@@ -72,26 +70,9 @@ const LeadTable = ({ userId }) => {
     { value: 'Qualified Lead', label: 'Qualified Lead' },
     { value: 'Lost Lead',      label: 'Lost Lead' },
     { value: 'Follow-up',      label: 'Follow-up' },
-    {value: 'Request deletion', label: 'Request deletion' } ,
+    {value: 'Request deletion', label: 'Request deletion' },
     { value:'Fin Health Checkup Done', label:'Fin Health Checkup Done' },
   ];
-
-  /* ───────────────────── helpers ───────────────────── */
-  const fetchTeamMembers = async () => {
-    try {
-      const auth = getAuth(); const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated.');
-      const token = await user.getIdToken();
-
-      const res = await fetch(`${API_URL}/api/admin/users`, {
-        headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Failed to fetch users.');
-      setTeamMembers(await res.json());
-    } catch (err) {
-      console.error(err); setTeamMembers([]);
-    }
-  };
 
   const fetchLeads = async (showOverlay = true) => {
     if (showOverlay) setLoading(true);
@@ -100,7 +81,7 @@ const LeadTable = ({ userId }) => {
       if (!user) throw new Error('User not authenticated.');
       const token = await user.getIdToken();
 
-      const { data } = await axios.get(`${API_URL}/api/leads/all`, {
+      const { data } = await axios.get(`${API_URL}/api/users/leads`, {
         headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
       });
       const sorted = (data || []).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
@@ -111,49 +92,6 @@ const LeadTable = ({ userId }) => {
     } finally { if (showOverlay) setLoading(false); }
   };
 
-  const pollFacebookLeads = async (manual = false) => {
-    if (isPolling) return false;
-    setIsPolling(true);
-
-    if (manual) {
-      showNotification({
-        id:'fb-poll', title:'Polling Facebook Leads',
-        message:'Checking for new leads from Facebook…',
-        loading:true, autoClose:false, withCloseButton:false,
-      });
-    }
-
-    try {
-      const auth = getAuth(); const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated.');
-      const token = await user.getIdToken();
-
-      const { data } = await axios.post(`${API_URL}/api/fb/leads/poll`, {}, {
-        headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
-      });
-      const newCount = data?.newLeadsCount ?? 0;
-      await fetchLeads(false);
-
-      const notify = manual ? updateNotification : showNotification;
-      notify({
-        id:'fb-poll',
-        title:'Polling Complete',
-        message: newCount ? `Fetched ${newCount} new lead(s).` : 'No new leads this time.',
-        color:'green', icon:<IconListCheck size={16}/>, loading:false, autoClose:5000,
-      });
-      return true;
-    } catch (err) {
-      console.error(err);
-      showNotification({
-        id:`fb-poll-error-${Date.now()}`, title:'Polling Failed',
-        message: err.response?.data?.message || err.message,
-        color:'red', icon:<IconAlertCircle size={16}/>, autoClose:7000,
-      });
-      return false;
-    } finally {
-      setIsPolling(false);
-    }
-  };
 
   /* ───────────────────── initial load ───────────────────── */
   useEffect(() => {
@@ -161,18 +99,11 @@ const LeadTable = ({ userId }) => {
     (async () => {
       setLoading(true); setError(null);
       try {
-        await fetchTeamMembers();
         await fetchLeads(false);
       } catch (err) {
         if (mounted) setError(err.message);
       } finally {
         if (mounted) setLoading(false);
-      }
-
-      if (!hasPolledInitially) {
-        pollFacebookLeads(false).then(() => {
-          setHasPolledInit(true);
-        });
       }
     })();
     return () => { mounted = false; };
@@ -215,42 +146,6 @@ const LeadTable = ({ userId }) => {
   }, [totalFilteredRecords, pageSize, page]);
 
   // place this just after fetchTeamMembers (or anywhere before return)
-  // ───────── assign selected leads to a team member ─────────
-  const assignLeads = async () => {
-    if (!selectedTeamMember) {
-      alert('Please select a team member.');
-      return;
-    }
-    if (!selectedLeads.length) {
-      alert('No leads selected.');
-      return;
-    }
-
-    try {
-      const auth  = getAuth();
-      const user  = auth.currentUser;
-      if (!user) throw new Error('User not authenticated.');
-      const token = await user.getIdToken();
-
-      const res = await fetch(`${API_URL}/api/admin/assign`, {
-        method : 'POST',
-        headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
-        body   : JSON.stringify({ user_id: selectedTeamMember, leads: selectedLeads }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'Failed to assign leads.');
-      }
-
-      showNotification({ title:'Success', message:'Leads assigned successfully', color:'green' });
-      setSelectedLeads([]);
-      setSelectedTM(null);
-      fetchLeads(false);                    // refresh list silently
-    } catch (err) {
-      console.error(err);
-      showNotification({ title:'Error', message:err.message, color:'red' });
-    }
-  };
 
   const updateLeadStatus = async (lead, newStatus) => {
     // No changes needed here
@@ -401,8 +296,6 @@ const fetchFollowupHistory = async (leadId) => {
 
   return (
       <div className="panel mt-6 relative">
-          <LoadingOverlay visible={loading || isPolling} overlayBlur={2} />
-
           {error && (
               <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" withCloseButton onClose={() => setError(null)} mb="md">
                   {error}
@@ -436,13 +329,6 @@ const fetchFollowupHistory = async (leadId) => {
                       searchable
                   />
               </div>
-
-              {/* facebook + csv buttons */}
-              <button className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50" onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
-                  <span className="flex gap-2 items-center">
-                      <IconFacebook /> Import from Facebook
-                  </span>
-              </button>
 
               <button onClick={() => setCsvOpen(true)} className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">
                   CSV Bulk Upload
@@ -571,15 +457,15 @@ const fetchFollowupHistory = async (leadId) => {
                               </Button>
                           ),
                       },
-                      {
-                          accessor: 'user_id',
-                          title: 'Assigned To',
-                          sortable: true,
-                          render: ({ user_id }) => {
-                              const u = teamMembers.find((t) => t.id === user_id);
-                              return u ? u.username : <Text color="dimmed">Unassigned</Text>;
-                          },
-                      },
+                    //   {
+                    //       accessor: 'user_id',
+                    //       title: 'Assigned To',
+                    //       sortable: true,
+                    //       render: ({ user_id }) => {
+                    //           const u = teamMembers.find((t) => t.id === user_id);
+                    //           return u ? u.username : <Text color="dimmed">Unassigned</Text>;
+                    //       },
+                    //   },
                       {
                           accessor: 'actions',
                           title: 'Actions',
@@ -592,7 +478,7 @@ const fetchFollowupHistory = async (leadId) => {
                                       </Button>
                                   </Menu.Target>
                                   <Menu.Dropdown>
-                                      <Menu.Item onClick={() => router.push(`/editlead/${record.id}`)} icon={<IconPencil size={14} />}>
+                                      <Menu.Item onClick={() => router.push(`/usereditlead/${record.id}`)} icon={<IconPencil size={14} />}>
                                           Edit Lead
                                       </Menu.Item>
                                       <Menu.Item
@@ -647,7 +533,7 @@ const fetchFollowupHistory = async (leadId) => {
                   onSortStatusChange={setSortStatus}
                   minHeight={200}
                   noRecordsText="No leads found"
-                  fetching={loading || isPolling}
+                  fetching={loading}
                   paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} leads`}
               />
           </div>

@@ -1,5 +1,5 @@
 "use client"
-import ComponentsDatatablesMultiColumn from '@/components/usertable/leadtable';
+import ComponentsDatatablesMultiColumn from '@/components/usertable/leadtable2';
 import IconBell from '@/components/icon/icon-bell';
 import React from 'react';
 import IconFacebook from '@/components/icon/icon-facebook';

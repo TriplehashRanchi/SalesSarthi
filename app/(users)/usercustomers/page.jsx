@@ -1,5 +1,5 @@
 "use client";
-import Customertable from '@/components/usertable/customerTable';
+import Customertable from '@/components/usertable/customerTable2';
 import IconBell from '@/components/icon/icon-bell';
 import React from 'react';
 import IconFacebook from '@/components/icon/icon-facebook';
