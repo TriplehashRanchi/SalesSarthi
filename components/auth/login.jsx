@@ -7,6 +7,7 @@ import { auth, googleProvider } from "@/utils/firebase";
 import { useAuth } from "@/context/AuthContext";
 import IconLockDots from "@/components/icon/icon-lock-dots";
 import IconMail from "@/components/icon/icon-mail";
+import IconGoogle from "../icon/icon-google";
 
 const ComponentsAuthLoginForm = () => {
     const router = useRouter();
@@ -96,7 +97,7 @@ const ComponentsAuthLoginForm = () => {
             </div>
             {error && <p className="text-red-500">{error}</p>}
             <button type="submit" className="btn btn-gradient w-full">Sign in</button>
-            <button type="button" onClick={handleGoogleLogin} className="btn btn-google w-full">Sign in with Google</button>
+            <button type="button" onClick={handleGoogleLogin} className="btn shadow-sm w-full"><IconGoogle className="mr-2" />Sign in with Google</button>
              <button
                type="button"
                onClick={handleForgotPassword}

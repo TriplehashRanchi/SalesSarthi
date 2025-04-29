@@ -387,7 +387,7 @@ const ReportingDashboard = () => {
         <div className="p-4 md:p-6 bg-gray-50 min-h-screen relative">
             <LoadingOverlay visible={loading} overlayBlur={2} />
 
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">Sales & Activity Dashboard</h2>
+            {/* <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">Sales & Activity Dashboard</h2> */}
 
             {error && (
                 <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" withCloseButton onClose={() => setError(null)} mb="lg">

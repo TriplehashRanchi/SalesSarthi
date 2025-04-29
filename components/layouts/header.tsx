@@ -158,7 +158,7 @@ const Header = () => {
                         {/* Conditional User Section */}
                         {!authLoading && currentUser && ( // Render only when auth check is done and user exists
                             <>
-                                {/* Messages Dropdown - RESTORED */}
+                                {/* Messages Dropdown - RESTORED 
                                 <div className="dropdown shrink-0">
                                     <Dropdown offset={[0, 8]} placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`} btnClassName="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60" button={<IconMailDot />} >
                                         <ul className="w-[300px] !py-0 text-xs text-dark dark:text-white-dark sm:w-[375px]">
@@ -171,9 +171,9 @@ const Header = () => {
                                             )}
                                         </ul>
                                     </Dropdown>
-                                </div>
+                                </div>*/}
 
-                                {/* Notifications Dropdown - RESTORED */}
+                                {/* Notifications Dropdown - RESTORED 
                                 <div className="dropdown shrink-0">
                                     <Dropdown offset={[0, 8]} placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`} btnClassName="relative block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60" button={ <span> <IconBellBing /> <span className="absolute top-0 flex h-3 w-3 ltr:right-0 rtl:left-0"> <span className="absolute -top-[3px] inline-flex h-full w-full animate-ping rounded-full bg-success/50 opacity-75 ltr:-left-[3px] rtl:-right-[3px]"></span> <span className="relative inline-flex h-[6px] w-[6px] rounded-full bg-success"></span> </span> </span> } >
                                         <ul className="w-[300px] divide-y !py-0 text-dark dark:divide-white/10 dark:text-white-dark sm:w-[350px]">
@@ -186,7 +186,7 @@ const Header = () => {
                                             )}
                                         </ul>
                                     </Dropdown>
-                                </div>
+                                </div>*/}
 
                                 {/* Profile Dropdown */}
                                 <div className="dropdown flex shrink-0">

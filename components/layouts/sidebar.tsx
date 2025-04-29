@@ -149,7 +149,7 @@ const Sidebar = () => {
                                 </Link>
                             </li>
                             <li className="menu nav-item">
-                                <Link href="/calc">
+                                <Link href="/fincalc">
                                     <div className="flex items-center">
                                         <IconMenuCharts className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Fin Health Calculator')}</span>

@@ -69,7 +69,7 @@ const CustomerTable = () => {
   };
 
   const handleEditCustomer = (customer) => {
-    router.push(`/editcustomer/${customer.id}`);
+    router.push(`/edit-customer/${customer.id}`);
   };
 
   /* ─────────── NEW delete helpers ─────────── */
