@@ -20,7 +20,7 @@ import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
-import {IconBrandFacebook, IconBrandWhatsappFilled, IconForms} from '@tabler/icons-react';
+import {IconBrandFacebook, IconBrandWhatsappFilled, IconForms, IconReport} from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
@@ -220,7 +220,7 @@ const Sidebar = () => {
                                     </div>
                                 </Link>
                             </li>
-                            <li className="menu nav-item">
+                            {/* <li className="menu nav-item">
                                 <button type="button" className={`${currentMenu === 'report' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('report')}>
                                     <div className="flex items-center">
                                         <IconTrendingUp className="shrink-0 group-hover:!text-primary" />
@@ -237,20 +237,28 @@ const Sidebar = () => {
                                         <li>
                                             <Link href="/reports">{t('Report')}</Link>
                                         </li>
-                                        {/* <li>
+                                         <li>
                                             <Link href="/reports/weekly">{t('weekly')}</Link>
                                         </li>
                                         <li>
                                             <Link href="/reports//monthly">{t('monthly')}</Link>
-                                        </li> */}
-                                        {/* <li>
+                                        </li> 
+                                         <li>
                                             <Link href="/crypto">{t('crypto')}</Link>
-                                        </li> */}
+                                        </li> 
                                     </ul>
                                 </AnimateHeight>
+                            </li> */}
+                            <li className="menu nav-item">
+                                <Link href="/reports">
+                                    <div className="flex items-center">
+                                        <IconReport className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Report')}</span>
+                                    </div>
+                                </Link>
                             </li>
                             <li className="menu nav-item">
-                                <Link href="/banner">
+                                <Link href="/ad-banner">
                                     <div className="flex items-center">
                                         <IconLaptop className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>

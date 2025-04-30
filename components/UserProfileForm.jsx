@@ -4,12 +4,12 @@ import IconHome from '@/components/icon/icon-home';
 import IconDollarSignCircle from '@/components/icon/icon-dollar-sign-circle';
 import IconUser from '@/components/icon/icon-user';
 import IconPhone from '@/components/icon/icon-phone';
-import IconFacebook from '@/components/icon/icon-facebook';
-import IconTwitter from '@/components/icon/icon-twitter';
-import IconGithub from '@/components/icon/icon-github';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { useCloudinaryUpload } from '@/utils/useCloudinaryUpload';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+
 
 const AccountSettingsTabs = () => {
     const [activeTab, setActiveTab] = useState('home');
@@ -226,14 +226,28 @@ const AccountSettingsTabs = () => {
                             ].map((f) => (
                                 <div key={f.id}>
                                     <label htmlFor={f.id}>{f.label}</label>
-                                    <input
-                                        id={f.id}
-                                        type={f.type || 'text'}
-                                        placeholder={f.placeholder}
-                                        className="form-input"
-                                        value={profile[f.id]}
-                                        onChange={(e) => handleProfileChange(f.id, e.target.value)}
-                                    />
+                                    {f.id === 'phone' ? (
+                                        <PhoneInput
+                                            country="in"
+                                            value={profile.phone}
+                                            onChange={(value) => handleProfileChange('phone', `+${value}`)}
+                                            enableSearch
+                                            countryCodeEditable={false}
+                                            inputProps={{
+                                                id: f.id,
+                                                placeholder: f.placeholder,
+                                            }}
+                                        />
+                                    ) : (
+                                        <input
+                                            id={f.id}
+                                            type={f.type || 'text'}
+                                            placeholder={f.placeholder}
+                                            className="form-input"
+                                            value={profile[f.id]}
+                                            onChange={(e) => handleProfileChange(f.id, e.target.value)}
+                                        />
+                                    )}
                                 </div>
                             ))}
 
@@ -337,7 +351,15 @@ const AccountSettingsTabs = () => {
                         ].map((f) => (
                             <div key={f.id}>
                                 <label htmlFor={f.id}>{f.label}</label>
-                                <input
+                                {f.id === 'phone1' || f.id === 'phone2' ? (
+                                    <PhoneInput
+                                        inputClass="form-input"
+                                        country="in"
+                                        value={company[f.id]}
+                                        onChange={(phone) => handleCompanyChange(f.id, phone)}
+                                    />
+                                ) : (
+                                    <input
                                     id={f.id}
                                     type={f.type || 'text'}
                                     placeholder={f.placeholder}
@@ -345,6 +367,9 @@ const AccountSettingsTabs = () => {
                                     value={company[f.id]}
                                     onChange={(e) => handleCompanyChange(f.id, e.target.value)}
                                 />
+                                )
+                                }
+                              
                             </div>
                         ))}
                     </div>

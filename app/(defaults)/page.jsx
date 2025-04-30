@@ -16,7 +16,7 @@ export default function Home() {
       router.replace('/login');
     } else if (user.role === 'admin') {
       router.replace('/dashboard');
-    } else if (user.role === 'user') {
+    } else if (user.role === 'salesperson' || user.role === 'manager') {
       router.replace('/user-dashboard');
     } else {
       router.replace('/login');                    // fallback

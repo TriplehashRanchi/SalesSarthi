@@ -820,7 +820,7 @@ const FinancialHealthCalculator = () => {
                                                size="xs"
                                                hideControls
                                                classNames={{
-                                                 input: 'text-sm text-right bg-dark-6 text-white form-input',
+                                                 input: 'text-sm text-right bg-dark-6 text-dark dark:text-gray-100 form-input',
                                                }}
                                               
                                              />

@@ -35,7 +35,7 @@ const ProfessionalBannerMaker = () => {
         const token =  await auth.currentUser.getIdToken();
         // Load company
         const { data: comp } = await axios.get(
-          `${API_URL}/api/companies/me`,
+          `${API_URL}/api/companies/user`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCompany({

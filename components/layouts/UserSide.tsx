@@ -109,33 +109,12 @@ const UserSide = () => {
                     <PerfectScrollbar className="relative h-[calc(100vh-80px)]">
                         <ul className="relative space-y-0.5 p-4 py-0 font-semibold">
                             <li className="menu nav-item">
-                                <button type="button" className={`${currentMenu === 'dashboard' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('dashboard')}>
+                               <Link href="/user-dashboard">
                                     <div className="flex items-center">
                                         <IconMenuDashboard className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('dashboard')}</span>
+                                        <span  className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('dashboard')}</span>
                                     </div>
-
-                                    <div className={currentMenu !== 'dashboard' ? '-rotate-90 rtl:rotate-90' : ''}>
-                                        <IconCaretDown />
-                                    </div>
-                                </button>
-
-                                <AnimateHeight duration={300} height={currentMenu === 'dashboard' ? 'auto' : 0}>
-                                    <ul className="sub-menu text-gray-500">
-                                        <li>
-                                            <Link href="/user-dashboard">{t('sales')}</Link>
-                                        </li>
-                                        <li>
-                                            <Link href="/analytics">{t('analytics')}</Link>
-                                        </li>
-                                        <li>
-                                            <Link href="/finance">{t('finance')}</Link>
-                                        </li>
-                                        {/* <li>
-                                            <Link href="/crypto">{t('crypto')}</Link>
-                                        </li> */}
-                                    </ul>
-                                </AnimateHeight>
+                               </Link>
                             </li>
                             <li className="menu nav-item">
                                 <Link href="/useraddlead">
@@ -154,7 +133,7 @@ const UserSide = () => {
                                 </Link>
                             </li>
                             <li className="menu nav-item">
-                                <Link href="/calc">
+                                <Link href="/fin-health">
                                     <div className="flex items-center">
                                         <IconMenuCharts className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Fin Health Calculator')}</span>
@@ -178,7 +157,7 @@ const UserSide = () => {
                                 </Link>
                             </li>
                             <li className="menu nav-item">
-                                <Link href="/banner">
+                                <Link href="/user-banner">
                                     <div className="flex items-center">
                                         <IconLaptop className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>
