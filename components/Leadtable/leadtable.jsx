@@ -480,10 +480,10 @@ const fetchFollowupHistory = async (leadId) => {
                   CSV Bulk Upload
               </button>
           </div>
-
+          <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
           {/* assign dropdown */}
           {teamMembers.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
+              <>
                   <Select
                       data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
                       value={selectedTeamMember}
@@ -496,13 +496,15 @@ const fetchFollowupHistory = async (leadId) => {
                   <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
                       Assign ({selectedLeads.length})
                   </Button>
-                 
-              </div>
+                  </> 
+             
           )}
 
              <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
                       Delete ({selectedLeads.length})
                   </Button>
+
+           </div>
 
           {/* table */}
           <div className="datatables">
