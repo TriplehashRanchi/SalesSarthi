@@ -12,6 +12,7 @@ import {
   Textarea,
   Group,
 } from '@mantine/core';
+import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
 import { IconAlertCircle, IconListCheck } from '@tabler/icons-react';
 
@@ -154,6 +155,37 @@ const LeadTable = ({ userId }) => {
       setIsPolling(false);
     }
   };
+
+  // ───────── raw‑payload viewer ─────────
+const [payloadViewer, setPayloadViewer] = useState({
+  open : false,
+  json : null,      // pretty‑string
+  title: '',
+});
+function payloadToSections(raw = {}) {
+  // convert string → object if necessary
+  const payload =
+    typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+  /* ---------- Answers ---------- */
+  const answers = (payload.field_data || []).map((f) => ({
+    label: f.name
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase()),
+    value: f.values?.[0] || '—',
+  }));
+
+  /* ---------- Campaign / ad meta ---------- */
+  const meta = [
+    { label: 'Campaign ID', value: payload.campaign_id },
+    { label: 'Adset ID',    value: payload.adgroup_id },
+    { label: 'Ad ID',       value: payload.ad_id },
+  ].filter((r) => r.value);
+
+  return { answers, meta };
+}
+
+
 
   /* ───────────────────── initial load ───────────────────── */
   useEffect(() => {
@@ -464,11 +496,13 @@ const fetchFollowupHistory = async (leadId) => {
                   <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
                       Assign ({selectedLeads.length})
                   </Button>
-                  <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
-                      Delete ({selectedLeads.length})
-                  </Button>
+                 
               </div>
           )}
+
+             <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
+                      Delete ({selectedLeads.length})
+                  </Button>
 
           {/* table */}
           <div className="datatables">
@@ -560,6 +594,26 @@ const fetchFollowupHistory = async (leadId) => {
                                   </Badge>
                               ),
                       },
+                      {
+                        accessor: 'form_name',
+                        title   : 'Form',
+                        width   : '15%',
+                        render  : (r) => (
+                          <Button variant="subtle" size="xs"
+                          onClick={() =>
+                            setPayloadViewer({
+                              open : true,
+                              data : payloadToSections(r.raw_payload),  // ← parsed sections
+                              title: r.form_name || 'Unknown Form',
+                            })
+                          }
+                          
+                          >
+                            {r.form_name || '—'}
+                          </Button>
+                        ),
+                      },
+                      
                       {
                           accessor: 'notes',
                           title: 'Notes',
@@ -738,6 +792,44 @@ const fetchFollowupHistory = async (leadId) => {
                   </Button>
               </Group>
           </Modal>
+         
+
+<Modal
+  opened={payloadViewer.open}
+  onClose={() => setPayloadViewer({ open:false, data:null, title:'' })}
+  title={`Lead Details – ${payloadViewer.title}`}
+  centered size="lg"
+>
+  {payloadViewer.data && (
+    <ScrollArea.Autosize mah={450}>
+      {/* Answers timeline */}
+      <Text weight={600} mb="xs">Form Answers</Text>
+      <Timeline active={payloadViewer.data.answers.length} bulletSize={16} lineWidth={2}>
+        {payloadViewer.data.answers.map((a, i) => (
+          <Timeline.Item key={i} title={a.label}>
+            <Text size="sm" color="dimmed">{a.value}</Text>
+          </Timeline.Item>
+        ))}
+      </Timeline>
+
+      {/* Meta list */}
+      {payloadViewer.data.meta.length > 0 && (
+        <>
+          <Text weight={600} mt="md" mb="xs">Ad / Campaign</Text>
+          <List spacing="xs" size="sm" withPadding>
+            {payloadViewer.data.meta.map((m) => (
+              <List.Item key={m.label}>
+                <b>{m.label}:</b> {m.value}
+              </List.Item>
+            ))}
+          </List>
+        </>
+      )}
+    </ScrollArea.Autosize>
+  )}
+</Modal>
+
+
       </div>
   );
 };
