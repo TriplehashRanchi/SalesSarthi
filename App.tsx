@@ -32,7 +32,10 @@ function App({ children }: PropsWithChildren) {
 
     return (
         <NotificationsProvider>
-            <MantineProvider theme={{ colorScheme: themeConfig.theme }}>
+            <MantineProvider
+  theme={{ colorScheme: themeConfig.theme === 'dark' ? 'dark' : 'light' }}
+>
+
         <AuthProvider>
             <div
                 className={`${(themeConfig.sidebar && 'toggle-sidebar') || ''} ${themeConfig.menu} ${themeConfig.layout} ${
