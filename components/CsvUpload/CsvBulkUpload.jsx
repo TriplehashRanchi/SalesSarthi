@@ -27,12 +27,13 @@ import {
   Group,
   Badge,
   LoadingOverlay,
+  Anchor, // Added for the download link
 } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import Papa from 'papaparse';
 import { getAuth } from 'firebase/auth';
 import axios from 'axios';
-import { IconUpload, IconAlertTriangle, IconCheck } from '@tabler/icons-react';
+import { IconUpload, IconAlertTriangle, IconCheck, IconDownload } from '@tabler/icons-react'; // Added IconDownload
 
 // Minimum columns we expect – everything else is optional
 const REQUIRED_HEADERS = ['full_name', 'email', 'phone_number', 'lead_status'];
@@ -76,6 +77,46 @@ const CsvBulkUpload = ({ opened, onClose, onSuccess }) => {
     setFile(f);
     setRows([]);
     if (f) parseCsv(f);
+  };
+
+  /* ---------- download sample CSV ---------- */
+  const generateSampleCsvContent = () => {
+    const headers = REQUIRED_HEADERS.join(',');
+    const exampleRow1 = "John Doe,john.doe@example.com,1234567890,New";
+    const exampleRow2 = "Jane Smith,jane.smith@example.com,0987654321,Contacted,123 Main St,Some notes";
+    // Example with an extra column (address, notes)
+    const extendedHeaders = [...REQUIRED_HEADERS, 'address', 'notes'].join(',');
+
+
+    return `${extendedHeaders}\n${exampleRow1},,\n${exampleRow2}`;
+    // Or if you only want the required headers in the sample:
+    // return `${headers}\n${exampleRow1}\nJane Smith,jane.smith@example.com,0987654321,Contacted`;
+  };
+
+  const handleDownloadSample = () => {
+    const csvContent = generateSampleCsvContent();
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      // Browsers that support HTML5 download attribute
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'sample_leads_import.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else {
+      // Fallback for older browsers
+      showNotification({
+        title: 'Download Error',
+        message: 'Your browser does not support automatic downloads. Please copy the content manually.',
+        color: 'orange',
+      });
+      // Optionally, display the content in a modal or alert
+      console.log("Sample CSV Content:\n", csvContent);
+    }
   };
 
   /* ---------- upload ---------- */
@@ -128,6 +169,16 @@ const CsvBulkUpload = ({ opened, onClose, onSuccess }) => {
   return (
     <Modal opened={opened} onClose={onClose} title="Bulk CSV Upload" size="lg" centered>
       <LoadingOverlay visible={loading} overlayBlur={2} />
+
+      <Group position="apart" mb="xs">
+        <Text size="sm" weight={500}>Required columns: {REQUIRED_HEADERS.join(', ')}</Text>
+        <Anchor component="button" type="button" onClick={handleDownloadSample} size="sm">
+          <Group spacing="xs" noWrap>
+            <IconDownload size={14} />
+            Download Sample CSV
+          </Group>
+        </Anchor>
+      </Group>
 
       <FileInput
         label="Select CSV file"
@@ -182,4 +233,4 @@ const CsvBulkUpload = ({ opened, onClose, onSuccess }) => {
   );
 };
 
-export default CsvBulkUpload;
+export default CsvBulkUpload; 

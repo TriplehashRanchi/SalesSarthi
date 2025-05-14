@@ -62,28 +62,29 @@ const replacePlaceholders = (templateMessage, record) => {
 const formatReminderDate = (dateString, category) => {
   if (!dateString) return 'N/A';
 
-  const now = dayjs();
-  // Try parsing as UTC then converting to local to handle potential timezone issues like '1995-04-12T18:30:00.000Z' vs '1995-04-13'
-  const date = dayjs.utc(dateString).local(); 
+    const now = dayjs();
+    // Try parsing as UTC then converting to local to handle potential timezone issues like '1995-04-12T18:30:00.000Z' vs '1995-04-13'
+    const date = dayjs.utc(dateString).local();
+    console.log(dateString, date); 
 
-  if (!date.isValid()) return 'Invalid Date';
+    if (!date.isValid()) return 'Invalid Date';
 
-  switch (category) {
-    case 'nurturing': // Typically uses 'created_at' which is a timestamp
-      return `Added ${date.fromNow()}`; // e.g., "Added 2 days ago"
-    case 'birthday':
-    case 'anniversary':
-      // Calculate next occurrence for display
-      const nextEventDateForDisplay = getNextEventDate(date);
-      // Use calendar format relative to next occurrence
-      return `on ${date.format('MMMM D')} (${nextEventDateForDisplay.calendar(now)})`; // e.g., "on April 13 (in 5 days)"
-    case 'renewal':
-      // Use calendar format relative to the actual renewal date
-      return `on ${date.format('MMMM D, YYYY')} (${date.calendar(now)})`; // e.g., "on May 15, 2025 (Tomorrow at 12:00 AM)"
-    default:
-      return date.format('MMMM D, YYYY'); // Fallback basic format
-  }
-};
+    switch (category) {
+      case 'nurturing': // Typically uses 'created_at' which is a timestamp
+        return `Added ${date.fromNow()}`; // e.g., "Added 2 days ago"
+      case 'birthday':
+      case 'anniversary':
+        // Calculate next occurrence for display
+        const nextEventDateForDisplay = getNextEventDate(date);
+        // Use calendar format relative to next occurrence
+        return `on ${date.format('MMMM D')} (${nextEventDateForDisplay.calendar(now)})`; // e.g., "on April 13 (in 5 days)"
+      case 'renewal':
+        // Use calendar format relative to the actual renewal date
+        return `on ${date.format('MMMM D, YYYY')} (${date.calendar(now)})`; // e.g., "on May 15, 2025 (Tomorrow at 12:00 AM)"
+      default:
+        return date.format('MMMM D, YYYY'); // Fallback basic format
+    }
+  };
 
 // Helper function to calculate the next occurrence of a date (for sorting)
 const getNextEventDate = (date) => {
@@ -363,124 +364,88 @@ const RemindersPage = () => {
   const router = useRouter();
 
   return (
-    <Box p="md">
-      <Title order={2} mb="md">
-        Reminders
-        <Button
-          onClick={() => router.push('/template')}
-          ml="md"
-          variant="default"
-          size="xs"
-          radius="xl"
-        >
-          Add Template
-        </Button>
-      </Title>
-  
-      {/* Search Bar */}
-      <Group mb="md" position="apart">
-        <TextInput
-          placeholder="Search by name..."
-          icon={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-          style={{ flex: 1 }}
-          radius="md"
-        />
-      </Group>
-  
-      <Tabs value={activeTab} onTabChange={setActiveTab} variant="pills" radius="md">
-        <Tabs.List grow>
-          {reminderCategories.map((cat) => (
-            <Tabs.Tab key={cat.value} value={cat.value}>
-              {cat.label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-        {/* Use Tabs.Panel outside the loop if content depends on activeTab */}
-        <Tabs.Panel value={activeTab} pt="lg">
-          {loading || loadingLogs ? (
-            <Group position="center" mt="xl">
-              <Loader />
-            </Group>
-          ) : sortedAndFilteredRecords.length > 0 ? (
-            <Paper shadow="sm" p="md" radius="md" withBorder> 
-              <Table 
-                highlightOnHover 
-                verticalSpacing="sm"
-                fontSize="sm"
-                striped // Added striped style
-              >
-                <thead style={{ backgroundColor: '#f1f3f5' }}> 
-                  <tr>
-                    <th style={{ paddingLeft: '16px', width: activeTab === 'nurturing' ? '30%' : '40%' }}>Name</th>
-                    {activeTab === 'nurturing' && <th style={{ width: '20%' }}>Status</th>}
-                    <th style={{ width: activeTab === 'nurturing' ? '30%' : '40%' }}>Date Info</th>
-                    <th style={{ textAlign: 'center', paddingRight: '16px', width: '20%' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedAndFilteredRecords.map((record) => {
-                    const statusInfo = activeTab === 'nurturing' ? getLeadStatusInfo(record.lead_status) : null;
-                    const StatusIcon = statusInfo?.icon;
+<Box className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+  <Title order={2} className="mb-4 flex items-center justify-between">
+    Reminders
+    <Button
+      onClick={() => router.push('/template')}
+      className="ml-4 bg-gray-200 dark:bg-gray-700 text-black dark:text-white text-xs px-3 py-1 rounded-full"
+    >
+      Add Template
+    </Button>
+  </Title>
 
-                    return (
-                      <tr key={record.id}>
-                        <td style={{ paddingLeft: '16px' }}>{record.full_name || 'N/A'}</td>
-                        {activeTab === 'nurturing' && (
-                          <td>
-                            {statusInfo && StatusIcon ? (
-                              <Badge 
-                                size="sm" 
-                                variant="light" 
-                                color={statusInfo.color}
-                                leftSection={StatusIcon && <StatusIcon size={14} />}
-                              >
-                                {record.lead_status || 'N/A'}
-                              </Badge>
-                            ) : (
-                              <Text size="xs" color="dimmed">N/A</Text>
-                            )}
-                          </td>
-                        )}
-                        <td style={{ display: 'flex', alignItems: 'center' }}>
-                          {getCategoryIcon(activeTab)}
-                          {formatReminderDate(
-                            activeTab === 'nurturing'
-                              ? record.created_at
-                              : activeTab === 'birthday'
-                              ? record.date_of_birth
-                              : activeTab === 'anniversary'
-                              ? record.anniversary
-                              : record.renewal_date,
-                            activeTab
-                          )}
-                        </td>
-                        <td align="center" style={{ paddingRight: '16px' }}>
-                          <Button
-                            size="xs"
-                            variant="gradient" 
-                            gradient={{ from: 'teal', to: 'lime', deg: 105 }}
-                            leftIcon={<IconBrandWhatsapp size={16} />} 
-                            onClick={() => handleSendReminder(record)}
-                          >
-                            Send
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </Paper>
-          ) : (
-            <Text align="center" color="dimmed" mt="xl" size="lg">
-              🎉 No pending reminders for this category!
-            </Text>
-          )}
-        </Tabs.Panel>
-      </Tabs>
-    </Box>
+  <Group className="mb-4 flex justify-between">
+    <TextInput
+      placeholder="Search by name..."
+      icon={<IconSearch size={16} />}
+      value={search}
+      onChange={(e) => setSearch(e.currentTarget.value)}
+      className="flex-1 rounded-md dark:bg-gray-700 dark:text-white"
+    />
+  </Group>
+
+  <Tabs value={activeTab} onTabChange={setActiveTab}>
+    <Tabs.List grow>
+      {reminderCategories.map((cat) => (
+        <Tabs.Tab key={cat.value} value={cat.value} className="dark:text-white">
+          {cat.label}
+        </Tabs.Tab>
+      ))}
+    </Tabs.List>
+    <Tabs.Panel value={activeTab} className="pt-4">
+      {loading || loadingLogs ? (
+        <Group className="justify-center mt-10">
+          <Loader />
+        </Group>
+      ) : sortedAndFilteredRecords.length > 0 ? (
+        <Paper className="shadow-md p-4 rounded-md border dark:bg-gray-700 dark:border-gray-600">
+          <table className="w-full text-sm table-auto">
+            <thead className="bg-gray-100 dark:bg-gray-600 dark:text-white">
+              <tr>
+                <th className="text-left p-2">Name</th>
+                {activeTab === 'nurturing' && <th>Status</th>}
+                <th>Date Info</th>
+                <th className="text-center ">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedAndFilteredRecords.map((record) => (
+                <tr key={record.id} className="hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">
+                  <td className="p-2">{record.full_name || 'N/A'}</td>
+                  {activeTab === 'nurturing' && (
+                    <td>
+                      {/* Status Badge - Use a component or span with dynamic Tailwind color */}
+                    </td>
+                  )}
+                  <td className="flex items-center">
+                    {getCategoryIcon(activeTab)}
+                    {formatReminderDate(/* params */)}
+                  </td>
+                  <td className="text-center p-2">
+                    <Button
+                      size="xs"
+                      className="bg-gradient-to-r from-teal-400 to-lime-400 text-white dark:from-teal-500 dark:to-lime-500"
+                      leftIcon={<IconBrandWhatsapp size={16} />}
+                      onClick={() => handleSendReminder(record)}
+                    >
+                      Send
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Paper>
+      ) : (
+        <Text align="center" className="text-gray-500 dark:text-gray-400 mt-10 text-lg">
+          🎉 No pending reminders for this category!
+        </Text>
+      )}
+    </Tabs.Panel>
+  </Tabs>
+</Box>
+
   );
   
 };

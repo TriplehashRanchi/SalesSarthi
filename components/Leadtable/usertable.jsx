@@ -132,12 +132,12 @@ export default function UserListPro() {
       </Group>
 
       <Group spacing="md" mb="md" align="flex-end">
-        <TextInput
+        <input
           icon={<IconSearch size={16} />}
           placeholder="Search name or email..."
           value={searchTerm}
+          className='form-input w-2/3'
           onChange={e => setSearchTerm(e.target.value)}
-          sx={{ flex: 1 }}
         />
         <Select
           placeholder="Filter by Role"
@@ -157,7 +157,7 @@ export default function UserListPro() {
       <Card withBorder radius="md" p={0} style={{ position: 'relative' }}>
         <LoadingOverlay visible={loading} />
         <ScrollArea>
-          <Table miw={800} verticalSpacing="sm">
+          <Table miw={800} verticalSpacing="sm" className='dark:text-white dark:bg-gray-800'>
             <thead>
               <tr>
                 <th><Checkbox

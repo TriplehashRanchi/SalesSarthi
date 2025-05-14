@@ -11,6 +11,7 @@ import {
   Modal,
   Textarea,
   Group,
+  useMantineTheme,
 } from '@mantine/core';
 import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
@@ -62,6 +63,8 @@ const LeadTable = ({ userId }) => {
     lead   : null,     // whole lead object
     text : '',       // working text
   });
+
+  const theme = useMantineTheme(); // Get the theme
   
 
   const router   = useRouter();
@@ -164,9 +167,11 @@ const [payloadViewer, setPayloadViewer] = useState({
 });
 function payloadToSections(raw = {}) {
   // convert string → object if necessary
+
+  /* ---------- Payload ---------- */
   const payload =
     typeof raw === 'string' ? JSON.parse(raw) : raw;
-
+console.log(payload);
   /* ---------- Answers ---------- */
   const answers = (payload.field_data || []).map((f) => ({
     label: f.name
@@ -174,6 +179,7 @@ function payloadToSections(raw = {}) {
       .replace(/\b\w/g, (c) => c.toUpperCase()),
     value: f.values?.[0] || '—',
   }));
+
 
   /* ---------- Campaign / ad meta ---------- */
   const meta = [
@@ -433,7 +439,7 @@ const fetchFollowupHistory = async (leadId) => {
 
   return (
       <div className="panel mt-6 relative">
-          <LoadingOverlay visible={loading || isPolling} overlayBlur={2} />
+          {/* <LoadingOverlay visible={loading || isPolling} overlayBlur={2} /> */}
 
           {error && (
               <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" withCloseButton onClose={() => setError(null)} mb="md">
@@ -465,6 +471,7 @@ const fetchFollowupHistory = async (leadId) => {
                           setPage(1);
                       }}
                       clearable
+                      theme="dark"  
                       searchable
                   />
               </div>
@@ -496,8 +503,7 @@ const fetchFollowupHistory = async (leadId) => {
                   <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
                       Assign ({selectedLeads.length})
                   </Button>
-                  </> 
-             
+                  </>   
           )}
 
              <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
@@ -507,13 +513,13 @@ const fetchFollowupHistory = async (leadId) => {
            </div>
 
           {/* table */}
-          <div className="datatables">
-              <DataTable
+          <div className="datatables dark:bg-gray-800 dark:text-gray-200">
+          <DataTable
+                  // className="dark:bg-gray-800 dark:text-gray-100"
                   withBorder
                   striped
                   highlightOnHover
                   borderRadius="sm"
-                  className="table-hover whitespace-nowrap"
                   records={recordsData}
                   columns={[
                       {
@@ -653,12 +659,40 @@ const fetchFollowupHistory = async (leadId) => {
                                       </Menu.Item>
                                       <Menu.Item
                                           onClick={() => {
-                                              /* sendWhatsApp */
-                                              const num = record.phone_number || '';
-                                              if (/^[6-9]\d{9}$/.test(num.replace(/^91/, ''))) {
-                                                  window.open(`https://wa.me/${num.startsWith('91') ? num : '91' + num}?text=Hello,`, '_blank');
-                                              } else alert('Invalid phone number');
-                                          }}
+                                            const rawPhoneNumber = record.phone_number || '';
+                                        
+                                            if (!rawPhoneNumber.trim()) {
+                                                alert('Phone number is empty.');
+                                                return;
+                                            }
+                                        
+                                            // 1. Sanitize: Remove all non-digit characters (spaces, hyphens, parentheses, plus sign etc.)
+                                            let digitsOnly = rawPhoneNumber.replace(/\D/g, '');
+                                        
+                                            let tenDigitNumber;
+                                        
+                                            // 2. Normalize: Extract the 10-digit number, assuming Indian numbers
+                                            if (digitsOnly.startsWith('91') && digitsOnly.length === 12) {
+                                                // It's a 12-digit number starting with 91 (e.g., "919876543210")
+                                                tenDigitNumber = digitsOnly.substring(2); // Get the last 10 digits
+                                            } else if (digitsOnly.length === 10) {
+                                                // It's a 10-digit number (e.g., "9876543210")
+                                                tenDigitNumber = digitsOnly;
+                                            } else {
+                                                // Not a 10-digit number nor a 12-digit number starting with 91
+                                                alert('Invalid phone number length. Please use a 10-digit number, optionally prefixed with 91.');
+                                                return;
+                                            }
+                                        
+                                            // 3. Validate the extracted 10-digit number (common Indian mobile format)
+                                            if (/^[6-9]\d{9}$/.test(tenDigitNumber)) {
+                                                // Construct the WhatsApp link ensuring '91' is prepended
+                                                const whatsAppLink = `https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`;
+                                                window.open(whatsAppLink, '_blank');
+                                            } else {
+                                                alert('Invalid Indian mobile number format (must be 10 digits starting with 6, 7, 8, or 9).');
+                                            }
+                                        }}
                                           icon={<IconChatDot size={14} />}
                                       >
                                           Send WhatsApp
@@ -673,7 +707,7 @@ const fetchFollowupHistory = async (leadId) => {
                                                   email: record.email,
                                               }).toString();
 
-                                              router.push(`/calc?${qs}`);
+                                              router.push(`/fincalc?${qs}`);
                                           }}
                                       >
                                           Financial Health Check-up
@@ -705,7 +739,59 @@ const fetchFollowupHistory = async (leadId) => {
                   noRecordsText="No leads found"
                   fetching={loading || isPolling}
                   paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} leads`}
-              />
+                  styles={(currentTheme) => {
+                    // Only apply these overrides if in dark mode to avoid breaking light mode
+                    if (currentTheme.colorScheme === 'light') {
+                        return {}; // Let Mantine handle light mode defaults
+                    }
+            
+                    // Define your desired dark mode row colors
+                    const darkEvenRowBg = currentTheme.colors.dark[7]; // Example: for even rows
+                    const darkOddRowBg = currentTheme.colors.dark[6];  // Example: for striped (odd) rows
+                    const darkHoverRowBg = currentTheme.colors.dark[5]; // Example: for hovered rows
+                    const darkTextColor = currentTheme.colors.dark[0];
+                    const darkBorderColor = currentTheme.colors.dark[4];
+            
+                    return {
+                        // Target the root of the table if needed for overall context
+                        root: {
+                            // backgroundColor: currentTheme.colors.dark[8], // Overall table area, if not handled by parent
+                        },
+                        // Target table header cells
+                        th: {
+                            backgroundColor: `${currentTheme.colors.dark[7]} !important`, // Header background
+                            color: `${darkTextColor} !important`,
+                            borderColor: `${darkBorderColor} !important`,
+                        },
+                        // Target table body rows (tr)
+                        tr: {
+                            // Base background for ALL rows in dark mode (will be overridden by :nth-of-type for stripes)
+                            backgroundColor: `${darkEvenRowBg} !important`,
+                            color: `${darkTextColor} !important`, // Ensure text color
+                            borderColor: `${darkBorderColor} !important`, // Ensure border color
+            
+                            // Override for striped (odd) rows in dark mode
+                            '&:nth-of-type(odd)': {
+                                backgroundColor: `${darkOddRowBg} !important`,
+                            },
+            
+                            // Override for hovered rows in dark mode
+                            // This targets rows that have the data-hover attribute,
+                            // which mantine-datatable should add if highlightOnHover is true.
+                            '&[data-hover="true"]:hover, &:hover': { // Covering both general hover and mantine's specific
+                                backgroundColor: `${darkHoverRowBg} !important`,
+                            },
+                        },
+                        // Target table data cells (td)
+                        td: {
+                            color: `${darkTextColor} !important`, // Ensure text color in cells
+                            borderColor: `${darkBorderColor} !important`,
+                             // Cells should be transparent to let <tr> background show
+                            backgroundColor: 'transparent !important',
+                        },
+                    };
+                }}
+            />
           </div>
 
           {/* follow up drawer */}
@@ -794,8 +880,6 @@ const fetchFollowupHistory = async (leadId) => {
                   </Button>
               </Group>
           </Modal>
-         
-
 <Modal
   opened={payloadViewer.open}
   onClose={() => setPayloadViewer({ open:false, data:null, title:'' })}

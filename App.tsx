@@ -7,6 +7,7 @@ import Loading from '@/components/layouts/loading';
 import { getTranslation } from '@/i18n';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationsProvider } from '@mantine/notifications';
+import { MantineProvider } from '@mantine/core';
 
 function App({ children }: PropsWithChildren) {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
@@ -31,6 +32,7 @@ function App({ children }: PropsWithChildren) {
 
     return (
         <NotificationsProvider>
+            <MantineProvider theme={{ colorScheme: themeConfig.theme }}>
         <AuthProvider>
             <div
                 className={`${(themeConfig.sidebar && 'toggle-sidebar') || ''} ${themeConfig.menu} ${themeConfig.layout} ${
@@ -40,6 +42,7 @@ function App({ children }: PropsWithChildren) {
                 {isLoading ? <Loading /> : children}
             </div>
         </AuthProvider>
+        </MantineProvider>
         </NotificationsProvider>
     );
 }

@@ -384,7 +384,7 @@ const ReportingDashboard = () => {
     };
 
     return (
-        <div className="p-4 md:p-6 bg-gray-50 min-h-screen relative">
+        <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen relative">
             <LoadingOverlay visible={loading} overlayBlur={2} />
 
             {/* <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">Sales & Activity Dashboard</h2> */}
@@ -398,7 +398,7 @@ const ReportingDashboard = () => {
             {/* --- KPI Cards --- */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
                 {/* Leads */}
-                <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 p-4 rounded-lg shadow-md text-white">
+                <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 p-4 rounded-lg shadow-md text-white">
                     <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-primary dark:text-white-light">
                             <IconUsersGroup className="h-5 w-5" />
@@ -410,7 +410,7 @@ const ReportingDashboard = () => {
                     </div>
                 </div>
                 {/* Conversions */}
-                <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 p-4 rounded-lg shadow-md text-white">
+                <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 p-4 rounded-lg shadow-md text-white">
                     <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30  text-white dark:bg-success dark:text-white-light">
                             <IconSquareCheck className="h-5 w-5" />
@@ -422,7 +422,7 @@ const ReportingDashboard = () => {
                     </div>
                 </div>
                 {/* Conversion Rate */}
-                <div className="panel bg-gradient-to-r from-teal-500 to-teal-400 p-4 rounded-lg shadow-md text-white">
+                <div className="panel bg-gradient-to-r from-teal-500 to-teal-400 dark:from-teal-700 dark:to-teal-600 p-4 rounded-lg shadow-md text-white">
                     <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-warning dark:text-white-light">
                             <IconTrendingUp className="h-5 w-5" />
@@ -434,7 +434,7 @@ const ReportingDashboard = () => {
                     </div>
                 </div>
                 {/* NEW: Total Sales Value */}
-                <div className="bg-gradient-to-r from-indigo-500 to-indigo-400 p-4 rounded-lg shadow-md text-white">
+                <div className="bg-gradient-to-r from-indigo-500 to-indigo-400 dark:from-indigo-700 dark:to-indigo-600 p-4 rounded-lg shadow-md text-white">
                 <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-warning dark:text-white-light">
                             <IconCoinRupee className="h-5 w-5" />
@@ -468,17 +468,17 @@ const ReportingDashboard = () => {
             {/* --- Charts Row --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {/* Lead Status Pipeline */}
-                <div className="p-4 bg-white shadow-md rounded-lg lg:col-span-1">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Lead Pipeline Status</h3>
+                <div className="p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg lg:col-span-1">
+                    <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-4">Lead Pipeline Status</h3>
                     {Object.keys(dashboardData.leadsByStatus).length > 0 ? (
                         <ReactApexChart options={leadStatusChartOptions} series={leadStatusChartSeries} type="bar" height={300} />
                     ) : (
-                        <p className="text-gray-500 text-center py-10">No lead status data available.</p>
+                        <p className="text-gray-500  dark:text-gray-200 text-center py-10">No lead status data available.</p>
                     )}
                 </div>
                 {/* Leads by Source */}
-                <div className="p-4 bg-white shadow-md rounded-lg lg:col-span-1">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Leads by Source</h3>
+                <div className="p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg lg:col-span-1">
+                    <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-4">Leads by Source</h3>
                     {dashboardData.leadsBySource && Object.keys(dashboardData.leadsBySource).length > 0 ? (
                         <ReactApexChart options={sourceChartOptions} series={Object.values(dashboardData.leadsBySource)} type="donut" height={300} />
                     ) : (
@@ -486,12 +486,12 @@ const ReportingDashboard = () => {
                     )}
                 </div>
                 {/* Appointments Analysis */}
-                <div className="p-4 bg-white shadow-md rounded-lg lg:col-span-1">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Appointments Overview</h3>
+                <div className="p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg lg:col-span-1">
+                    <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-4">Appointments Overview</h3>
                     {dashboardData.totalAppointments > 0 ? (
                         <ReactApexChart options={appointmentChartOptions} series={appointmentChartSeries} type="bar" height={300} />
                     ) : (
-                        <p className="text-gray-500 text-center py-10">No appointment data available.</p>
+                        <p className="text-gray-500  dark:text-gray-200 text-center py-10">No appointment data available.</p>
                     )}
                     <p className="text-xs text-center text-gray-500 mt-2">Missed Rate: {dashboardData.missedAppointmentsRate}% (of total)</p>
                 </div>
@@ -500,28 +500,28 @@ const ReportingDashboard = () => {
             {/* --- Actionable Task Lists --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {/* Upcoming Appointments */}
-                <div className="bg-white p-4 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Upcoming Appointments (Next 7 Days)</h3>
+                <div className="bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-3 border-b pb-2">Upcoming Appointments (Next 7 Days)</h3>
                     {dashboardData.upcomingAppointments.length > 0 ? (
                         <ul className="space-y-2 max-h-60 overflow-y-auto">
                             {dashboardData.upcomingAppointments.map((appt) => (
-                                <li key={appt.id} className="text-sm text-gray-600 border-l-4 border-blue-500 pl-2 py-1">
+                                <li key={appt.id} className="text-sm  dark:text-gray-200 text-gray-600 border-l-4 border-blue-500 pl-2 py-1">
                                     <span className="font-medium">{formatDateTime(appt.appointment_date)}</span> - {appt.appointment_type || 'General'}
                                     {/* Maybe add link/info about related Lead/Customer if ID is available */}
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <p className="text-gray-500 text-sm">No upcoming appointments.</p>
+                        <p className="text-gray-500  dark:text-gray-300 text-sm">No upcoming appointments.</p>
                     )}
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Recent Past Appointments (Last 30 Days)</h3>
+                <div className="bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-3 border-b pb-2">Recent Past Appointments (Last 30 Days)</h3>
                     {dashboardData.pastAppointments.length > 0 ? (
                         <ul className="space-y-2 max-h-60 overflow-y-auto">
                             {dashboardData.pastAppointments.map((appt) => (
-                                <li key={appt.id} className={`text-sm text-gray-600 border-l-4 pl-2 py-1 ${appt.status?.toLowerCase() === 'completed' ? 'border-green-500' : 'border-red-500'}`}>
+                                <li key={appt.id} className={`text-sm text-gray-600  dark:text-gray-200 border-l-4 pl-2 py-1 ${appt.status?.toLowerCase() === 'completed' ? 'border-green-500' : 'border-red-500'}`}>
                                     <span className="font-medium">{formatDateTime(appt.appointment_date)}</span> - {appt.appointment_type || 'General'}
                                     <span className={`ml-2 text-xs font-semibold ${appt.status?.toLowerCase() === 'completed' ? 'text-green-700' : 'text-red-700'}`}>({appt.status})</span>
                                     {/* Optional: Add Lead/Customer info if available */}
@@ -529,17 +529,17 @@ const ReportingDashboard = () => {
                             ))}
                         </ul>
                     ) : (
-                        <p className="text-gray-500 text-sm">No completed/missed appointments in the last 30 days.</p>
+                        <p className="text-gray-500  dark:text-gray-300 text-sm">No completed/missed appointments in the last 30 days.</p>
                     )}
                 </div>
 
                 {/* Upcoming Renewals */}
-                <div className="bg-white p-4 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Upcoming Renewals (Next 30 Days)</h3>
+                <div className="bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-3 border-b pb-2">Upcoming Renewals (Next 30 Days)</h3>
                     {dashboardData.upcomingRenewals.length > 0 ? (
                         <ul className="space-y-2 max-h-60 overflow-y-auto">
                             {dashboardData.upcomingRenewals.map((cust) => (
-                                <li key={cust.id} className="text-sm text-gray-600 border-l-4 border-yellow-500 pl-2 py-1">
+                                <li key={cust.id} className="text-sm text-gray-600  dark:text-gray-200 border-l-4 border-yellow-500 pl-2 py-1">
                                     <span className="font-medium">{cust.full_name || 'N/A'}</span> - Due: {formatDate(cust.renewal_date)}
                                     <p className="text-xs text-gray-500">
                                         Policy: {cust.policy_number || 'N/A'} / Premium: {formatCurrency(cust.premium)}
@@ -549,18 +549,18 @@ const ReportingDashboard = () => {
                             ))}
                         </ul>
                     ) : (
-                        <p className="text-gray-500 text-sm">No upcoming renewals.</p>
+                        <p className="text-gray-500  dark:text-gray-200 text-sm">No upcoming renewals.</p>
                     )}
                 </div>
             </div>
 
             {/* --- Data Export Section --- */}
-            <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Data Export (CSV)</h3>
+            <div className="mt-6 bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 border-b pb-2">Data Export (CSV)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     {/* Export Leads by Date */}
                     <div className="flex flex-col space-y-2">
-                        <p className="text-sm font-medium text-gray-600">Export Leads Created:</p>
+                        <p className="text-sm font-medium text-gray-600  dark:text-gray-300">Export Leads Created:</p>
                         <div className="flex space-x-2">
                             <Button variant="outline" size="xs" onClick={() => handleExportLeadsByDate('week')}>
                                 This Week
@@ -573,7 +573,7 @@ const ReportingDashboard = () => {
 
                     {/* Export Conversions by User */}
                     <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium text-gray-600">Export Conversions By User:</p>
+                        <p className="text-sm font-medium text-gray-600  dark:text-gray-200">Export Conversions By User:</p>
                         <Select
                             placeholder="Select Team Member"
                             data={teamMembers.map((tm) => ({ value: String(tm.id), label: tm.username }))} // Ensure value is string for Select
@@ -585,7 +585,7 @@ const ReportingDashboard = () => {
                         />
                     </div>
                     <div>
-                        <Button size="xs" onClick={handleExportConversionsByUser} disabled={!selectedExportUser || dashboardData.allCustomers.length === 0}>
+                        <Button size="xs" className='dark:bg-cyan-200 dark:text-black' onClick={handleExportConversionsByUser} disabled={!selectedExportUser || dashboardData.allCustomers.length === 0}>
                             Export Conversions
                         </Button>
                     </div>

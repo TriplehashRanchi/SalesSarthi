@@ -14,16 +14,16 @@ export default function ViewUsers() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen">
       {/* Page Title */}
-      <h1 className="text-3xl font-bold text-gray-700 mb-6">👥 Team Members</h1>
+      <h1 className="text-3xl font-bold mb-6"> Team Members</h1>
 
       {/* Filter Section */}
-      <div className="flex items-center justify-between mb-4">
-        <label className="text-gray-600 font-medium text-lg">Filter by Role:</label>
+      <div className="flex items-center justify-between mb-4 dark:text-white ">
+        <label className="text-gray-600 font-medium text-lg dark:text-white">Filter by Role:</label>
         <select 
           onChange={(e) => setFilter(e.target.value)}
-          className="w-1/4 p-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300"
+          className="w-1/4 p-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300 dark:bg-gray-700 dark:text-white"
         >
           <option value="">All Roles</option>
           <option value="Manager">Manager</option>
@@ -31,7 +31,7 @@ export default function ViewUsers() {
         </select>
       </div>
 
-      {/* User List Table */}
+      {/* User List Table */} 
       <UserList users={users.filter(user => (filter ? user.role === filter : true))} />
     </div>
   );

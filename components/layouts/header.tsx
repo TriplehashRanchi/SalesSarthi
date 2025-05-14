@@ -202,8 +202,8 @@ const Header = () => {
                                                 </div>
                                             </li>
                                             <li><Link href="/profile" className="dark:hover:text-white"><IconUser className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" /> Profile</Link></li>
-                                            <li><Link href="/apps/mailbox" className="dark:hover:text-white"><IconMail className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" /> Inbox</Link></li>
-                                            <li><Link href="/auth/boxed-lockscreen" className="dark:hover:text-white"><IconLockDots className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" /> Lock Screen</Link></li>
+                                            {/* <li><Link href="/apps/mailbox" className="dark:hover:text-white"><IconMail className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" /> Inbox</Link></li> */}
+                                            {/* <li><Link href="/auth/boxed-lockscreen" className="dark:hover:text-white"><IconLockDots className="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" /> Lock Screen</Link></li> */}
                                             <li className="border-t border-white-light dark:border-white-light/10">
                                                 <button type="button" onClick={handleSignOut} className="!py-3 text-danger flex items-center w-full" > <IconLogout className="h-4.5 w-4.5 shrink-0 rotate-90 ltr:mr-2 rtl:ml-2" /> Sign Out </button>
                                             </li>

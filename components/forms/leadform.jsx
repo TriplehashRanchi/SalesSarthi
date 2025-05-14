@@ -109,14 +109,14 @@ const LeadForm = ({ existingLead }) => {
   };
 
   return (
-    <div className="form-container p-6 bg-white rounded shadow-md">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+    <div className="form-container p-6 bg-white dark:bg-gray-900 rounded shadow-md">
+      <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
         {existingLead ? 'Edit Lead' : 'Add New Lead'}
       </h2>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Full Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Full Name
           </label>
           <input
@@ -132,7 +132,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700  dark:text-slate-300 mb-1">
             Email
           </label>
           <input
@@ -148,7 +148,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Phone Number */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700  dark:text-slate-300 mb-1">
             Phone Number
           </label>
           <input
@@ -164,7 +164,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Lead Status with custom options */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Lead Status
           </label>
           <select
@@ -185,7 +185,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Gender */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Gender
           </label>
           <select
@@ -202,7 +202,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Date of Birth */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Date of Birth
           </label>
           <input
@@ -216,7 +216,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Address */}
         <div className="col-span-1 lg:col-span-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Address
           </label>
           <textarea
@@ -230,7 +230,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Insurance Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Insurance Type
           </label>
           <input
@@ -245,7 +245,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Policy Number */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Policy Number
           </label>
           <input
@@ -260,7 +260,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Coverage Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Coverage Amount
           </label>
           <input
@@ -276,7 +276,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Preferred Plan */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Preferred Plan
           </label>
           <input
@@ -291,7 +291,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Next Follow-up Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Next Follow-up Date
           </label>
           <input
@@ -305,7 +305,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Source */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Source
           </label>
           <input
@@ -320,7 +320,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Company Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Company Name
           </label>
           <input
@@ -335,7 +335,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Referrer */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Referrer
           </label>
           <input
@@ -350,7 +350,7 @@ const LeadForm = ({ existingLead }) => {
 
         {/* Notes */}
         <div className="col-span-1 lg:col-span-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Notes
           </label>
           <textarea

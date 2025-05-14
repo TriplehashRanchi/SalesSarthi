@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Textarea, Button, Group } from '@mantine/core';
+import { Textarea, Button, Group, Text, Select, Box } from '@mantine/core';
 import axios from 'axios';
 import { showNotification } from '@mantine/notifications';
 
@@ -11,89 +11,136 @@ const availableVariables = [
   { value: '{dob}', label: 'Date of Birth' },
   { value: '{renewal_date}', label: 'Renewal Date' },
   { value: '{appointment_date}', label: 'Appointment Date' },
-  // Add any additional placeholders as needed
 ];
 
-const TemplateForm = ({ initialData, category, onSave, apiUrl, token }) => {
+// Special key for the Select component to represent a custom/edited message
+const CUSTOM_TEMPLATE_KEY = '__custom_edited__';
 
-    console.log('API tokwn:', token);
-  // Removed template_name from state since it's irrelevant now.
-  const [formData, setFormData] = useState({
-    template_message: initialData ? initialData.template_message : '',
-    category: category || 'new_lead',
-  });
+const TemplateForm = ({
+  initialData, // Existing template data from DB { id, template_message, category } or null
+  categoryValue, // e.g., 'nurturing'
+  predefinedTemplatesForCategory, // Array: [{ id, name, message }, ...]
+  onSave,
+  apiUrl,
+  token,
+}) => {
+  const [templateMessage, setTemplateMessage] = useState('');
+  const [selectedPredefinedKey, setSelectedPredefinedKey] = useState(null); // Stores id of selected predefined or CUSTOM_TEMPLATE_KEY
   const [loading, setLoading] = useState(false);
   const textAreaRef = useRef(null);
 
-  // Update the form when initialData or category changes.
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        template_message: initialData.template_message,
-        category: initialData.category,
-      });
-    } else {
-      setFormData({
-        template_message: '',
-        category: category || 'new_lead',
-      });
-    }
-  }, [initialData, category]);
+  // Prepare data for the Select component
+  const selectOptions = [
+    { value: CUSTOM_TEMPLATE_KEY, label: 'Custom / Edited Message' },
+    ...(predefinedTemplatesForCategory || []).map(pt => ({ value: pt.id, label: pt.name })),
+  ];
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    if (initialData && initialData.template_message) {
+      setTemplateMessage(initialData.template_message);
+      // Check if current message matches any predefined template
+      const matchedPredefined = (predefinedTemplatesForCategory || []).find(
+        pt => pt.message === initialData.template_message
+      );
+      if (matchedPredefined) {
+        setSelectedPredefinedKey(matchedPredefined.id);
+      } else {
+        setSelectedPredefinedKey(CUSTOM_TEMPLATE_KEY); // Mark as custom if no exact match
+      }
+    } else {
+      // New template, or no initial message
+      setTemplateMessage('');
+      setSelectedPredefinedKey(null); // Nothing selected yet, placeholder will show
+    }
+  }, [initialData, predefinedTemplatesForCategory]);
+
+  const handlePredefinedSelectChange = (value) => {
+    setSelectedPredefinedKey(value);
+    if (value && value !== CUSTOM_TEMPLATE_KEY) {
+      const selectedTemplate = predefinedTemplatesForCategory.find(t => t.id === value);
+      if (selectedTemplate) {
+        setTemplateMessage(selectedTemplate.message);
+      }
+    } else if (value === CUSTOM_TEMPLATE_KEY) {
+      // User explicitly selected "Custom", message in textarea is kept.
+      // If they want to start blank from here, they'd need to clear the textarea.
+    } else { // Value is null (if Select is clearable and cleared)
+      setTemplateMessage('');
+    }
   };
 
-  // Inserts a placeholder variable into template_message at the current cursor position.
+  const handleTextAreaChange = (event) => {
+    const newMessage = event.currentTarget.value;
+    setTemplateMessage(newMessage);
+
+    if (selectedPredefinedKey && selectedPredefinedKey !== CUSTOM_TEMPLATE_KEY) {
+      // If a predefined template was selected, check if message still matches
+      const currentSelectedObject = predefinedTemplatesForCategory.find(t => t.id === selectedPredefinedKey);
+      if (currentSelectedObject && currentSelectedObject.message !== newMessage) {
+        setSelectedPredefinedKey(CUSTOM_TEMPLATE_KEY); // Message has been edited
+      }
+    } else if (!selectedPredefinedKey && newMessage !== '') {
+      // If nothing was selected and user starts typing, it's custom
+      setSelectedPredefinedKey(CUSTOM_TEMPLATE_KEY);
+    }
+  };
+
   const handleInsertVariable = (variable) => {
     if (textAreaRef.current) {
       const textarea = textAreaRef.current;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const currentValue = formData.template_message;
+      const currentValue = templateMessage;
       const newValue = currentValue.substring(0, start) + variable + currentValue.substring(end);
-      setFormData((prev) => ({ ...prev, template_message: newValue }));
-      // Reset cursor position after insertion.
+      setTemplateMessage(newValue);
+
+      // If a predefined template was selected, and message changes due to variable insertion
+      if (selectedPredefinedKey && selectedPredefinedKey !== CUSTOM_TEMPLATE_KEY) {
+        const currentSelectedObject = predefinedTemplatesForCategory.find(t => t.id === selectedPredefinedKey);
+        if (currentSelectedObject && currentSelectedObject.message !== newValue) {
+          setSelectedPredefinedKey(CUSTOM_TEMPLATE_KEY);
+        }
+      } else if (!selectedPredefinedKey && newValue !== '') {
+         setSelectedPredefinedKey(CUSTOM_TEMPLATE_KEY);
+      }
+
       setTimeout(() => {
         textarea.selectionStart = textarea.selectionEnd = start + variable.length;
         textarea.focus();
       }, 0);
-    } else {
-      // Fallback: simply append the variable
-      setFormData((prev) => ({
-        ...prev,
-        template_message: prev.template_message + ' ' + variable,
-      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!templateMessage.trim()) {
+        showNotification({ title: 'Validation Error', message: 'Template message cannot be empty.', color: 'orange' });
+        return;
+    }
     setLoading(true);
+    const dataToSend = {
+      template_message: templateMessage,
+      category: categoryValue,
+    };
+
     try {
       let res;
-      if (initialData) {
-        // Update the existing template.
-        res = await axios.put(`${apiUrl}/api/templates/${initialData.id}`, formData, {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        }});
-      } else {
-        // Create a new template.
-        res = await axios.post(`${apiUrl}/api/templates`, formData, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-          }});
+      if (initialData && initialData.id) { // Editing an existing template
+        res = await axios.put(`${apiUrl}/api/templates/${initialData.id}`, dataToSend, {
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        });
+        onSave(res.data, true); // true for isEditing
+      } else { // Creating a new template
+        res = await axios.post(`${apiUrl}/api/templates`, dataToSend, {
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        });
+        onSave(res.data, false); // false for isEditing
       }
-      onSave(res.data, Boolean(initialData));
     } catch (error) {
-      console.error('Error saving template:', error);
+      console.error('Error saving template:', error.response ? error.response.data : error);
       showNotification({
         title: 'Error',
-        message: 'Failed to save template',
+        message: error.response?.data?.message || 'Failed to save template.',
         color: 'red',
       });
     } finally {
@@ -102,28 +149,47 @@ const TemplateForm = ({ initialData, category, onSave, apiUrl, token }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit}>
+      <Box mb="md">
+        <Select
+          label="Choose a Pre-made Template (Optional)"
+          placeholder="Select a template or write your own below"
+          value={selectedPredefinedKey}
+          onChange={handlePredefinedSelectChange}
+          data={selectOptions}
+          clearable
+          allowDeselect // Allows user to clear selection back to null
+        />
+      </Box>
+
       <Textarea
         label="Template Message"
-        name="template_message"
-        value={formData.template_message}
-        onChange={handleChange}
+        value={templateMessage}
+        onChange={handleTextAreaChange}
         required
         ref={textAreaRef}
+        minRows={7}
+        autosize
+        mb="md"
       />
-      <Group spacing="xs" mt="sm">
-        {availableVariables.map((variable) => (
-          <Button
-            key={variable.value}
-            size="xs"
-            variant="outline"
-            onClick={() => handleInsertVariable(variable.value)}
-          >
-            {variable.label}
-          </Button>
-        ))}
-      </Group>
-      <Group position="right" mt="md">
+
+      <Box mb="md">
+        <Text size="sm" weight={500} mb="xs">Insert Variable:</Text>
+        <Group spacing="xs">
+          {availableVariables.map((variable) => (
+            <Button
+              key={variable.value}
+              size="xs"
+              variant="outline"
+              onClick={() => handleInsertVariable(variable.value)}
+            >
+              {variable.label}
+            </Button>
+          ))}
+        </Group>
+      </Box>
+
+      <Group position="right" mt="xl">
         <Button type="submit" loading={loading}>
           {initialData ? 'Update Template' : 'Create Template'}
         </Button>
