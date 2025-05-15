@@ -7,7 +7,7 @@ import IconTrashLines from '@/components/icon/icon-trash-lines';
 import IconPlus from '@/components/icon/icon-plus';
 
 // Determine the base API URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URI || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 /**
  * CampaignList Component
