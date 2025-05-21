@@ -994,7 +994,7 @@ useEffect(() => {
                             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-md shadow-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                             disabled={!formData.clientName || !formData.date} // Basic validation example
                         >
-                            Generate Financial Health Report
+                            Generate Financial Health Report !
                         </button>
                     </div>
                 </div>
