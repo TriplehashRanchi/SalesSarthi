@@ -10,7 +10,7 @@
 //     company: 'ArthMitra Gurukulam',
 //     email: 'yogitraining.video@gmail.com',
 //     phone: '9818122533',
-//     logo: '/assets/images/logo.svg',
+//     logo: '/assets/images/logox.png',
 //     website: 'www.example.com',
 //   };
 
