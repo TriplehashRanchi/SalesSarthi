@@ -15,7 +15,7 @@ const BannerPage = () => {
                         </Link>
                         <div className="mt-4 hidden w-full max-w-[430px] lg:block">
                             {/* <img src="/assets/images/auth/login.svg" alt="Cover Image" className="w-full" /> */}
-                            <h2 className='text-3xl text-center font-extrabold uppercase !leading-snug text-pink-100 md:text-4xl'>Sales sarthi</h2>
+                            <h2 className='text-3xl text-center font-extrabold uppercase !leading-snug text-pink-100 md:text-4xl'>DG Saarthi</h2>
                         </div>
                     </div>
                 </div>
@@ -44,7 +44,7 @@ const BannerPage = () => {
                             </Link>
                         </div>
                     </div>
-                    <p className="absolute bottom-6 w-full text-center dark:text-white">© {new Date().getFullYear()}.Sales SarthiAll Rights Reserved.</p>
+                    <p className="absolute bottom-6 w-full text-center dark:text-white">© {new Date().getFullYear()}.Digital Gyani Saarthi. All Rights Reserved.</p>
                 </div>
             </div>
         </div>

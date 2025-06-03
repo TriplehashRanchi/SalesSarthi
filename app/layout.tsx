@@ -6,8 +6,8 @@ import { Nunito } from 'next/font/google';
 
 export const metadata: Metadata = {
     title: {
-        template: '%s | Sales Sarthi - har kadam aapke sath',
-        default: 'Sales Sarthi - har kadam aapke sath',
+        template: '%s | DG Saarthi - har kadam aapke sath',
+        default: 'DG Saarthi - har kadam aapke sath',
     },
 };
 const nunito = Nunito({

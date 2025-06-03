@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
 import { showNotification } from "@mantine/notifications";
@@ -16,12 +16,21 @@ const ComponentsAuthLoginForm = () => {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
+  // ✅ Redirect after user (with role) is available
+  useEffect(() => {
+    if (user?.role === "admin") {
+      router.push("/dashboard");
+    } else if (user?.role === "Manager" || user?.role === "Salesperson") {
+      router.push("/user-dashboard");
+    }
+  }, [user]);
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setError("");
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            router.push("/user-dashboard");
+            // router.push("/user-dashboard");
         } catch (err) {
             setError(err.message);
         }
@@ -30,7 +39,7 @@ const ComponentsAuthLoginForm = () => {
     const handleGoogleLogin = async () => {
         try {
             await signInWithPopup(auth, googleProvider);
-            router.push("/user-dashboard");
+            // router.push("/user-dashboard");
         } catch (err) {
             setError(err.message);
         }

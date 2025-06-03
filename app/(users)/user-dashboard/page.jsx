@@ -339,10 +339,10 @@ const UserDashboard = () => {
     };
 
     return (
-        <div className="p-4 md:p-6 bg-gray-50 min-h-screen relative">
+        <div className="p-4 panel md:p-6 bg-gray-50 min-h-screen relative">
             <LoadingOverlay visible={loading} overlayBlur={2} />
 
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">My Dashboard</h2>
+            <h2 className="text-2xl md:text-3xl font-semibold dark:text-gray-200 text-gray-800 mb-6 text-center">My Dashboard</h2>
 
             {error && (
                 <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" withCloseButton onClose={() => setError(null)} mb="lg">
@@ -351,7 +351,7 @@ const UserDashboard = () => {
             )}
 
             {/* --- KPI Cards (User Context) --- */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
+            <div className="grid panel grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
                 {/* My Leads */}
                 <div className="bg-gradient-to-r from-blue-500 to-blue-400 p-4 rounded-lg shadow-md text-white">
                      <div className="flex p-5">
@@ -434,7 +434,7 @@ const UserDashboard = () => {
             {/* --- Charts Row (User Context) --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                  {/* My Lead Status Pipeline */}
-                <div className="p-4 bg-white shadow-md rounded-lg lg:col-span-1">
+                <div className="p-4 shadow-md rounded-lg lg:col-span-1">
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">My Lead Pipeline</h3>
                     {Object.keys(dashboardData.leadsByStatus).length > 0 ? (
                         <ReactApexChart options={leadStatusChartOptions} series={leadStatusChartSeries} type="bar" height={300} />
@@ -443,7 +443,7 @@ const UserDashboard = () => {
                     )}
                 </div>
                 {/* My Leads by Source */}
-                <div className="p-4 bg-white shadow-md rounded-lg lg:col-span-1">
+                <div className="p-4  shadow-md rounded-lg lg:col-span-1">
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">My Leads by Source</h3>
                     {dashboardData.leadsBySource && Object.keys(dashboardData.leadsBySource).length > 0 ? (
                         <ReactApexChart options={sourceChartOptions} series={Object.values(dashboardData.leadsBySource)} type="donut" height={300} />
@@ -452,7 +452,7 @@ const UserDashboard = () => {
                     )}
                 </div>
                 {/* My Appointments Analysis */}
-                <div className="p-4 bg-white shadow-md rounded-lg lg:col-span-1">
+                <div className="p-4  shadow-md rounded-lg lg:col-span-1">
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">My Appointments</h3>
                     {dashboardData.totalAppointments > 0 ? (
                         <ReactApexChart options={appointmentChartOptions} series={appointmentChartSeries} type="bar" height={300} />
@@ -501,7 +501,7 @@ const UserDashboard = () => {
                 </div>
 
                 {/* My Upcoming Renewals */}
-                <div className="bg-white p-4 rounded-lg shadow-md">
+                <div className=" p-4 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">My Upcoming Renewals (Next 30 Days)</h3>
                     {dashboardData.upcomingRenewals.length > 0 ? (
                         <ul className="space-y-2 max-h-60 overflow-y-auto">
@@ -525,7 +525,7 @@ const UserDashboard = () => {
             </div>
 
              {/* --- Data Export Section (User Specific) --- */}
-            <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
+            <div className="mt-6 p-4 rounded-lg shadow-md">
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Export My Data (CSV)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                     {/* Export My Leads by Date */}
