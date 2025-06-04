@@ -7,9 +7,15 @@ import ScrollToTop from '@/components/layouts/scroll-to-top';
 import Setting from '@/components/layouts/setting';
 import Sidebar from '@/components/layouts/sidebar';
 import Portals from '@/components/portals';
+import Head from 'next/head';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
     return (
+        <>
+        <Head>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet" />
+</Head>
          <div className="min-h-screen text-black dark:text-white-dark">{children} </div>
+         </>
     );
 }

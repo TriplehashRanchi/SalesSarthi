@@ -22,7 +22,7 @@ const BannerPage = () => {
                         </Link>
                         <div className="mt-24 hidden w-full max-w-[430px] lg:block">
                             {/* <img src="/assets/images/auth/login.svg" alt="Cover Image" className="w-full" /> */}
-                            <h2 className='text-3xl text-center font-extrabold uppercase !leading-snug text-pink-100 md:text-4xl'>Digital Gyani Saarthi</h2>
+                            <h2 className='text-3xl text-center font-extrabold  !leading-snug text-pink-100 md:text-4xl font-righteous'>Digital Gyani Saarthi</h2>
                         </div>
                     </div>
                 </div>

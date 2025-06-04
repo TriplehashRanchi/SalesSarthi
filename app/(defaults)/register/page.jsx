@@ -15,7 +15,7 @@ const BannerPage = () => {
                         </Link>
                         <div className="mt-4 hidden w-full max-w-[430px] lg:block">
                             {/* <img src="/assets/images/auth/login.svg" alt="Cover Image" className="w-full" /> */}
-                            <h2 className='text-3xl text-center font-extrabold uppercase !leading-snug text-pink-100 md:text-4xl'>DG Saarthi</h2>
+                            <h2 className='text-3xl text-center font-extrabold  !leading-snug text-pink-100 md:text-4xl font-righteous' >Digital Gyani Saarthi</h2>
                         </div>
                     </div>
                 </div>
@@ -28,7 +28,7 @@ const BannerPage = () => {
                     </div>
                     <div className="w-full max-w-[440px] lg:mt-16">
                         <div className="mb-10">
-                            <h1 className="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Sign in</h1>
+                            <h1 className="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Sign Up</h1>
                             <p className="text-base font-bold leading-normal text-white-dark">Enter your email and password to login</p>
                         </div>
                         <Login />

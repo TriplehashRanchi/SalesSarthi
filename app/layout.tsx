@@ -2,7 +2,7 @@ import ProviderComponent from '@/components/layouts/provider-component';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import '../styles/tailwind.css';
 import { Metadata } from 'next';
-import { Nunito } from 'next/font/google';
+import { Nunito, Righteous } from 'next/font/google';
 
 export const metadata: Metadata = {
     title: {
@@ -17,10 +17,17 @@ const nunito = Nunito({
     variable: '--font-nunito',
 });
 
+const righteous = Righteous({
+    weight: ['400'],
+    subsets: ['latin'],
+    display: 'swap',
+    variable: '--font-righteous',
+})
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <body className={nunito.variable}>
+            <body className={`${nunito.variable} ${righteous.variable}`}>
                 <ProviderComponent>{children}</ProviderComponent>
             </body>
         </html>

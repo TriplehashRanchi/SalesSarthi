@@ -197,6 +197,7 @@ const LeadForm = ({ existingLead }) => {
             <option value="">Select Gender</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
@@ -292,7 +293,7 @@ const LeadForm = ({ existingLead }) => {
         {/* Next Follow-up Date */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Next Follow-up Date
+            Next Follow-up Date Time
           </label>
           <input
             type="datetime-local"

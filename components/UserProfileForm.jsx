@@ -9,6 +9,7 @@ import { getAuth } from 'firebase/auth';
 import { useCloudinaryUpload } from '@/utils/useCloudinaryUpload';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { IconAlertTriangle } from '@tabler/icons-react';
 
 
 const AccountSettingsTabs = () => {
@@ -191,7 +192,7 @@ const AccountSettingsTabs = () => {
                     { id: 'home', label: 'Home', icon: <IconHome /> },
                     { id: 'subscription', label: 'Subscription', icon: <IconDollarSignCircle /> },
                     { id: 'company', label: 'Company Details', icon: <IconUser className="h-5 w-5" /> },
-                    { id: 'danger-zone', label: 'Danger Zone', icon: <IconPhone /> },
+                    { id: 'danger-zone', label: 'Danger Zone', icon: <IconAlertTriangle /> },
                 ].map((t) => (
                     <li key={t.id} className="inline-block">
                         <button
@@ -219,7 +220,7 @@ const AccountSettingsTabs = () => {
                         <div className="grid flex-1 grid-cols-1 gap-5 sm:grid-cols-2">
                             {[
                                 { id: 'name', label: 'Full Name', placeholder: 'Your Name ' },
-                                { id: 'profession', label: 'Profession', placeholder: 'Web Developer' },
+                                { id: 'profession', label: 'Profession', placeholder: 'Enter Your Profession' },
                                 { id: 'location', label: 'Location', placeholder: 'Location' },
                                 { id: 'phone', label: 'Phone', placeholder: '+91 98755-XXXXX' },
                                 { id: 'email', label: 'Email', placeholder: 'jimmy@example.com', type: 'email' },
@@ -270,7 +271,7 @@ const AccountSettingsTabs = () => {
                             </div>
                             <div>
                                 <label htmlFor="address">Address</label>
-                                <input id="address" className="form-input" placeholder="New York" value={profile.address} onChange={(e) => handleProfileChange('address', e.target.value)} />
+                                <input id="address" className="form-input" placeholder="Enter Your Address" value={profile.address} onChange={(e) => handleProfileChange('address', e.target.value)} />
                             </div>
 
                             <div className="mt-3 sm:col-span-2">

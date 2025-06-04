@@ -264,10 +264,10 @@ export default function EnhancedFormBuilder() {
       ? `border: 1px solid ${styles.buttonBackgroundColor}; background-color: transparent; color: ${styles.buttonBackgroundColor};`
       : `border: none; background-color: ${styles.buttonBackgroundColor}; color: ${styles.buttonTextColor};`;
     
-    const formId = 'sarthiEmbedForm'; // Unique ID
+    const formId = 'sarthiEmbedForm'; // Unique ID  
     const statusId = 'sarthiEmbedStatus'; // Unique ID
     
-    let code = `<form id="${formId}" action="https://sarthiapi.vercel.app/api/leads/embed" method="POST" data-redirect="${styles.redirectUrl || ''}" style="background-color: ${styles.formBackgroundColor}; padding: 25px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; border-radius: ${borderRadiusMap[styles.roundedCorners]}; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">\n`;
+    let code = `<form id="${formId}" action="https://api.digitalgyanisaarthi.com/api/leads/embed" method="POST" data-redirect="${styles.redirectUrl || ''}" style="background-color: ${styles.formBackgroundColor}; padding: 25px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; border-radius: ${borderRadiusMap[styles.roundedCorners]}; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">\n`;
     
     code += `  <input type="hidden" name="admin_id" value="${admin_id || 'YOUR_ADMIN_ID_FALLBACK'}" />\n`; // Use admin_id
     

@@ -64,6 +64,7 @@ module.exports = {
             },
             fontFamily: {
                 nunito: ['var(--font-nunito)'],
+                righteous: ['var(--font-righteous)'],
             },
             spacing: {
                 4.5: '18px',

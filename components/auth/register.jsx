@@ -1,20 +1,31 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, googleProvider } from "@/utils/firebase";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { useAuth } from "@/context/AuthContext";
 
 const ComponentsAuthRegisterForm = () => {
     const router = useRouter();
+    const { user } = useAuth();
+
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-    // Handle Email/Password Signup
+    // ✅ Redirect based on role after auth state updates
+    useEffect(() => {
+        if (user?.role === "admin") {
+            router.push("/admin-dashboard");
+        } else if (user?.role === "user") {
+            router.push("/user-dashboard");
+        }
+    }, [user]);
+
     const handleRegister = async (e) => {
         e.preventDefault();
         setError("");
@@ -24,12 +35,12 @@ const ComponentsAuthRegisterForm = () => {
             const firebase_uid = userCredential.user.uid;
 
             await registerAdmin(firebase_uid, name, email, phone);
+            // ✅ Let useEffect handle redirect after auth context updates
         } catch (err) {
             setError(err.message);
         }
     };
 
-    // Handle Google Signup
     const handleGoogleSignIn = async () => {
         try {
             const result = await signInWithPopup(auth, googleProvider);
@@ -37,14 +48,13 @@ const ComponentsAuthRegisterForm = () => {
             const userEmail = result.user.email;
             const userName = result.user.displayName;
 
-            await registerAdmin(firebase_uid, userName, userEmail, ""); // No phone from Google
-
+            await registerAdmin(firebase_uid, userName, userEmail, "");
+            // ✅ Let useEffect handle redirect
         } catch (err) {
             setError(err.message);
         }
     };
 
-    // Send data to backend for database storage
     const registerAdmin = async (firebase_uid, name, email, phone) => {
         try {
             const response = await fetch(`${API_URL}/api/admin/register`, {
@@ -56,7 +66,7 @@ const ComponentsAuthRegisterForm = () => {
             const data = await response.json();
             if (!response.ok) throw new Error(data.message);
 
-            router.push("/dashboard");
+            // ✅ Wait for context to detect new user & trigger redirect
         } catch (err) {
             setError(err.message);
         }

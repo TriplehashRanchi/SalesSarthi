@@ -102,6 +102,7 @@ return (
           <TextInput
             label="First Name"
             name="first_name"
+            placeholder='Enter First Name'
             icon={<IconUserPlus size={16} />}
             value={userData.first_name}
             onChange={handleChange}
@@ -121,6 +122,7 @@ return (
           <TextInput
             label="Last Name"
             name="last_name"
+            placeholder='Enter Last Name'
             icon={<IconUserPlus size={16} />}
             value={userData.last_name}
             onChange={handleChange}
@@ -134,6 +136,7 @@ return (
             label="Email Address"
             name="email"
             type="email"
+            placeholder='email@example.com'
             icon={<IconMail size={16} />}
             value={userData.email}
             onChange={handleChange}
@@ -165,6 +168,7 @@ return (
           <Select
             label="Role"
             name="role"
+            placeholder='Select a role'
             data={['Manager', 'Salesperson']}
             value={userData.role}
             onChange={(v) => setUserData((prev) => ({ ...prev, role: v }))}
@@ -180,6 +184,7 @@ return (
           <PasswordInput
             label="Password"
             name="password"
+            placeholder='Enter Password'
             icon={<IconShieldLock size={16} />}
             value={userData.password}
             onChange={handleChange}
@@ -193,6 +198,7 @@ return (
           <PasswordInput
             label="Confirm Password"
             name="confirm_password"
+            placeholder='Confirm Password'
             icon={<IconShieldLock size={16} />}
             value={userData.confirm_password}
             onChange={handleChange}
