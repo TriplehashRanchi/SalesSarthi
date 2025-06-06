@@ -1,18 +1,20 @@
 "use client";
 // Parent component (e.g., page.jsx)
+import {useAuth} from "@/context/AuthContext";
 import LeadForm from '@/components/forms/leadform';
 
 
 const ParentComponent = () => {
+  const { user } = useAuth();
   return (
     <div>
       {/* Thought of the Day Section */}
       <div className="panel flex items-center justify-between overflow-x-auto whitespace-nowrap p-3 text-primary bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700 rounded-md mb-4 shadow-md">
         <div className="text-lg font-semibold text-white">
-          Hello User !
+         {user ? `Hello ${user.displayName || 'User'} !` : 'Hello User !'}
         </div>
         <div className="text-sm italic text-gray-200">
-          You got 7 fresh leads , check them out .
+         A new lead is a start of a new adventure.
         </div>
       </div>
 
