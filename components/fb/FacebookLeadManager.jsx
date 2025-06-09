@@ -385,7 +385,7 @@
       <div className="panel rounded-md border p-4 shadow-md dark:border-gray-700 dark:bg-gray-800 sm:p-6">
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Facebook Lead Integration</h1>
-            {fbToken && tokenSource && <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">FB Connected ({tokenSource})</span>}
+            {fbToken && tokenSource && <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">FB Connected </span>}
             {!fbToken && !tokenCheckComplete && (
               <div className="flex items-center text-sm text-gray-500">
                   <IconLoader /> <span className="ml-2">Checking connection...</span>
