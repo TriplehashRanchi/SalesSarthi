@@ -119,7 +119,7 @@
                 
                 if (response.data && response.data.fbToken) {
                     console.log('Found FB token in DB');
-                    currentFbToken = response.data.fbToken;
+                    currentFbToken = response.data.fbToken.fb_access_token  ;
                     source = 'db';
                     localStorage.setItem('fbAccessToken', currentFbToken); // Sync to local storage
                 } else {
