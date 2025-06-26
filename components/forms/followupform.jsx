@@ -62,7 +62,8 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel }) 
     setSubmitting(true);
 
     const localDate = new Date(followUpDate);
-    const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+    const correctUtcIsoString = localDate.toISOString();
+
 
     // Get auth token for the SECURE actions (create/update)
     const auth = getAuth();
@@ -77,7 +78,7 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel }) 
     // The data payload is clean, with no user_id.
     const followUpData = {
       lead_id: leadId,
-      follow_up_date: utcDate.toISOString(),
+      follow_up_date: correctUtcIsoString,
       status: status,
       purpose: purpose,
       notes: notes,
