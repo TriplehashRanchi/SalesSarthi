@@ -31,11 +31,11 @@ const ComponentsAuthRegisterForm = () => {
 
     // ✅ Redirect logic remains the same.
     useEffect(() => {
-        if (user?.role === 'admin') {
-            router.push('/dashboard');
-        } else if (user?.role === 'user') {
-            router.push('/user-dashboard');
-        }
+        // if (user?.role === 'admin') {
+        //     router.push('/dashboard');
+        // } else if (user?.role === 'user') {
+        //     router.push('/user-dashboard');
+        // }
     }, [user, router]);
 
     // Helper to register the user on your backend
@@ -65,6 +65,8 @@ const ComponentsAuthRegisterForm = () => {
 
             // This will throw an error if it fails, which will be caught below
             await registerAdmin(firebase_uid, name, email, phone);
+            router.push(`/payment?uid=${firebase_uid}`);
+
 
             // The redirect will happen via useEffect, so we don't need to do anything here.
             // We don't even need to set isLoading(false) on success, because the page will navigate away.
@@ -91,6 +93,8 @@ const ComponentsAuthRegisterForm = () => {
 
             // This will throw an error if it fails
             await registerAdmin(firebase_uid, userName, userEmail, '');
+            router.push(`/payment?uid=${firebase_uid}`);
+
 
         } catch (err) {
              // Handle common Firebase errors

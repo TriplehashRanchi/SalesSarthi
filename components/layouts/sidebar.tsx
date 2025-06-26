@@ -20,7 +20,7 @@ import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
-import {IconBrandFacebook, IconBrandWhatsappFilled, IconForms, IconReport} from '@tabler/icons-react';
+import {IconBrandFacebook, IconBrandWhatsappFilled, IconForms, IconHistory, IconReport} from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
@@ -170,6 +170,14 @@ const Sidebar = () => {
                                     <div className="flex items-center">
                                         <IconUsers className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('My Team')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/followups">
+                                    <div className="flex items-center">
+                                        <IconHistory className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Follow Ups')}</span>
                                     </div>
                                 </Link>
                             </li>

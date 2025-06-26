@@ -17,14 +17,20 @@ const DefaultLayout = ({ children }) => {
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                router.push("/login"); // Redirect if not logged in
-            } else if (user?.role !== "admin") {
-                router.push("/user-dashboard"); // Redirect users to their dashboard
-            }
-        }
-    }, [user, loading, router]);
+    if (loading) return; // Wait until loading is false
+
+    if (!user) {
+      router.push("/login");
+    } else if (user.role !== "admin") {
+      router.push("/user-dashboard");
+    } else {
+      if (user.status === "pending") {
+        router.push("/payment");
+      } else if (user.status === "expired") {
+        router.push("/subscription-expired");
+      }
+    }
+  }, [user, loading, router]);
 
     if (loading || !user) return <p className="text-center mt-10">Loading...</p>; // Show loading state
 

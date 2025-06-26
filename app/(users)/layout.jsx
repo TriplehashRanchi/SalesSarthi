@@ -18,17 +18,22 @@ const DefaultLayout = ({ children }) => {
     const router = useRouter();
 
 
-    useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                router.push("/login"); // Redirect if not logged in
-            } else if (user?.role !== "Salesperson" && user?.role !== "Manager") {
-                router.push("/");
-                // console.log(user.role);  
-                // Redirect users to their dashboard
-            }
+ useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+        router.push("/login"); // Not logged in
+    } else if (user.role !== "Salesperson" && user.role !== "Manager") {
+        router.push("/"); // Not a valid team role
+    } else {
+        if (user.status === "pending") {
+            router.push("/payment"); // Pending subscription
+        } else if (user.status === "expired") {
+            router.push("/subscription-expired"); // Expired
         }
-    }, [user, loading, router]);
+    }
+}, [user, loading, router]);
+
 
     if (loading || !user) return <p className="text-center mt-10">Loading...</p>; // Show loading state
 

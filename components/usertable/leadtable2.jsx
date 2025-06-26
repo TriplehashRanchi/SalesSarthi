@@ -11,20 +11,23 @@ import {
   Modal,
   Textarea,
   Group,
+  ActionIcon,
+  Title,
+  Stack,
+  Avatar,
 } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
-import { IconAlertCircle, IconListCheck } from '@tabler/icons-react';
-
-import IconMessage   from '../icon/icon-message';
-import IconPhoneCall from '../icon/icon-phone-call';
-import IconChatDot   from '../icon/icon-chat-dot';
-import IconFacebook  from '@/components/icon/icon-facebook';
+import { IconAlertCircle, IconBrandWhatsapp, IconCalculator, IconDots, IconDotsVertical, IconHistory, IconListCheck, IconMenu2, IconMenu3, IconMenu4, IconUserCheck } from '@tabler/icons-react';
 import IconPencil    from '../icon/icon-pencil';
 
 import FollowupForm  from '@/components/forms/followupform';
 import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUploadUser';
 
 import { getAuth } from 'firebase/auth';
+import IconChecks from '../icon/icon-checks';
+import IconClock from '../icon/icon-clock';
+import IconX from '../icon/icon-x';
+import IconMenu from '../icon/icon-menu';
 
 const LeadTable = ({ userId }) => {
   /* ───────────────────── state ───────────────────── */
@@ -287,6 +290,29 @@ const fetchFollowupHistory = async (leadId) => {
     }
 };
 
+
+
+// Helper function to format the date as "26th June 2025"
+function formatDateWithOrdinal(dateString) {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+
+    // Function to get the ordinal suffix (st, nd, rd, th)
+    const getOrdinal = (d) => {
+        if (d > 3 && d < 21) return 'th';
+        switch (d % 10) {
+            case 1:  return "st";
+            case 2:  return "nd";
+            case 3:  return "rd";
+            default: return "th";
+        }
+    };
+
+    return `${day}${getOrdinal(day)} ${month} ${year}`;
+}
+
   
 
   /* ───────────────────── render ───────────────────── */
@@ -457,66 +483,102 @@ const fetchFollowupHistory = async (leadId) => {
                               </Button>
                           ),
                       },
-                    //   {
-                    //       accessor: 'user_id',
-                    //       title: 'Assigned To',
-                    //       sortable: true,
-                    //       render: ({ user_id }) => {
-                    //           const u = teamMembers.find((t) => t.id === user_id);
-                    //           return u ? u.username : <Text color="dimmed">Unassigned</Text>;
-                    //       },
-                    //   },
+                      //   {
+                      //       accessor: 'user_id',
+                      //       title: 'Assigned To',
+                      //       sortable: true,
+                      //       render: ({ user_id }) => {
+                      //           const u = teamMembers.find((t) => t.id === user_id);
+                      //           return u ? u.username : <Text color="dimmed">Unassigned</Text>;
+                      //       },
+                      //   },
                       {
                           accessor: 'actions',
                           title: 'Actions',
                           textAlign: 'right',
                           render: (record) => (
-                              <Menu withinPortal shadow="md" width={200} position="bottom-end">
-                                  <Menu.Target>
-                                      <Button variant="light" size="xs" compact>
-                                          <IconListCheck size={16} />
-                                      </Button>
-                                  </Menu.Target>
-                                  <Menu.Dropdown>
-                                      <Menu.Item onClick={() => router.push(`/usereditlead/${record.id}`)} icon={<IconPencil size={14} />}>
-                                          Edit Lead
-                                      </Menu.Item>
-                                      <Menu.Item
-                                          onClick={() => {
-                                              /* sendWhatsApp */
-                                              const num = record.phone_number || '';
-                                              if (/^[6-9]\d{9}$/.test(num.replace(/^91/, ''))) {
-                                                  window.open(`https://wa.me/${num.startsWith('91') ? num : '91' + num}?text=Hello,`, '_blank');
-                                              } else alert('Invalid phone number');
-                                          }}
-                                          icon={<IconChatDot size={14} />}
-                                      >
-                                          Send WhatsApp
-                                      </Menu.Item>
-                                      <Menu.Item
-                                          icon={<IconListCheck size={14} />}
-                                          onClick={() => {
-                                              const qs = new URLSearchParams({
-                                                  id: record.id,
-                                                  name: record.full_name,
-                                                  phone: record.phone_number,
-                                                  email: record.email,
-                                              }).toString();
+                             <Menu withinPortal shadow="md" width={200} position="bottom-end">
+    <Menu.Target>
+        <ActionIcon variant="subtle" color="gray">
+            <IconMenu4 size={16} />
+        </ActionIcon>
+    </Menu.Target>
 
-                                              router.push(`/calc?${qs}`);
-                                          }}
-                                      >
-                                          Financial Health Check-up
-                                      </Menu.Item>
-                                      {/* <Menu.Item onClick={() => { setSelectedLead(record); setShowDrawer(true); fetchFollowupHistory(record.id); }} icon={<IconPhoneCall size={14}/>}>
-                      Follow‑ups
-                    </Menu.Item> */}
-                                      <Menu.Divider />
-                                      <Menu.Item color="teal" onClick={() => convertLeadToCustomer(record)} icon={<IconListCheck size={14} />}>
-                                          Convert to Customer
-                                      </Menu.Item>
-                                  </Menu.Dropdown>
-                              </Menu>
+    <Menu.Dropdown>
+        {/* All items are now in a single, clean list */}
+        
+        <Menu.Item
+            icon={<IconPencil size={14} />}
+            onClick={() => router.push(`/usereditlead/${record.id}`)}
+        >
+            {/* Using smaller text for a more compact feel */}
+            <Text size="xs">Edit Lead</Text>
+        </Menu.Item>
+
+        <Menu.Item
+            icon={<IconHistory size={14} />}
+            onClick={() => {
+                setSelectedLead(record);
+                setShowDrawer(true);
+                fetchFollowupHistory(record.id);
+            }}
+        >
+            <Text size="xs">Follow-ups</Text>
+        </Menu.Item>
+
+        <Menu.Item
+            icon={<IconBrandWhatsapp size={14} color="green" />}
+            onClick={() => {
+                const rawPhoneNumber = record.phone_number || '';
+                // ... (robust phone number parsing logic here)
+                if (!rawPhoneNumber.trim()) {
+                    alert('Phone number is empty.');
+                    return;
+                }
+                let digitsOnly = rawPhoneNumber.replace(/\D/g, '');
+                let tenDigitNumber;
+                if (digitsOnly.startsWith('91') && digitsOnly.length === 12) {
+                    tenDigitNumber = digitsOnly.substring(2);
+                } else if (digitsOnly.length === 10) {
+                    tenDigitNumber = digitsOnly;
+                } else {
+                    alert('Invalid phone number length.');
+                    return;
+                }
+                if (/^[6-9]\d{9}$/.test(tenDigitNumber)) {
+                    const whatsAppLink = `https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`;
+                    window.open(whatsAppLink, '_blank');
+                } else {
+                    alert('Invalid Indian mobile number format.');
+                }
+            }}
+        >
+            <Text size="xs">Send WhatsApp</Text>
+        </Menu.Item>
+
+        <Menu.Item
+            icon={<IconCalculator size={14} />}
+            onClick={() => {
+                const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email }).toString();
+                router.push(`/calc?${qs}`);
+            }}
+        >
+            <Text size="xs">Health Check-up</Text>
+        </Menu.Item>
+        
+        {/* To create a subtle visual break without a hard line, we can add a divider with very low opacity or just rely on spacing */}
+        {/* For true minimalism, we omit the divider entirely */}
+
+        <Menu.Item
+            color="teal"
+            icon={<IconUserCheck size={14} />}
+            onClick={() => convertLeadToCustomer(record)}
+        >
+            <Text size="xs">Convert to Customer</Text>
+        </Menu.Item>
+
+    </Menu.Dropdown>
+</Menu>
                           ),
                       },
                   ]}
@@ -547,44 +609,102 @@ const fetchFollowupHistory = async (leadId) => {
                   setFollowupHistory([]);
                   setExisting(null);
               }}
-              title={`Follow‑ups for ${selectedLead?.full_name}`}
+              // The title is now part of our custom layout, not a prop
+              withCloseButton={false} // We will render our own close button
               position="right"
               size="lg"
-              padding="md"
+              padding="lg"
               shadow="md"
-              styles={{ header: { background: '#f8f9fa', borderBottom: '1px solid #dee2e6' } }}
+              zIndex={1001}
           >
               {selectedLead ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                      <ScrollArea style={{ flexGrow: 1, padding: '1rem' }}>
-                          <Text size="lg" weight={600} mb="md">
-                              Follow‑up Timeline
-                          </Text>
+                  // THE LAYOUT CONTAINER: Fills the entire screen height
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+                      {/* PART 1: THE FIXED HEADER */}
+                      <Group
+                          position="apart"
+                          style={{
+                              borderBottom: '1px solid var(--mantine-color-gray-2)',
+                              flexShrink: 0, // Prevent shrinking
+                          }}
+                      >
+                          <Title className="mb-2 -mt-4" order={5}>
+                              Follow‑ups for {selectedLead.full_name}
+                          </Title>
+                          <ActionIcon className="mb-2 -mt-4" onClick={() => setShowDrawer(false)}>
+                              <IconX size={18} />
+                          </ActionIcon>
+                      </Group>
+
+                      {/* PART 2: THE SCROLLABLE TIMELINE */}
+                      {/* `flex: 1` allows this area to grow and shrink, consuming all available space */}
+                      <ScrollArea style={{ flex: 1, padding: 'var(--mantine-spacing-lg)' }}>
                           {followupHistory.length ? (
-                              <Timeline active={followupHistory.length} bulletSize={24} lineWidth={2}>
-                                  {followupHistory.map((f, i) => (
-                                      <Timeline.Item key={f.id || i} bullet={<IconMessage size={14} />} title={f.purpose || 'Follow‑up'}>
-                                          <Text size="xs" color="dimmed">
-                                              {f.follow_up_date ? new Date(f.follow_up_date).toLocaleString() : 'No Date'}
-                                          </Text>
-                                          <Badge color={f.status === 'Pending' ? 'yellow' : 'green'} size="sm" mt={4}>
-                                              {f.status || 'N/A'}
-                                          </Badge>
-                                          <Text size="sm" mt={4}>
-                                              {f.notes || '-'}
-                                          </Text>
+                              <Timeline className="mt-4" active={-1} bulletSize={32} lineWidth={2}>
+                                  {followupHistory.map((f) => (
+                                      <Timeline.Item
+                                          key={f.id}
+                                          style={{ paddingBottom: 'var(--mantine-spacing-md)' }} // Adds space between items
+                                          bullet={
+                                              <Avatar size={24} radius="xl" color={f.status === 'Completed' ? 'green' : 'orange'} variant="light">
+                                                  {f.status === 'Completed' ? <IconChecks size={16} /> : <IconClock size={16} />}
+                                              </Avatar>
+                                          }
+                                          title={
+                                              // BOLD AND LARGER FONT FOR THE DATE/TIME HEADER
+                                              <Group position="apart" align="center">
+                                                  <Text weight={600} size="md">
+                                                      {new Date(f.follow_up_date).toLocaleTimeString(undefined, {
+                                                          hour: '2-digit',
+                                                          minute: '2-digit',
+                                                      })}{' '}
+                                                      on {formatDateWithOrdinal(f.follow_up_date)}
+                                                  </Text>
+
+                                                  <ActionIcon size="sm" variant="subtle" onClick={() => setExisting(f)}>
+                                                      <IconPencil size={16} />
+                                                  </ActionIcon>
+                                              </Group>
+                                          }
+                                      >
+                                          <Stack spacing={4} mt={2}>
+                                              {/* MEDIUM WEIGHT FOR THE PURPOSE/SUBHEADING */}
+                                              <Text weight={500} size="md">
+                                                  {f.purpose || 'Follow-up'}
+                                              </Text>
+
+                                              {/* Notes are clearly distinct */}
+                                              {f.notes && (
+                                                  <Text color="blue" size="sm" mt="none">
+                                                      {f.notes}
+                                                  </Text>
+                                              )}
+
+                                              {/* Final metadata line */}
+                                              <Text color="dimmed" size="xs" mt="0">
+                                                  Created by: <strong>{f.creator_name || 'System'}</strong>
+                                              </Text>
+                                          </Stack>
                                       </Timeline.Item>
                                   ))}
                               </Timeline>
                           ) : (
                               <Text align="center" color="dimmed" mt="xl">
-                                  No follow‑up history found.
+                                  No follow-up history found.
                               </Text>
                           )}
                       </ScrollArea>
 
-                      <Divider />
-                      <div style={{ padding: '1rem', borderTop: '1px solid #dee2e6', flexShrink: 0 }}>
+                      {/* PART 3: THE FIXED FORM AT THE BOTTOM */}
+                      <div
+                          className="mb-8"
+                          style={{
+                              padding: 'var(--mantine-spacing-md)',
+                              borderTop: '1px solid var(--mantine-color-gray-2)',
+                              backgroundColor: 'var(--mantine-color-body)',
+                              flexShrink: 0, // Prevent shrinking
+                          }}
+                      >
                           <FollowupForm
                               leadId={selectedLead.id}
                               existingFollowUp={existingFollowUp}

@@ -37,6 +37,7 @@ import IconLaptop from '../icon/icon-laptop';
 import IconNotes from '../icon/icon-notes';
 import IconUserPlus from '../icon/icon-user-plus';
 import IconUsersGroup from '../icon/icon-users-group';
+import { IconHistory } from '@tabler/icons-react';
 
 const UserSide = () => {
     const dispatch = useDispatch();
@@ -129,6 +130,14 @@ const UserSide = () => {
                                     <div className="flex items-center">
                                         <IconUsersGroup className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('My Assigned Leads')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                            <li className="menu nav-item">
+                                <Link href="/user-followup">
+                                    <div className="flex items-center">
+                                        <IconHistory className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('My Follow Ups')}</span>
                                     </div>
                                 </Link>
                             </li>

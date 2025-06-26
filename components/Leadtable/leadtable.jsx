@@ -11,7 +11,11 @@ import {
   Modal,
   Textarea,
   Group,
+  ActionIcon,
   useMantineTheme,
+  Title,
+  Avatar,
+  Stack,
 } from '@mantine/core';
 import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
@@ -27,6 +31,9 @@ import FollowupForm  from '@/components/forms/followupform';
 import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUpload';
 
 import { getAuth } from 'firebase/auth';
+import IconX from '../icon/icon-x';
+import IconChecks from '../icon/icon-checks';
+import IconClock from '../icon/icon-clock';
 
 const LeadTable = ({ userId }) => {
   /* ───────────────────── state ───────────────────── */
@@ -50,6 +57,8 @@ const LeadTable = ({ userId }) => {
   const [selectedTeamMember, setSelectedTM]   = useState(null);
 
   const [csvOpen, setCsvOpen] = useState(false);
+  // In LeadTable.js, with your other useState hooks
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading]           = useState(true);
@@ -430,6 +439,28 @@ const fetchFollowupHistory = async (leadId) => {
     }
 };
 
+
+// Helper function to format the date as "26th June 2025"
+function formatDateWithOrdinal(dateString) {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
+
+    // Function to get the ordinal suffix (st, nd, rd, th)
+    const getOrdinal = (d) => {
+        if (d > 3 && d < 21) return 'th';
+        switch (d % 10) {
+            case 1:  return "st";
+            case 2:  return "nd";
+            case 3:  return "rd";
+            default: return "th";
+        }
+    };
+
+    return `${day}${getOrdinal(day)} ${month} ${year}`;
+}
+
   
 
   /* ───────────────────── render ───────────────────── */
@@ -471,7 +502,7 @@ const fetchFollowupHistory = async (leadId) => {
                           setPage(1);
                       }}
                       clearable
-                      theme="dark"  
+                      theme="dark"
                       searchable
                   />
               </div>
@@ -488,33 +519,32 @@ const fetchFollowupHistory = async (leadId) => {
               </button>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
-          {/* assign dropdown */}
-          {teamMembers.length > 0 && (
-              <>
-                  <Select
-                      data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
-                      value={selectedTeamMember}
-                      onChange={setSelectedTM}
-                      placeholder="Assign selected to..."
-                      searchable
-                      clearable
-                      style={{ minWidth: '200px' }}
-                  />
-                  <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
-                      Assign ({selectedLeads.length})
-                  </Button>
-                  </>   
-          )}
+              {/* assign dropdown */}
+              {teamMembers.length > 0 && (
+                  <>
+                      <Select
+                          data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
+                          value={selectedTeamMember}
+                          onChange={setSelectedTM}
+                          placeholder="Assign selected to..."
+                          searchable
+                          clearable
+                          style={{ minWidth: '200px' }}
+                      />
+                      <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
+                          Assign ({selectedLeads.length})
+                      </Button>
+                  </>
+              )}
 
-             <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
-                      Delete ({selectedLeads.length})
-                  </Button>
-
-           </div>
+              <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
+                  Delete ({selectedLeads.length})
+              </Button>
+          </div>
 
           {/* table */}
           <div className="datatables dark:bg-gray-800 dark:text-gray-200">
-          <DataTable
+              <DataTable
                   // className="dark:bg-gray-800 dark:text-gray-100"
                   withBorder
                   striped
@@ -603,25 +633,26 @@ const fetchFollowupHistory = async (leadId) => {
                               ),
                       },
                       {
-                        accessor: 'form_name',
-                        title   : 'Form',
-                        width   : '15%',
-                        render  : (r) => (
-                          <Button variant="subtle" size="xs"
-                          onClick={() =>
-                            setPayloadViewer({
-                              open : true,
-                              data : payloadToSections(r.raw_payload),  // ← parsed sections
-                              title: r.form_name || 'Unknown Form',
-                            })
-                          }
-                          
-                          >
-                            {r.form_name || '—'}
-                          </Button>
-                        ),
+                          accessor: 'form_name',
+                          title: 'Form',
+                          width: '15%',
+                          render: (r) => (
+                              <Button
+                                  variant="subtle"
+                                  size="xs"
+                                  onClick={() =>
+                                      setPayloadViewer({
+                                          open: true,
+                                          data: payloadToSections(r.raw_payload), // ← parsed sections
+                                          title: r.form_name || 'Unknown Form',
+                                      })
+                                  }
+                              >
+                                  {r.form_name || '—'}
+                              </Button>
+                          ),
                       },
-                      
+
                       {
                           accessor: 'notes',
                           title: 'Notes',
@@ -659,40 +690,40 @@ const fetchFollowupHistory = async (leadId) => {
                                       </Menu.Item>
                                       <Menu.Item
                                           onClick={() => {
-                                            const rawPhoneNumber = record.phone_number || '';
-                                        
-                                            if (!rawPhoneNumber.trim()) {
-                                                alert('Phone number is empty.');
-                                                return;
-                                            }
-                                        
-                                            // 1. Sanitize: Remove all non-digit characters (spaces, hyphens, parentheses, plus sign etc.)
-                                            let digitsOnly = rawPhoneNumber.replace(/\D/g, '');
-                                        
-                                            let tenDigitNumber;
-                                        
-                                            // 2. Normalize: Extract the 10-digit number, assuming Indian numbers
-                                            if (digitsOnly.startsWith('91') && digitsOnly.length === 12) {
-                                                // It's a 12-digit number starting with 91 (e.g., "919876543210")
-                                                tenDigitNumber = digitsOnly.substring(2); // Get the last 10 digits
-                                            } else if (digitsOnly.length === 10) {
-                                                // It's a 10-digit number (e.g., "9876543210")
-                                                tenDigitNumber = digitsOnly;
-                                            } else {
-                                                // Not a 10-digit number nor a 12-digit number starting with 91
-                                                alert('Invalid phone number length. Please use a 10-digit number, optionally prefixed with 91.');
-                                                return;
-                                            }
-                                        
-                                            // 3. Validate the extracted 10-digit number (common Indian mobile format)
-                                            if (/^[6-9]\d{9}$/.test(tenDigitNumber)) {
-                                                // Construct the WhatsApp link ensuring '91' is prepended
-                                                const whatsAppLink = `https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`;
-                                                window.open(whatsAppLink, '_blank');
-                                            } else {
-                                                alert('Invalid Indian mobile number format (must be 10 digits starting with 6, 7, 8, or 9).');
-                                            }
-                                        }}
+                                              const rawPhoneNumber = record.phone_number || '';
+
+                                              if (!rawPhoneNumber.trim()) {
+                                                  alert('Phone number is empty.');
+                                                  return;
+                                              }
+
+                                              // 1. Sanitize: Remove all non-digit characters (spaces, hyphens, parentheses, plus sign etc.)
+                                              let digitsOnly = rawPhoneNumber.replace(/\D/g, '');
+
+                                              let tenDigitNumber;
+
+                                              // 2. Normalize: Extract the 10-digit number, assuming Indian numbers
+                                              if (digitsOnly.startsWith('91') && digitsOnly.length === 12) {
+                                                  // It's a 12-digit number starting with 91 (e.g., "919876543210")
+                                                  tenDigitNumber = digitsOnly.substring(2); // Get the last 10 digits
+                                              } else if (digitsOnly.length === 10) {
+                                                  // It's a 10-digit number (e.g., "9876543210")
+                                                  tenDigitNumber = digitsOnly;
+                                              } else {
+                                                  // Not a 10-digit number nor a 12-digit number starting with 91
+                                                  alert('Invalid phone number length. Please use a 10-digit number, optionally prefixed with 91.');
+                                                  return;
+                                              }
+
+                                              // 3. Validate the extracted 10-digit number (common Indian mobile format)
+                                              if (/^[6-9]\d{9}$/.test(tenDigitNumber)) {
+                                                  // Construct the WhatsApp link ensuring '91' is prepended
+                                                  const whatsAppLink = `https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`;
+                                                  window.open(whatsAppLink, '_blank');
+                                              } else {
+                                                  alert('Invalid Indian mobile number format (must be 10 digits starting with 6, 7, 8, or 9).');
+                                              }
+                                          }}
                                           icon={<IconChatDot size={14} />}
                                       >
                                           Send WhatsApp
@@ -712,9 +743,16 @@ const fetchFollowupHistory = async (leadId) => {
                                       >
                                           Financial Health Check-up
                                       </Menu.Item>
-                                      {/* <Menu.Item onClick={() => { setSelectedLead(record); setShowDrawer(true); fetchFollowupHistory(record.id); }} icon={<IconPhoneCall size={14}/>}>
-                      Follow‑ups
-                    </Menu.Item> */}
+                                      <Menu.Item
+                                          onClick={() => {
+                                              setSelectedLead(record);
+                                              setShowDrawer(true);
+                                              fetchFollowupHistory(record.id);
+                                          }}
+                                          icon={<IconPhoneCall size={14} />}
+                                      >
+                                          Follow‑ups
+                                      </Menu.Item>
                                       <Menu.Divider />
                                       <Menu.Item color="teal" onClick={() => convertLeadToCustomer(record)} icon={<IconListCheck size={14} />}>
                                           Convert to Customer
@@ -740,61 +778,60 @@ const fetchFollowupHistory = async (leadId) => {
                   fetching={loading || isPolling}
                   paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} leads`}
                   styles={(currentTheme) => {
-                    // Only apply these overrides if in dark mode to avoid breaking light mode
-                    if (currentTheme.colorScheme === 'light') {
-                        return {}; // Let Mantine handle light mode defaults
-                    }
-            
-                    // Define your desired dark mode row colors
-                    const darkEvenRowBg = currentTheme.colors.dark[7]; // Example: for even rows
-                    const darkOddRowBg = currentTheme.colors.dark[6];  // Example: for striped (odd) rows
-                    const darkHoverRowBg = currentTheme.colors.dark[5]; // Example: for hovered rows
-                    const darkTextColor = currentTheme.colors.dark[0];
-                    const darkBorderColor = currentTheme.colors.dark[4];
-            
-                    return {
-                        // Target the root of the table if needed for overall context
-                        root: {
-                            // backgroundColor: currentTheme.colors.dark[8], // Overall table area, if not handled by parent
-                        },
-                        // Target table header cells
-                        th: {
-                            backgroundColor: `${currentTheme.colors.dark[7]} !important`, // Header background
-                            color: `${darkTextColor} !important`,
-                            borderColor: `${darkBorderColor} !important`,
-                        },
-                        // Target table body rows (tr)
-                        tr: {
-                            // Base background for ALL rows in dark mode (will be overridden by :nth-of-type for stripes)
-                            backgroundColor: `${darkEvenRowBg} !important`,
-                            color: `${darkTextColor} !important`, // Ensure text color
-                            borderColor: `${darkBorderColor} !important`, // Ensure border color
-            
-                            // Override for striped (odd) rows in dark mode
-                            '&:nth-of-type(odd)': {
-                                backgroundColor: `${darkOddRowBg} !important`,
-                            },
-            
-                            // Override for hovered rows in dark mode
-                            // This targets rows that have the data-hover attribute,
-                            // which mantine-datatable should add if highlightOnHover is true.
-                            '&[data-hover="true"]:hover, &:hover': { // Covering both general hover and mantine's specific
-                                backgroundColor: `${darkHoverRowBg} !important`,
-                            },
-                        },
-                        // Target table data cells (td)
-                        td: {
-                            color: `${darkTextColor} !important`, // Ensure text color in cells
-                            borderColor: `${darkBorderColor} !important`,
-                             // Cells should be transparent to let <tr> background show
-                            backgroundColor: 'transparent !important',
-                        },
-                    };
-                }}
-            />
-          </div>
+                      // Only apply these overrides if in dark mode to avoid breaking light mode
+                      if (currentTheme.colorScheme === 'light') {
+                          return {}; // Let Mantine handle light mode defaults
+                      }
 
-          {/* follow up drawer */}
+                      // Define your desired dark mode row colors
+                      const darkEvenRowBg = currentTheme.colors.dark[7]; // Example: for even rows
+                      const darkOddRowBg = currentTheme.colors.dark[6]; // Example: for striped (odd) rows
+                      const darkHoverRowBg = currentTheme.colors.dark[5]; // Example: for hovered rows
+                      const darkTextColor = currentTheme.colors.dark[0];
+                      const darkBorderColor = currentTheme.colors.dark[4];
+
+                      return {
+                          // Target the root of the table if needed for overall context
+                          root: {
+                              // backgroundColor: currentTheme.colors.dark[8], // Overall table area, if not handled by parent
+                          },
+                          // Target table header cells
+                          th: {
+                              backgroundColor: `${currentTheme.colors.dark[7]} !important`, // Header background
+                              color: `${darkTextColor} !important`,
+                              borderColor: `${darkBorderColor} !important`,
+                          },
+                          // Target table body rows (tr)
+                          tr: {
+                              // Base background for ALL rows in dark mode (will be overridden by :nth-of-type for stripes)
+                              backgroundColor: `${darkEvenRowBg} !important`,
+                              color: `${darkTextColor} !important`, // Ensure text color
+                              borderColor: `${darkBorderColor} !important`, // Ensure border color
+
+                              // Override for striped (odd) rows in dark mode
+                              '&:nth-of-type(odd)': {
+                                  backgroundColor: `${darkOddRowBg} !important`,
+                              },
+
+                              // Override for hovered rows in dark mode
+                              // This targets rows that have the data-hover attribute,
+                              // which mantine-datatable should add if highlightOnHover is true.
+                              '&[data-hover="true"]:hover, &:hover': {
+                                  // Covering both general hover and mantine's specific
+                                  backgroundColor: `${darkHoverRowBg} !important`,
+                              },
+                          },
+                          // Target table data cells (td)
+                          td: {
+                              color: `${darkTextColor} !important`, // Ensure text color in cells
+                              borderColor: `${darkBorderColor} !important`,
+                              // Cells should be transparent to let <tr> background show
+                              backgroundColor: 'transparent !important',
+                          },
+                      };
+                  }}
+              />
+          </div>
           <Drawer
               opened={showDrawer}
               onClose={() => {
@@ -803,44 +840,102 @@ const fetchFollowupHistory = async (leadId) => {
                   setFollowupHistory([]);
                   setExisting(null);
               }}
-              title={`Follow‑ups for ${selectedLead?.full_name}`}
+              // The title is now part of our custom layout, not a prop
+              withCloseButton={false} // We will render our own close button
               position="right"
               size="lg"
-              padding="md"
+              padding="lg"
               shadow="md"
-              styles={{ header: { background: '#f8f9fa', borderBottom: '1px solid #dee2e6' } }}
+              zIndex={1001}
           >
               {selectedLead ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                      <ScrollArea style={{ flexGrow: 1, padding: '1rem' }}>
-                          <Text size="lg" weight={600} mb="md">
-                              Follow‑up Timeline
-                          </Text>
+                  // THE LAYOUT CONTAINER: Fills the entire screen height
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+                      {/* PART 1: THE FIXED HEADER */}
+                      <Group
+                          position="apart"
+                          style={{
+                              borderBottom: '1px solid var(--mantine-color-gray-2)',
+                              flexShrink: 0, // Prevent shrinking
+                          }}
+                      >
+                          <Title className="mb-2 -mt-4" order={5}>
+                              Follow‑ups for {selectedLead.full_name}
+                          </Title>
+                          <ActionIcon className="mb-2 -mt-4" onClick={() => setShowDrawer(false)}>
+                              <IconX size={18} />
+                          </ActionIcon>
+                      </Group>
+
+                      {/* PART 2: THE SCROLLABLE TIMELINE */}
+                      {/* `flex: 1` allows this area to grow and shrink, consuming all available space */}
+                      <ScrollArea style={{ flex: 1, padding: 'var(--mantine-spacing-lg)' }}>
                           {followupHistory.length ? (
-                              <Timeline active={followupHistory.length} bulletSize={24} lineWidth={2}>
-                                  {followupHistory.map((f, i) => (
-                                      <Timeline.Item key={f.id || i} bullet={<IconMessage size={14} />} title={f.purpose || 'Follow‑up'}>
-                                          <Text size="xs" color="dimmed">
-                                              {f.follow_up_date ? new Date(f.follow_up_date).toLocaleString() : 'No Date'}
-                                          </Text>
-                                          <Badge color={f.status === 'Pending' ? 'yellow' : 'green'} size="sm" mt={4}>
-                                              {f.status || 'N/A'}
-                                          </Badge>
-                                          <Text size="sm" mt={4}>
-                                              {f.notes || '-'}
-                                          </Text>
+                              <Timeline className="mt-4" active={-1} bulletSize={32} lineWidth={2}>
+                                  {followupHistory.map((f) => (
+                                      <Timeline.Item
+                                          key={f.id}
+                                          style={{ paddingBottom: 'var(--mantine-spacing-md)' }} // Adds space between items
+                                          bullet={
+                                              <Avatar size={24} radius="xl" color={f.status === 'Completed' ? 'green' : 'orange'} variant="light">
+                                                  {f.status === 'Completed' ? <IconChecks size={16} /> : <IconClock size={16} />}
+                                              </Avatar>
+                                          }
+                                          title={
+                                              // BOLD AND LARGER FONT FOR THE DATE/TIME HEADER
+                                              <Group position="apart" align="center">
+                                                  <Text weight={600} size="md">
+                                                      {new Date(f.follow_up_date).toLocaleTimeString(undefined, {
+                                                          hour: '2-digit',
+                                                          minute: '2-digit',
+                                                      })}{' '}
+                                                      on {formatDateWithOrdinal(f.follow_up_date)}
+                                                  </Text>
+
+                                                  <ActionIcon size="sm" variant="subtle" onClick={() => setExisting(f)}>
+                                                      <IconPencil size={16} />
+                                                  </ActionIcon>
+                                              </Group>
+                                          }
+                                      >
+                                          <Stack spacing={4} mt={2}>
+                                              {/* MEDIUM WEIGHT FOR THE PURPOSE/SUBHEADING */}
+                                              <Text weight={500} size="md">
+                                                  {f.purpose || 'Follow-up'}
+                                              </Text>
+
+                                              {/* Notes are clearly distinct */}
+                                              {f.notes && (
+                                                  <Text color="blue" size="sm" mt="none">
+                                                      {f.notes}
+                                                  </Text>
+                                              )}
+
+                                              {/* Final metadata line */}
+                                              <Text color="dimmed" size="xs" mt="0">
+                                                  Created by: <strong>{f.creator_name || 'System'}</strong>
+                                              </Text>
+                                          </Stack>
                                       </Timeline.Item>
                                   ))}
                               </Timeline>
                           ) : (
                               <Text align="center" color="dimmed" mt="xl">
-                                  No follow‑up history found.
+                                  No follow-up history found.
                               </Text>
                           )}
                       </ScrollArea>
 
-                      <Divider />
-                      <div style={{ padding: '1rem', borderTop: '1px solid #dee2e6', flexShrink: 0 }}>
+                      {/* PART 3: THE FIXED FORM AT THE BOTTOM */}
+                      <div
+                          className="mb-8"
+                          style={{
+                              padding: 'var(--mantine-spacing-md)',
+                              borderTop: '1px solid var(--mantine-color-gray-2)',
+                              backgroundColor: 'var(--mantine-color-body)',
+                              flexShrink: 0, // Prevent shrinking
+                          }}
+                      >
                           <FollowupForm
                               leadId={selectedLead.id}
                               existingFollowUp={existingFollowUp}
@@ -880,42 +975,41 @@ const fetchFollowupHistory = async (leadId) => {
                   </Button>
               </Group>
           </Modal>
-<Modal
-  opened={payloadViewer.open}
-  onClose={() => setPayloadViewer({ open:false, data:null, title:'' })}
-  title={`Lead Details – ${payloadViewer.title}`}
-  centered size="lg"
->
-  {payloadViewer.data && (
-    <ScrollArea.Autosize mah={450}>
-      {/* Answers timeline */}
-      <Text weight={600} mb="xs">Form Answers</Text>
-      <Timeline active={payloadViewer.data.answers.length} bulletSize={16} lineWidth={2}>
-        {payloadViewer.data.answers.map((a, i) => (
-          <Timeline.Item key={i} title={a.label}>
-            <Text size="sm" color="dimmed">{a.value}</Text>
-          </Timeline.Item>
-        ))}
-      </Timeline>
+          <Modal opened={payloadViewer.open} onClose={() => setPayloadViewer({ open: false, data: null, title: '' })} title={`Lead Details – ${payloadViewer.title}`} centered size="lg">
+              {payloadViewer.data && (
+                  <ScrollArea.Autosize mah={450}>
+                      {/* Answers timeline */}
+                      <Text weight={600} mb="xs">
+                          Form Answers
+                      </Text>
+                      <Timeline active={payloadViewer.data.answers.length} bulletSize={16} lineWidth={2}>
+                          {payloadViewer.data.answers.map((a, i) => (
+                              <Timeline.Item key={i} title={a.label}>
+                                  <Text size="sm" color="dimmed">
+                                      {a.value}
+                                  </Text>
+                              </Timeline.Item>
+                          ))}
+                      </Timeline>
 
-      {/* Meta list */}
-      {payloadViewer.data.meta.length > 0 && (
-        <>
-          <Text weight={600} mt="md" mb="xs">Ad / Campaign</Text>
-          <List spacing="xs" size="sm" withPadding>
-            {payloadViewer.data.meta.map((m) => (
-              <List.Item key={m.label}>
-                <b>{m.label}:</b> {m.value}
-              </List.Item>
-            ))}
-          </List>
-        </>
-      )}
-    </ScrollArea.Autosize>
-  )}
-</Modal>
-
-
+                      {/* Meta list */}
+                      {payloadViewer.data.meta.length > 0 && (
+                          <>
+                              <Text weight={600} mt="md" mb="xs">
+                                  Ad / Campaign
+                              </Text>
+                              <List spacing="xs" size="sm" withPadding>
+                                  {payloadViewer.data.meta.map((m) => (
+                                      <List.Item key={m.label}>
+                                          <b>{m.label}:</b> {m.value}
+                                      </List.Item>
+                                  ))}
+                              </List>
+                          </>
+                      )}
+                  </ScrollArea.Autosize>
+              )}
+          </Modal>
       </div>
   );
 };

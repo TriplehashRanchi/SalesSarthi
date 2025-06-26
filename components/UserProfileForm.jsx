@@ -307,7 +307,7 @@ const AccountSettingsTabs = () => {
                                 <div key={row.txn_id} className="flex justify-between border-b border-[#ebedf2] py-2 dark:border-[#1b2e4b]">
                                     <span>{new Date(row.txn_date).toLocaleDateString()}</span>
                                     <span>
-                                        {row.currency} {row.amount.toFixed(2)}
+                                        {row.currency} {row.amount}
                                     </span>
                                     <span className={row.status === 'Success' ? 'text-green-500' : row.status === 'Pending' ? 'text-yellow-500' : 'text-red-500'}>{row.status}</span>
                                 </div>
