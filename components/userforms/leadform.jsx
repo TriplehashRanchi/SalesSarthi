@@ -40,7 +40,7 @@ const LeadForm = ({ existingLead }) => {
 
   const router = useRouter();
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Replace with your actual API URL
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'; // Replace with your actual API URL
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -58,7 +58,7 @@
 //         leadConversionRate: '0.0',  
 //     });
 
-//     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Ensure this is set in your .env.local
+//     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'; // Ensure this is set in your .env.local
 
 //     // --- Base Chart Options ---
 //     // Define base options for reuse, especially styling

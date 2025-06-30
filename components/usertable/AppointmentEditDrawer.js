@@ -25,7 +25,7 @@ const AppointmentEditDrawer = ({ appointment, opened, onClose, onUpdate }) => {
         }
     }, [appointment]);
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     const handleChange = (e) => {
         const { name, value } = e.target;

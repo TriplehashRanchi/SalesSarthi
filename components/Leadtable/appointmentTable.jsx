@@ -11,7 +11,7 @@ import AppointmentEditDrawer from './AppointmentEditDrawer'; // Ensure this path
 import { getAuth } from 'firebase/auth';
 import { isFuture, isPast, parseISO, format, isValid } from 'date-fns'; // Added isValid
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const PAGE_SIZES = [10, 20, 30, 50, 100];
 
 const AppointmentTable = () => {

@@ -34,6 +34,7 @@ import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuMore from '@/components/icon/menu/icon-menu-more';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
+import MobileBottomNav from './mobileBottomNav'; // Assuming mobileBottomNav.tsx exists
 
 // --- Firebase Auth Imports ---
 import { getAuth, signOut, User, onAuthStateChanged } from 'firebase/auth';
@@ -126,7 +127,8 @@ const Header = () => {
     const defaultAvatar = '/assets/images/user-profile.jpeg'; // Default if no photoURL and no initials generated
 
     return (
-        <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
+        <>
+        <header className={`z-40 hidden md:block ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
             <div className="shadow-sm">
                 <div className="relative flex w-full items-center bg-white px-5 py-2.5 dark:bg-black">
                     {/* Logo and Sidebar Toggle */}
@@ -235,6 +237,8 @@ const Header = () => {
                  </ul>
             </div>
         </header>
+        <MobileBottomNav />
+        </>
     );
 };
 

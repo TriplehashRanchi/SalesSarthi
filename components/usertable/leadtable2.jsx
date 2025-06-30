@@ -65,7 +65,7 @@ const LeadTable = ({ userId }) => {
   
 
   const router   = useRouter();
-  const API_URL  = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL  = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const statusOptions = [
     { value: 'Cold Lead',      label: 'Cold Lead' },

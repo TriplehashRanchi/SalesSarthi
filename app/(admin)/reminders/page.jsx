@@ -27,7 +27,7 @@ dayjs.extend(timezone);
 // It's often better to handle dates in UTC and format in the user's local time.
 
 // Define API_URL from environment variable or fallback.
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Utility function to replace placeholders in a template with record data.
 const replacePlaceholders = (templateMessage, record) => {

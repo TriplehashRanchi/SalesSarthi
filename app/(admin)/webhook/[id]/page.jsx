@@ -53,7 +53,7 @@ export default function WebhookDetail() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
 
-  const API_BASE_URL = 'http://localhost:5000/api'; // Define base URL
+  const API_BASE_URL = 'http://localhost:8000/api'; // Define base URL
 
   // Fetch webhook details & mapping config
   useEffect(() => {

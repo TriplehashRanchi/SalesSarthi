@@ -11,7 +11,7 @@ const EditFollowUp = ({ params }) => {
     const [error, setError] = useState(null);
     const router = useRouter();
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     // Extract leadId and followUpId from params
     const { leadId, followUpId } = params;

@@ -7,7 +7,7 @@ import IconArrowBackward from '../icon/icon-arrow-backward';
 import IconArrowLeft from '../icon/icon-arrow-left';
 import LeadTable from './leadtable';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function UserPerformance() {
     const router = useRouter();

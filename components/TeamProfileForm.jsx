@@ -41,7 +41,7 @@ const UserAccountSettingsTabs = () => {
     expires_at: '',
   });
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     const fetchData = async () => {

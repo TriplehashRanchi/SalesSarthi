@@ -12,7 +12,7 @@ import { set } from 'lodash';
 import { MultiSelect } from '@mantine/core';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URI || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URI || 'http://localhost:8000';
 
 export default function EmailCampaignDashboard() {
   const [adminId, setAdminId] = useState(null);

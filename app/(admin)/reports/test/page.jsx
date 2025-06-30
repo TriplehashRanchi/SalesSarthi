@@ -11,7 +11,7 @@ import { LoadingOverlay, Alert, Card, Title, Select, Button, Group, Stack, Text,
 import { DateRangePicker } from '@mantine/dates'; // Ensure @mantine/dates is installed
 import { IconAlertCircle, IconDownload, IconReportAnalytics, IconUsers, IconCalendar, IconFilter } from '@tabler/icons-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // --- Helper Function for API calls ---
 const authenticatedAxios = async (method, url, data = null) => {

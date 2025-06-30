@@ -27,7 +27,7 @@ const ComponentsAuthRegisterForm = () => {
     // --- NEW: Add a loading state ---
     const [isLoading, setIsLoading] = useState(false);
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     // ✅ Redirect logic remains the same.
     useEffect(() => {

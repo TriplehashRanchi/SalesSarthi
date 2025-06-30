@@ -14,7 +14,7 @@ const EditFollowUp = () => {
     // Destructure the dynamic parameters from the URL
     const { leadId, followUpId } = router.query;
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     useEffect(() => {
         // Ensure that both leadId and followUpId are available before making the API call

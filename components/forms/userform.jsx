@@ -32,7 +32,7 @@ export default function AddUserPage() {
     password: '',
     confirm_password: '',
   });
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const handleChange = (e) => {
     const { name, value } = e.target;

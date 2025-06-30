@@ -16,7 +16,7 @@ const SuperAdminBannerManager = () => {
   // Inside component:
 const { upload, uploading, error } = useCloudinaryUpload();
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   // Fetch existing banners
   const fetchBanners = async () => {

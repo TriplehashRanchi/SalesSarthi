@@ -13,7 +13,7 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange }) => {
   const [error, setError] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   // Fetch follow-up stages for the logged-in user
   useEffect(() => {

@@ -14,7 +14,7 @@ import IconUsersGroup from '@/components/icon/icon-users-group';
 import IconSquareCheck from '@/components/icon/icon-square-check';
 import IconTrendingUp from '@/components/icon/icon-trending-up';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Dynamically import ApexCharts
 const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });

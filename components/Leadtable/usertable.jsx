@@ -28,7 +28,7 @@ export default function UserListPro() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const PAGE_SIZE = 10;
 
   // fetch users

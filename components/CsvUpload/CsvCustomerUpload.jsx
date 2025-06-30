@@ -199,7 +199,7 @@ const CsvCustomersUpload = ({ opened, onClose, onSuccess }) => {
 
 
   /* -------- Upload to API -------- */
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const upload = async () => {
     if (!rows.length) {

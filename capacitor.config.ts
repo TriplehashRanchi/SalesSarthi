@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'vristo-next',
   webDir: 'public', // still required, but not used with live server
   server: {
-    url: 'http://192.168.1.23:3000',
+    url: 'https://app.digitalgyanisaarthi.com',
     cleartext: true
   },
   // bundledWebRuntime: false

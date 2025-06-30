@@ -15,7 +15,7 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel }) 
   const [isUpdating, setIsUpdating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   // Fetch follow-up stages. This is a PUBLIC endpoint as requested.
   useEffect(() => {

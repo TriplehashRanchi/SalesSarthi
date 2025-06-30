@@ -50,7 +50,7 @@ const AccountSettingsTabs = () => {
 
     const [logoPreview, setLogoPreview] = useState(null);
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     // ───── load existing data ─────
     useEffect(() => {

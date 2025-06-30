@@ -22,7 +22,7 @@ const PaymentPage = () => {
     const [error, setError] = useState('');
     const [discount, setDiscount] = useState(0); // State to hold the discount percentage
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     // --- NEW: PRE-DEFINED COUPON CODES ---
     const specialCoupons = {

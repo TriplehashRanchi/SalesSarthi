@@ -67,7 +67,7 @@ const TemplateManagementPage = () => {
   const [modalOpened, setModalOpened] = useState(false);
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     const fetchTemplates = async () => {
