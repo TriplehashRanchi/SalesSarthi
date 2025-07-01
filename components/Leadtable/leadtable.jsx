@@ -19,7 +19,7 @@ import {
 } from '@mantine/core';
 import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
-import { IconAlertCircle, IconListCheck } from '@tabler/icons-react';
+import { IconAlertCircle, IconBrandWhatsapp, IconCalculator, IconHistory, IconListCheck, IconMenu4, IconUserCheck } from '@tabler/icons-react';
 
 import IconMessage   from '../icon/icon-message';
 import IconPhoneCall from '../icon/icon-phone-call';
@@ -34,6 +34,7 @@ import { getAuth } from 'firebase/auth';
 import IconX from '../icon/icon-x';
 import IconChecks from '../icon/icon-checks';
 import IconClock from '../icon/icon-clock';
+import IconPhone from '../icon/icon-phone';
 
 const LeadTable = ({ userId }) => {
   /* ───────────────────── state ───────────────────── */
@@ -66,6 +67,14 @@ const LeadTable = ({ userId }) => {
 
   const [isPolling, setIsPolling]               = useState(false);
   const [hasPolledInitially, setHasPolledInit]  = useState(false);
+
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
+  const [filteredLeads, setFilteredLeads] = useState([]);
+
+  const handleLoadMore = () => {
+    // Increase the count by another 20 items
+    setMobileVisibleCount(prevCount => prevCount + 20); 
+};
 
   const [noteEditor, setNoteEditor] = useState({
     open : false,
@@ -227,7 +236,7 @@ console.log(payload);
 
   /* ───────────────────── filter / sort / paginate ───────────────────── */
   useEffect(() => {
-    let data = leads;
+    let data = [...leads];
     if (userId) data = data.filter(l => l.user_id === userId);
     data = data.filter(l => l.lead_status?.toLowerCase() !== 'customer');
 
@@ -250,9 +259,19 @@ console.log(payload);
     }
 
     setTotalCount(data.length);
-    const from = (page-1)*pageSize, to = from + pageSize;
-    setRecordsData(data.slice(from,to));
-  }, [leads, search, statusFilter, sortStatus, page, pageSize, userId]);
+    setFilteredLeads(data);
+    // const from = (page-1)*pageSize, to = from + pageSize;
+    // setRecordsData(data.slice(from,to));
+    
+  }, [leads, search, statusFilter, sortStatus, userId]);
+
+  useEffect(() => {
+    // This effect only runs when the full list or the page/pageSize changes.
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize;
+    setRecordsData(filteredLeads.slice(from, to)); // Slices the full list for the desktop table
+
+}, [filteredLeads, page, pageSize]);
 
   /* pagination safety */
   useEffect(() => {
@@ -468,8 +487,11 @@ function formatDateWithOrdinal(dateString) {
   const allSel  = currentIds.length && currentIds.every(id => selectedLeads.includes(id));
   const someSel = currentIds.length && currentIds.some(id => selectedLeads.includes(id));
 
+
+
+
   return (
-      <div className="panel mt-6 relative">
+      <div className="panel p-2 mt-6 relative">
           {/* <LoadingOverlay visible={loading || isPolling} overlayBlur={2} /> */}
 
           {error && (
@@ -479,7 +501,7 @@ function formatDateWithOrdinal(dateString) {
           )}
 
           {/* top controls */}
-          <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
+          <div className="mb-5 hidden md:flex flex-col gap-5 md:flex-row md:items-center">
               <h5 className="text-lg font-semibold dark:text-white-light">Lead Management</h5>
 
               {/* search + filter */}
@@ -518,7 +540,7 @@ function formatDateWithOrdinal(dateString) {
                   CSV Bulk Upload
               </button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
+          <div className="hidden md:flex flex-col sm:flex-row gap-4 mb-4 items-center">
               {/* assign dropdown */}
               {teamMembers.length > 0 && (
                   <>
@@ -542,8 +564,96 @@ function formatDateWithOrdinal(dateString) {
               </Button>
           </div>
 
+          {/* Mobile Controls */}
+<div className="md:hidden flex flex-col gap-3 mb-5">
+    {/* Line 1: Search */}
+    <input
+        className="form-input w-full text-sm"
+        placeholder="Search Name, Email, Phone..."
+        value={search}
+        onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+        }}
+    />
+
+    {/* Line 2: Filter + Facebook + CSV */}
+    <div className="flex gap-2 items-center">
+        <div className="flex-1">
+            <Select
+                data={statusOptions}
+                placeholder="Status"
+                value={statusFilter}
+                onChange={(v) => {
+                    setStatusFilter(v);
+                    setPage(1);
+                }}
+                clearable
+                searchable
+                theme="dark"
+            />
+        </div>
+
+        <button
+            className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm disabled:opacity-50"
+            onClick={() => pollFacebookLeads(true)}
+            disabled={isPolling}
+        >
+            <IconFacebook className="inline w-4 h-4" />
+        </button>
+
+        <button
+            onClick={() => setCsvOpen(true)}
+            className="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm"
+        >
+            CSV
+        </button>
+    </div>
+
+    <div className="flex gap-2 items-center">
+        {/* Assign dropdown */}
+        {teamMembers.length > 0 && (
+            <>
+                <div className="flex-1 min-w-[140px]">
+                    <Select
+                        data={teamMembers.map((u) => ({
+                            value: u.id.toString(),
+                            label: `${u.username} (${u.role})`,
+                        }))}
+                        value={selectedTeamMember}
+                        onChange={setSelectedTM}
+                        placeholder="Assign selected to..."
+                        searchable
+                        clearable
+                        className="w-full"
+                    />
+                </div>
+
+                {/* Assign button */}
+                <button
+                    onClick={assignLeads}
+                    disabled={!selectedTeamMember || !selectedLeads.length}
+                    className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs disabled:opacity-50"
+                >
+                    Assign ({selectedLeads.length})
+                </button>
+            </>
+        )}
+
+        {/* Delete button */}
+        <button
+            onClick={deleteLeads}
+            disabled={!selectedLeads.length}
+            className="bg-red-500 text-white px-3 py-1 rounded-md text-xs disabled:opacity-50"
+        >
+            Delete ({selectedLeads.length})
+        </button>
+    </div>
+</div>
+
+
           {/* table */}
-          <div className="datatables dark:bg-gray-800 dark:text-gray-200">
+          <div className="hidden md:block datatables dark:bg-gray-800 dark:text-gray-200">
               <DataTable
                   // className="dark:bg-gray-800 dark:text-gray-100"
                   withBorder
@@ -554,7 +664,7 @@ function formatDateWithOrdinal(dateString) {
                   columns={[
                       {
                           accessor: 'select',
-                          width: '5%',
+                          width: '2%',
                           title: (
                               <Checkbox
                                   checked={allSel}
@@ -575,7 +685,7 @@ function formatDateWithOrdinal(dateString) {
                           ),
                           textAlign: 'center',
                       },
-                      { accessor: 'full_name', title: 'Name', sortable: true },
+                      { accessor: 'full_name', title: 'Name', sortable: true  },
                       { accessor: 'email', title: 'Email', sortable: true },
                       { accessor: 'phone_number', title: 'Phone', sortable: true },
                       {
@@ -673,92 +783,93 @@ function formatDateWithOrdinal(dateString) {
                               return u ? u.username : <Text color="dimmed">Unassigned</Text>;
                           },
                       },
-                      {
+                       {
                           accessor: 'actions',
                           title: 'Actions',
                           textAlign: 'right',
                           render: (record) => (
-                              <Menu withinPortal shadow="md" width={200} position="bottom-end">
-                                  <Menu.Target>
-                                      <Button variant="light" size="xs" compact>
-                                          <IconListCheck size={16} />
-                                      </Button>
-                                  </Menu.Target>
-                                  <Menu.Dropdown>
-                                      <Menu.Item onClick={() => router.push(`/editlead/${record.id}`)} icon={<IconPencil size={14} />}>
-                                          Edit Lead
-                                      </Menu.Item>
-                                      <Menu.Item
-                                          onClick={() => {
-                                              const rawPhoneNumber = record.phone_number || '';
+                             <Menu withinPortal shadow="md" width={200} position="bottom-end">
+    <Menu.Target>
+        <ActionIcon variant="subtle" color="gray">
+            <IconMenu4 size={16} />
+        </ActionIcon>
+    </Menu.Target>
 
-                                              if (!rawPhoneNumber.trim()) {
-                                                  alert('Phone number is empty.');
-                                                  return;
-                                              }
+    <Menu.Dropdown>
+        {/* All items are now in a single, clean list */}
+        
+        <Menu.Item
+            icon={<IconPencil size={14} />}
+            onClick={() => router.push(`/editlead/${record.id}`)}
+        >
+            {/* Using smaller text for a more compact feel */}
+            <Text size="xs">Edit Lead</Text>
+        </Menu.Item>
 
-                                              // 1. Sanitize: Remove all non-digit characters (spaces, hyphens, parentheses, plus sign etc.)
-                                              let digitsOnly = rawPhoneNumber.replace(/\D/g, '');
+        <Menu.Item
+            icon={<IconHistory size={14} />}
+            onClick={() => {
+                setSelectedLead(record);
+                setShowDrawer(true);
+                fetchFollowupHistory(record.id);
+            }}
+        >
+            <Text size="xs">Follow-ups</Text>
+        </Menu.Item>
 
-                                              let tenDigitNumber;
+        <Menu.Item
+            icon={<IconBrandWhatsapp size={14} color="green" />}
+            onClick={() => {
+                const rawPhoneNumber = record.phone_number || '';
+                // ... (robust phone number parsing logic here)
+                if (!rawPhoneNumber.trim()) {
+                    alert('Phone number is empty.');
+                    return;
+                }
+                let digitsOnly = rawPhoneNumber.replace(/\D/g, '');
+                let tenDigitNumber;
+                if (digitsOnly.startsWith('91') && digitsOnly.length === 12) {
+                    tenDigitNumber = digitsOnly.substring(2);
+                } else if (digitsOnly.length === 10) {
+                    tenDigitNumber = digitsOnly;
+                } else {
+                    alert('Invalid phone number length.');
+                    return;
+                }
+                if (/^[6-9]\d{9}$/.test(tenDigitNumber)) {
+                    const whatsAppLink = `https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`;
+                    window.open(whatsAppLink, '_blank');
+                } else {
+                    alert('Invalid Indian mobile number format.');
+                }
+            }}
+        >
+            <Text size="xs">Send WhatsApp</Text>
+        </Menu.Item>
 
-                                              // 2. Normalize: Extract the 10-digit number, assuming Indian numbers
-                                              if (digitsOnly.startsWith('91') && digitsOnly.length === 12) {
-                                                  // It's a 12-digit number starting with 91 (e.g., "919876543210")
-                                                  tenDigitNumber = digitsOnly.substring(2); // Get the last 10 digits
-                                              } else if (digitsOnly.length === 10) {
-                                                  // It's a 10-digit number (e.g., "9876543210")
-                                                  tenDigitNumber = digitsOnly;
-                                              } else {
-                                                  // Not a 10-digit number nor a 12-digit number starting with 91
-                                                  alert('Invalid phone number length. Please use a 10-digit number, optionally prefixed with 91.');
-                                                  return;
-                                              }
+        <Menu.Item
+            icon={<IconCalculator size={14} />}
+            onClick={() => {
+                const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email }).toString();
+                router.push(`/calc?${qs}`);
+            }}
+        >
+            <Text size="xs">Health Check-up</Text>
+        </Menu.Item>
+        
+        {/* To create a subtle visual break without a hard line, we can add a divider with very low opacity or just rely on spacing */}
+        {/* For true minimalism, we omit the divider entirely */}
 
-                                              // 3. Validate the extracted 10-digit number (common Indian mobile format)
-                                              if (/^[6-9]\d{9}$/.test(tenDigitNumber)) {
-                                                  // Construct the WhatsApp link ensuring '91' is prepended
-                                                  const whatsAppLink = `https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`;
-                                                  window.open(whatsAppLink, '_blank');
-                                              } else {
-                                                  alert('Invalid Indian mobile number format (must be 10 digits starting with 6, 7, 8, or 9).');
-                                              }
-                                          }}
-                                          icon={<IconChatDot size={14} />}
-                                      >
-                                          Send WhatsApp
-                                      </Menu.Item>
-                                      <Menu.Item
-                                          icon={<IconListCheck size={14} />}
-                                          onClick={() => {
-                                              const qs = new URLSearchParams({
-                                                  id: record.id,
-                                                  name: record.full_name,
-                                                  phone: record.phone_number,
-                                                  email: record.email,
-                                              }).toString();
+        <Menu.Item
+            color="teal"
+            icon={<IconUserCheck size={14} />}
+            onClick={() => convertLeadToCustomer(record)}
+        >
+            <Text size="xs">Convert to Customer</Text>
+        </Menu.Item>
 
-                                              router.push(`/fincalc?${qs}`);
-                                          }}
-                                      >
-                                          Financial Health Check-up
-                                      </Menu.Item>
-                                      <Menu.Item
-                                          onClick={() => {
-                                              setSelectedLead(record);
-                                              setShowDrawer(true);
-                                              fetchFollowupHistory(record.id);
-                                          }}
-                                          icon={<IconPhoneCall size={14} />}
-                                      >
-                                          Follow‑ups
-                                      </Menu.Item>
-                                      <Menu.Divider />
-                                      <Menu.Item color="teal" onClick={() => convertLeadToCustomer(record)} icon={<IconListCheck size={14} />}>
-                                          Convert to Customer
-                                      </Menu.Item>
-                                  </Menu.Dropdown>
-                              </Menu>
+    </Menu.Dropdown>
+</Menu>
                           ),
                       },
                   ]}
@@ -832,6 +943,152 @@ function formatDateWithOrdinal(dateString) {
                   }}
               />
           </div>
+          <div className="block md:hidden">
+    <div className="md:hidden flex flex-col gap-4">
+      {filteredLeads.slice(0, mobileVisibleCount).map((record) => {
+        const isSelected = selectedLeads.includes(record.id);
+        const u = teamMembers.find((t) => t.id === record.user_id);
+
+        return (
+           <div
+            key={record.id}
+            className="bg-white dark:bg-gray-800 shadow-sm rounded-md p-2 text-sm flex flex-col gap-1 border"
+              onClick={() => router.push(`/leadtable/${record.id}`)}
+          >
+            <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-between">
+              <span className="font-medium truncate text-sm max-w-[80%]">{record.full_name}</span>
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() =>
+                  setSelectedLeads((prev) =>
+                    isSelected ? prev.filter((id) => id !== record.id) : [...prev, record.id]
+                  )
+                }
+              />
+            </div>
+
+            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+              <span>📞 {record.phone_number}</span>
+              <Menu withinPortal shadow="md" position="bottom-start">
+                <Menu.Target>
+                  <Badge
+                    onClick={(e) => e.stopPropagation()}
+                    className="cursor-pointer px-1 text-[10px]"
+                    color="blue"
+                    variant="light"
+                  >
+                    {record.lead_status || 'Select'}
+                  </Badge>
+                </Menu.Target>
+                <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+                  {statusOptions.map((o) => (
+                    <Menu.Item
+                      key={o.value}
+                      onClick={() => updateLeadStatus(record, o.value)}
+                    >
+                      {o.label}
+                    </Menu.Item>
+                    
+                  ))}
+                </Menu.Dropdown>
+              </Menu>
+            </div>
+
+            <div className="text-xs text-gray-500">Assigned to: {u ? u.username : '—'}</div>
+
+            <div onClick={(e) => e.stopPropagation()} className="flex justify-start flex-wrap gap-1 mt-1">
+              <Button size="xs" compact variant="transparent" onClick={() => router.push(`/editlead/${record.id}`)}>
+                <IconPencil size={12} />
+              </Button>
+              <Button
+                size="xs"
+                compact
+                variant="transparent"
+                onClick={() => {
+                  const digits = (record.phone_number || '').replace(/\D/g, '');
+                  const tenDigitNumber = digits.length === 12 && digits.startsWith('91')
+                    ? digits.slice(2)
+                    : digits.length === 10
+                    ? digits
+                    : null;
+
+                  if (tenDigitNumber && /^[6-9]\d{9}$/.test(tenDigitNumber)) {
+                    window.open(`https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`, '_blank');
+                  } else {
+                    alert('Invalid phone number');
+                  }
+                }}
+              >
+                <IconChatDot size={12} />
+              </Button>
+              <Button
+                size="xs"
+                compact
+                variant="transparent"
+                onClick={() => {
+                  setSelectedLead(record);
+                  setShowDrawer(true);
+                  fetchFollowupHistory(record.id);
+                }}
+              >
+                <IconHistory size={16} />
+              </Button>
+              <Button
+                size="xs"
+                compact
+                variant="transparent"
+                onClick={() => convertLeadToCustomer(record)}
+              >
+                Convert
+              </Button>
+              <Button
+                size="xs"
+                compact
+                variant="transparent"
+                onClick={() => {
+                const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email }).toString();
+                router.push(`/calc?${qs}`);
+            }}
+              >
+                <IconCalculator size={12} />
+              </Button>
+              <Button
+  size="xs"
+  compact
+  variant="light"
+  onClick={() => {
+    const digits = (record.phone_number || '').replace(/\D/g, '');
+    const tel = digits.length ? `tel:${digits}` : '';
+    if (tel) {
+      window.open(tel, '_self');
+    } else {
+      alert('Phone number invalid');
+    }
+  }}
+>
+  <IconPhone size={12} />
+</Button>
+
+            </div>
+          </div>
+        );
+      })}
+
+      {mobileVisibleCount < filteredLeads.length && (
+        <div className="mt-6 text-center">
+            <Button
+                variant="default"
+                onClick={handleLoadMore}
+            >
+                Load More
+            </Button>
+        </div>
+    )}
+
+     
+    </div>
+</div>
           <Drawer
               opened={showDrawer}
               onClose={() => {

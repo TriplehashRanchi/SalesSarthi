@@ -28,6 +28,8 @@ import IconChecks from '../icon/icon-checks';
 import IconClock from '../icon/icon-clock';
 import IconX from '../icon/icon-x';
 import IconMenu from '../icon/icon-menu';
+import IconChatDot from '../icon/icon-chat-dot';
+import IconPhone from '../icon/icon-phone';
 
 const LeadTable = ({ userId }) => {
   /* ───────────────────── state ───────────────────── */
@@ -55,6 +57,14 @@ const LeadTable = ({ userId }) => {
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading]           = useState(true);
   const [error,   setError]             = useState(null);
+
+    const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
+    const [filteredLeads, setFilteredLeads] = useState([]);
+  
+    const handleLoadMore = () => {
+      // Increase the count by another 20 items
+      setMobileVisibleCount(prevCount => prevCount + 20); 
+  };
 
 
   const [noteEditor, setNoteEditor] = useState({
@@ -114,7 +124,7 @@ const LeadTable = ({ userId }) => {
 
   /* ───────────────────── filter / sort / paginate ───────────────────── */
   useEffect(() => {
-    let data = leads;
+    let data = [...leads];
     if (userId) data = data.filter(l => l.user_id === userId);
     data = data.filter(l => l.lead_status?.toLowerCase() !== 'customer');
 
@@ -137,9 +147,16 @@ const LeadTable = ({ userId }) => {
     }
 
     setTotalCount(data.length);
-    const from = (page-1)*pageSize, to = from + pageSize;
-    setRecordsData(data.slice(from,to));
-  }, [leads, search, statusFilter, sortStatus, page, pageSize, userId]);
+    setFilteredLeads(data);
+  }, [leads, search, statusFilter, sortStatus, userId]);
+
+    useEffect(() => {
+    // This effect only runs when the full list or the page/pageSize changes.
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize;
+    setRecordsData(filteredLeads.slice(from, to)); // Slices the full list for the desktop table
+
+}, [filteredLeads, page, pageSize]);
 
   /* pagination safety */
   useEffect(() => {
@@ -329,7 +346,7 @@ function formatDateWithOrdinal(dateString) {
           )}
 
           {/* top controls */}
-          <div className="mb-5 flex flex-col gap-5 md:flex-row md:items-center">
+          <div className="mb-5 hidden md:flex flex-col gap-5 md:flex-row md:items-center">
               <h5 className="text-lg font-semibold dark:text-white-light">Lead Management</h5>
 
               {/* search + filter */}
@@ -361,6 +378,47 @@ function formatDateWithOrdinal(dateString) {
               </button>
           </div>
 
+                    {/* Mobile Controls */}
+          <div className="md:hidden flex flex-col gap-3 mb-5">
+              {/* Line 1: Search */}
+              <input
+                  className="form-input w-full text-sm"
+                  placeholder="Search Name, Email, Phone..."
+                  value={search}
+                  onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPage(1);
+                  }}
+              />
+          
+              {/* Line 2: Filter + Facebook + CSV */}
+              <div className="flex gap-2 items-center">
+                  <div className="flex-1">
+                      <Select
+                          data={statusOptions}
+                          placeholder="Status"
+                          value={statusFilter}
+                          onChange={(v) => {
+                              setStatusFilter(v);
+                              setPage(1);
+                          }}
+                          clearable
+                          searchable
+                          theme="dark"
+                      />
+                  </div>
+          
+          
+                  <button
+                      onClick={() => setCsvOpen(true)}
+                      className="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm"
+                  >
+                      CSV
+                  </button>
+              </div>
+          
+          </div>
+
           {/* assign dropdown */}
           {teamMembers.length > 0 && (
               <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
@@ -383,7 +441,7 @@ function formatDateWithOrdinal(dateString) {
           )}
 
           {/* table */}
-          <div className="datatables">
+          <div className="hidden md:block datatables">
               <DataTable
                   withBorder
                   striped
@@ -598,6 +656,153 @@ function formatDateWithOrdinal(dateString) {
                   fetching={loading}
                   paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} leads`}
               />
+          </div>
+
+           <div className="block md:hidden">
+              <div className="md:hidden flex flex-col gap-4">
+                {filteredLeads.slice(0, mobileVisibleCount).map((record) => {
+                  const isSelected = selectedLeads.includes(record.id);
+                  const u = teamMembers.find((t) => t.id === record.user_id);
+          
+                  return (
+                     <div
+                      key={record.id}
+                      className="bg-white dark:bg-gray-800 shadow-sm rounded-md p-2 text-sm flex flex-col gap-1 border"
+                        onClick={() => router.push(`/userleadtable/${record.id}`)}
+                    >
+                      <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-between">
+                        <span className="font-medium truncate text-sm max-w-[80%]">{record.full_name}</span>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() =>
+                            setSelectedLeads((prev) =>
+                              isSelected ? prev.filter((id) => id !== record.id) : [...prev, record.id]
+                            )
+                          }
+                        />
+                      </div>
+          
+                      <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+                        <span>📞 {record.phone_number}</span>
+                        <Menu withinPortal shadow="md" position="bottom-start">
+                          <Menu.Target>
+                            <Badge
+                              onClick={(e) => e.stopPropagation()}
+                              className="cursor-pointer px-1 text-[10px]"
+                              color="blue"
+                              variant="light"
+                            >
+                              {record.lead_status || 'Select'}
+                            </Badge>
+                          </Menu.Target>
+                          <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+                            {statusOptions.map((o) => (
+                              <Menu.Item
+                                key={o.value}
+                                onClick={() => updateLeadStatus(record, o.value)}
+                              >
+                                {o.label}
+                              </Menu.Item>
+                              
+                            ))}
+                          </Menu.Dropdown>
+                        </Menu>
+                      </div>
+          
+                      <div className="text-xs text-gray-500">Assigned to: {u ? u.username : '—'}</div>
+          
+                      <div onClick={(e) => e.stopPropagation()} className="flex justify-start flex-wrap gap-1 mt-1">
+                        <Button size="xs" compact variant="transparent" onClick={() => router.push(`/usereditlead/${record.id}`)}>
+                          <IconPencil size={12} />
+                        </Button>
+                        <Button
+                          size="xs"
+                          compact
+                          variant="transparent"
+                          onClick={() => {
+                            const digits = (record.phone_number || '').replace(/\D/g, '');
+                            const tenDigitNumber = digits.length === 12 && digits.startsWith('91')
+                              ? digits.slice(2)
+                              : digits.length === 10
+                              ? digits
+                              : null;
+          
+                            if (tenDigitNumber && /^[6-9]\d{9}$/.test(tenDigitNumber)) {
+                              window.open(`https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`, '_blank');
+                            } else {
+                              alert('Invalid phone number');
+                            }
+                          }}
+                        >
+                          <IconChatDot size={12} />
+                        </Button>
+                        <Button
+                          size="xs"
+                          compact
+                          variant="transparent"
+                          onClick={() => {
+                            setSelectedLead(record);
+                            setShowDrawer(true);
+                            fetchFollowupHistory(record.id);
+                          }}
+                        >
+                          <IconHistory size={16} />
+                        </Button>
+                        <Button
+                          size="xs"
+                          compact
+                          variant="transparent"
+                          onClick={() => convertLeadToCustomer(record)}
+                        >
+                          Convert
+                        </Button>
+                        <Button
+                                        size="xs"
+                                        compact
+                                        variant="transparent"
+                                        onClick={() => {
+                                        const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email }).toString();
+                                        router.push(`/calc?${qs}`);
+                                    }}
+                                      >
+                                        <IconCalculator size={12} />
+                                      </Button>
+                        <Button
+            size="xs"
+            compact
+            variant="light"
+            onClick={() => {
+              const digits = (record.phone_number || '').replace(/\D/g, '');
+              const tel = digits.length ? `tel:${digits}` : '';
+              if (tel) {
+                window.open(tel, '_self');
+              } else {
+                alert('Phone number invalid');
+              }
+            }}
+          >
+            <IconPhone size={12} />
+          </Button>
+          
+                      </div>
+                    </div>
+                  );
+                })}
+          
+                {mobileVisibleCount < filteredLeads.length && (
+                  <div className="mt-6 text-center">
+                      <Button
+                          variant="default"
+                          onClick={handleLoadMore}
+                      >
+                          Load More
+                      </Button>
+                  </div>
+              )}
+          
+ 
+              </div>
           </div>
 
           {/* follow up drawer */}

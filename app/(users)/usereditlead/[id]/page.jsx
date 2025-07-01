@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import LeadForm from '@/components/forms/leadform'; // Adjust the path based on your structure
+import { IconArrowBack, IconArrowLeft } from '@tabler/icons-react';
 
 const EditLeadPage = ({ params }) => {
   const { id } = params; // Get the lead ID from the route params
@@ -42,7 +43,9 @@ const EditLeadPage = ({ params }) => {
 
   return (
     <div className="container mx-auto mt-6">
-      <h1 className="text-2xl font-semibold mb-6">Edit Lead</h1>
+      {/* back button */}
+     
+      <h1 className="text-lg md:text-2xl flex gap-4 font-semibold mb-6"> <IconArrowLeft onClick={() => router.back()} className="cursor-pointer" /> Edit Lead</h1>
       <LeadForm
         existingLead={leadData} // Pass the fetched lead to the form
         onClose={() => router.push('/leads')} // Redirect back after editing

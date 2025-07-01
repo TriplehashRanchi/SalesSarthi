@@ -13,6 +13,7 @@ import ComponentsDashboardAnalytics from '@/components/dashboard/analytics';
 import IconUsersGroup from '@/components/icon/icon-users-group';
 import IconSquareCheck from '@/components/icon/icon-square-check';
 import IconTrendingUp from '@/components/icon/icon-trending-up';
+import IconChecks from '@/components/icon/icon-checks';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -384,7 +385,7 @@ const ReportingDashboard = () => {
     };
 
     return (
-        <div className="p-4 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen relative">
+        <div className="p-2 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen relative">
             <LoadingOverlay visible={loading} overlayBlur={2} />
 
             {/* <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">Sales & Activity Dashboard</h2> */}
@@ -396,7 +397,7 @@ const ReportingDashboard = () => {
             )}
 
             {/* --- KPI Cards --- */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
+            <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
                 {/* Leads */}
                 <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 p-4 rounded-lg shadow-md text-white">
                     <div className="flex p-5">
@@ -435,7 +436,7 @@ const ReportingDashboard = () => {
                 </div>
                 {/* NEW: Total Sales Value */}
                 <div className="bg-gradient-to-r from-indigo-500 to-indigo-400 dark:from-indigo-700 dark:to-indigo-600 p-4 rounded-lg shadow-md text-white">
-                <div className="flex p-5">
+                    <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-warning dark:text-white-light">
                             <IconCoinRupee className="h-5 w-5" />
                         </div>
@@ -452,9 +453,57 @@ const ReportingDashboard = () => {
                     <p className="text-xs opacity-80">(Completed / (Comp+Missed))</p>
                 </div>
             </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6 md:hidden">
+                {/* Leads */}
+                <div className="bg-gradient-to-r px-2 from-blue-500 to-blue-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconUsersGroup className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {dashboardData.totalLeads} <span className="text-[11px] opacity-90">Leads</span>
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconChecks className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {dashboardData.customerConversions} <span className="text-[11px] opacity-90">Conversions</span>
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-r px-2 from-lime-500 to-lime-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconCoinRupee className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {formatCurrency(dashboardData.totalSalesValue)} <span className="text-[11px] opacity-90">Sales </span>
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-r px-2 from-fuchsia-500 to-fuchsia-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconUsersGroup className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {dashboardData.leadConversionRate}% <span className="text-[11px] opacity-90">ROC</span>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Repeat for other KPIs with same pattern */}
+                {/* Conversions, Conversion Rate, Total Sales Value, Appointment Success Rate */}
+            </div>
+
             {/* **** RENDER CHILD ONLY WHEN DATA IS FETCHED **** */}
             {!loading && !error && fetchedRawData && (
-                <div className="mb-6">
+                <div className="hidden md:block mb-6">
                     <ComponentsDashboardAnalytics
                         // **** PASS RAW DATA ARRAYS AS PROPS ****
                         leads={fetchedRawData.leads}
@@ -521,7 +570,10 @@ const ReportingDashboard = () => {
                     {dashboardData.pastAppointments.length > 0 ? (
                         <ul className="space-y-2 max-h-60 overflow-y-auto">
                             {dashboardData.pastAppointments.map((appt) => (
-                                <li key={appt.id} className={`text-sm text-gray-600  dark:text-gray-200 border-l-4 pl-2 py-1 ${appt.status?.toLowerCase() === 'completed' ? 'border-green-500' : 'border-red-500'}`}>
+                                <li
+                                    key={appt.id}
+                                    className={`text-sm text-gray-600  dark:text-gray-200 border-l-4 pl-2 py-1 ${appt.status?.toLowerCase() === 'completed' ? 'border-green-500' : 'border-red-500'}`}
+                                >
                                     <span className="font-medium">{formatDateTime(appt.appointment_date)}</span> - {appt.appointment_type || 'General'}
                                     <span className={`ml-2 text-xs font-semibold ${appt.status?.toLowerCase() === 'completed' ? 'text-green-700' : 'text-red-700'}`}>({appt.status})</span>
                                     {/* Optional: Add Lead/Customer info if available */}
@@ -585,7 +637,12 @@ const ReportingDashboard = () => {
                         />
                     </div>
                     <div>
-                        <Button size="xs" className='dark:bg-cyan-200 dark:text-black' onClick={handleExportConversionsByUser} disabled={!selectedExportUser || dashboardData.allCustomers.length === 0}>
+                        <Button
+                            size="xs"
+                            className="dark:bg-cyan-200 dark:text-black"
+                            onClick={handleExportConversionsByUser}
+                            disabled={!selectedExportUser || dashboardData.allCustomers.length === 0}
+                        >
                             Export Conversions
                         </Button>
                     </div>

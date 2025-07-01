@@ -14,6 +14,7 @@ import IconUsersGroup from '@/components/icon/icon-users-group';
 import IconSquareCheck from '@/components/icon/icon-square-check';
 import IconTrendingUp from '@/components/icon/icon-trending-up';
 import IconCalendar from '@/components/icon/icon-calendar'; // Example icon if needed
+import IconChecks from '@/components/icon/icon-checks';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -351,10 +352,10 @@ const UserDashboard = () => {
             )}
 
             {/* --- KPI Cards (User Context) --- */}
-            <div className="grid panel grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
+            <div className="hidden md:grid panel grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
                 {/* My Leads */}
                 <div className="bg-gradient-to-r from-blue-500 to-blue-400 p-4 rounded-lg shadow-md text-white">
-                     <div className="flex p-5">
+                    <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-primary dark:text-white-light">
                             <IconUsersGroup className="h-5 w-5" />
                         </div>
@@ -364,9 +365,9 @@ const UserDashboard = () => {
                         </div>
                     </div>
                 </div>
-                 {/* My Conversions */}
+                {/* My Conversions */}
                 <div className="bg-gradient-to-r from-green-500 to-green-400 p-4 rounded-lg shadow-md text-white">
-                     <div className="flex p-5">
+                    <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30  text-white dark:bg-success dark:text-white-light">
                             <IconSquareCheck className="h-5 w-5" />
                         </div>
@@ -389,8 +390,8 @@ const UserDashboard = () => {
                     </div>
                 </div>
                 {/* My Total Sales Value */}
-                 <div className="bg-gradient-to-r from-indigo-500 to-indigo-400 p-4 rounded-lg shadow-md text-white">
-                     <div className="flex p-5">
+                <div className="bg-gradient-to-r from-indigo-500 to-indigo-400 p-4 rounded-lg shadow-md text-white">
+                    <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-warning dark:text-white-light">
                             <IconCoinRupee className="h-5 w-5" />
                         </div>
@@ -405,21 +406,69 @@ const UserDashboard = () => {
                     {/* Using IconCalendar as an example */}
                     <div className="flex p-5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-secondary dark:text-white-light">
-                           <IconCalendar className="h-5 w-5"/>
+                            <IconCalendar className="h-5 w-5" />
                         </div>
                         <div className="font-semibold ltr:ml-3 rtl:mr-3">
                             <p className="text-2xl text-purple-100 dark:text-white-light">{dashboardData.appointmentSuccessRate}%</p>
                             <h5 className="text-xs text-white">My Appt. Success</h5>
-                             <p className="text-xs opacity-80">(Completed / (Comp+Missed))</p>
+                            <p className="text-xs opacity-80">(Completed / (Comp+Missed))</p>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* Mobile View KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6 md:hidden">
+                {/* Leads */}
+                <div className="bg-gradient-to-r px-2 from-blue-500 to-blue-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconUsersGroup className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {dashboardData.totalLeads} <span className="text-[11px] opacity-90">Leads</span>
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconChecks className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {dashboardData.customerConversions} <span className="text-[11px] opacity-90">Conversions</span>
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-r px-2 from-lime-500 to-lime-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconCoinRupee className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {formatCurrency(dashboardData.totalSalesValue)} <span className="text-[11px] opacity-90">Sales </span>
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-r px-2 from-fuchsia-500 to-fuchsia-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
+                        <IconUsersGroup className="h-4 w-4" />
+                    </div>
+                    <div className="text-sm">
+                        <p className="font-bold">
+                            {dashboardData.leadConversionRate}% <span className="text-[11px] opacity-90">ROC</span>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Repeat for other KPIs with same pattern */}
+                {/* Conversions, Conversion Rate, Total Sales Value, Appointment Success Rate */}
+            </div>
+
             {/* --- Optional Analytics Component (Pass User Data) --- */}
-             {/* Pass only user-specific data if this component is used */}
-             {!loading && !error && fetchedRawData && (
-                <div className="mb-6">
+            {/* Pass only user-specific data if this component is used */}
+            {!loading && !error && fetchedRawData && (
+                <div className="hidden md:block mb-6">
                     {/* Ensure ComponentsDashboardAnalytics can handle data without 'users' array or adjust props */}
                     <ComponentsDashboardAnalytics
                         leads={fetchedRawData.leads}
@@ -430,10 +479,9 @@ const UserDashboard = () => {
                 </div>
             )}
 
-
             {/* --- Charts Row (User Context) --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
-                 {/* My Lead Status Pipeline */}
+                {/* My Lead Status Pipeline */}
                 <div className="p-4 shadow-md rounded-lg lg:col-span-1">
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">My Lead Pipeline</h3>
                     {Object.keys(dashboardData.leadsByStatus).length > 0 ? (
@@ -463,7 +511,7 @@ const UserDashboard = () => {
                 </div>
             </div>
 
-             {/* --- Actionable Task Lists (User Context) --- */}
+            {/* --- Actionable Task Lists (User Context) --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {/* My Upcoming Appointments */}
                 <div className="bg-white p-4 rounded-lg shadow-md">
@@ -482,15 +530,22 @@ const UserDashboard = () => {
                     )}
                 </div>
 
-                 {/* My Recent Past Appointments */}
+                {/* My Recent Past Appointments */}
                 <div className="bg-white p-4 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">My Recent Past Appointments (Last 30 Days)</h3>
-                     {dashboardData.pastAppointments.length > 0 ? (
+                    {dashboardData.pastAppointments.length > 0 ? (
                         <ul className="space-y-2 max-h-60 overflow-y-auto">
                             {dashboardData.pastAppointments.map((appt) => (
-                                <li key={appt.id} className={`text-sm text-gray-600 border-l-4 pl-2 py-1 ${appt.status?.toLowerCase() === 'completed' ? 'border-green-500' : appt.status?.toLowerCase() === 'missed' ? 'border-red-500' : 'border-gray-400'}`}>
+                                <li
+                                    key={appt.id}
+                                    className={`text-sm text-gray-600 border-l-4 pl-2 py-1 ${appt.status?.toLowerCase() === 'completed' ? 'border-green-500' : appt.status?.toLowerCase() === 'missed' ? 'border-red-500' : 'border-gray-400'}`}
+                                >
                                     <span className="font-medium">{formatDateTime(appt.appointment_date)}</span> - {appt.appointment_type || 'General'}
-                                    <span className={`ml-2 text-xs font-semibold ${appt.status?.toLowerCase() === 'completed' ? 'text-green-700' : appt.status?.toLowerCase() === 'missed' ? 'text-red-700' : 'text-gray-600'}`}>({appt.status})</span>
+                                    <span
+                                        className={`ml-2 text-xs font-semibold ${appt.status?.toLowerCase() === 'completed' ? 'text-green-700' : appt.status?.toLowerCase() === 'missed' ? 'text-red-700' : 'text-gray-600'}`}
+                                    >
+                                        ({appt.status})
+                                    </span>
                                     {/* Optional: Add Lead/Customer info if available */}
                                 </li>
                             ))}
@@ -511,7 +566,7 @@ const UserDashboard = () => {
                                     <p className="text-xs text-gray-500">
                                         Policy: {cust.policy_number || 'N/A'} / Premium: {formatCurrency(cust.premium)}
                                     </p>
-                                     {/* Add Link to Customer details */}
+                                    {/* Add Link to Customer details */}
                                 </li>
                             ))}
                         </ul>
@@ -521,10 +576,9 @@ const UserDashboard = () => {
                 </div>
 
                 {/* Add Upcoming/Overdue Follow-ups sections here if implemented */}
-
             </div>
 
-             {/* --- Data Export Section (User Specific) --- */}
+            {/* --- Data Export Section (User Specific) --- */}
             <div className="mt-6 p-4 rounded-lg shadow-md">
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Export My Data (CSV)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
@@ -541,8 +595,8 @@ const UserDashboard = () => {
                         </div>
                     </div>
 
-                     {/* Add Export My Customers/Appointments if needed */}
-                     {/* Example:
+                    {/* Add Export My Customers/Appointments if needed */}
+                    {/* Example:
                      <div className="flex flex-col space-y-2">
                          <p className="text-sm font-medium text-gray-600">Export My Customers:</p>
                          <Button size="xs" onClick={handleExportMyCustomers} disabled={dashboardData.myCustomers.length === 0}>
