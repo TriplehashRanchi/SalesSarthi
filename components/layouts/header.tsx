@@ -34,7 +34,7 @@ import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuMore from '@/components/icon/menu/icon-menu-more';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
-import MobileBottomNav from './mobileBottomNav'; // Assuming mobileBottomNav.tsx exists
+import MobileBottomNav from '@/components/layouts/mobileBottomNav.jsx'; // Assuming mobileBottomNav.tsx exists
 
 // --- Firebase Auth Imports ---
 import { getAuth, signOut, User, onAuthStateChanged } from 'firebase/auth';
