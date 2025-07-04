@@ -1,3 +1,4 @@
+'use client';
 import ContentAnimation from '@/components/layouts/content-animation';
 import Footer from '@/components/layouts/footer';
 import Header from '@/components/layouts/header';
@@ -7,6 +8,7 @@ import ScrollToTop from '@/components/layouts/scroll-to-top';
 import Setting from '@/components/layouts/setting';
 import Sidebar from '@/components/layouts/sidebar';
 import Portals from '@/components/portals';
+import { AuthProvider } from '@/context/AuthContext';
 import Head from 'next/head';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
@@ -15,7 +17,9 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
         <Head>
   <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet" />
 </Head>
+        <AuthProvider>
          <div className="min-h-screen text-black dark:text-white-dark">{children} </div>
+         </AuthProvider>
          </>
     );
 }

@@ -6,14 +6,14 @@ import axios from 'axios';
 import sortBy from 'lodash/sortBy';
 import { useRouter } from 'next/navigation';
 // replace Drawer import with Modal
-import { Menu, Button, Modal, ScrollArea, Text, Divider, Badge, Checkbox, Group, FileInput } from '@mantine/core';
+import { Menu, Button, Modal, ScrollArea, Text, Divider, Badge, Checkbox, Group, FileInput, Paper, ActionIcon } from '@mantine/core';
 import IconPencil from '../icon/icon-pencil';
 import IconTrash from '../icon/icon-trash-lines';
 // import IconUpload from '../icon/icon-upload-cloud';
 import AppointmentDrawer from './AppointmentDrawer';
 import IconMailDot from '../icon/icon-mail-dot';
 import { getAuth } from 'firebase/auth';
-import { IconFileExport, IconUpload } from '@tabler/icons-react';
+import { IconDotsVertical, IconFileExport, IconUpload } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
 
 const CustomerTable = () => {
@@ -376,6 +376,83 @@ const CustomerTable = () => {
                     onSortStatusChange={setSortStatus}
                 />
             </div>
+            {/* ─── Mobile Customer List ─── */}
+<div className="block md:hidden">
+  {/* Bulk toolbar (delete + export) */}
+  <Group className="px-3 py-2" position="apart" noWrap>
+    <Button
+      size="xs"
+      color="red"
+      disabled={!selectedIds.length}
+      leftSection={<IconTrash size={14} />}
+      onClick={deleteSelected}
+    >
+      Delete ({selectedIds.length})
+    </Button>
+    <Button size="xs" onClick={handleExportData} leftSection={<IconFileExport size={14} />}>
+      Export
+    </Button>
+     <Button size="xs" onClick={() => setCsvModalOpen(true)} leftSection={<IconFileExport size={14} />}>
+      Upload CSV
+    </Button>
+  </Group>
+
+  <ScrollArea style={{ height: 'calc(100vh - 160px)' }} px="xs">
+    {recordsData.map((cust) => {
+      const isSel = selectedIds.includes(cust.id);
+      const nextAppt = getNextAppointment(cust.appointments);
+      return (
+        <Paper
+          key={cust.id}
+          p="xs"
+          withBorder
+          shadow="xs"
+          mb="xs"
+          className="flex items-start justify-between"
+        >
+          {/* Main info */}
+          <div className="flex-1 mr-2">
+            <Group position="apart" noWrap>
+              <Text weight={500} lineClamp={1}>{cust.full_name}</Text>
+              <Checkbox checked={isSel} onChange={() => toggleSelect(cust.id)} />
+            </Group>
+            <Text size="xs" color="dimmed">{cust.phone_number}</Text>
+            {nextAppt && (
+              <Badge size="xs" color="blue" variant="light" mt="xs">
+                {new Date(nextAppt.appointment_date).toLocaleDateString()} @ {new Date(nextAppt.appointment_date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+              </Badge>
+            )}
+          </div>
+
+          {/* Actions menu */}
+          <Menu shadow="md" withinPortal>
+            <Menu.Target>
+              <ActionIcon size="sm" variant="subtle">
+                <IconDotsVertical size={18} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item icon={<IconPencil size={14} />} onClick={() => handleEditCustomer(cust)}>
+                Edit
+              </Menu.Item>
+              <Menu.Item icon={<IconMailDot size={14} />} onClick={() => handleManageAppointments(cust)}>
+                Appointments
+              </Menu.Item>
+              <Menu.Item
+                icon={<IconTrash size={14} />}
+                color="red"
+                onClick={() => deleteCustomer(cust.id)}
+              >
+                Delete
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </Paper>
+      );
+    })}
+  </ScrollArea>
+</div>
+
 
             {/* ⬇︎ Existing appointment drawer */}
             <AppointmentDrawer customer={selectedCustomer} opened={openDrawer} onClose={() => setOpenDrawer(false)} />

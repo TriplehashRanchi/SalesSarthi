@@ -84,7 +84,7 @@ export default function AddUserPage() {
 
 
 return (
-  <Container size="md" py="xl">
+  <Container size="lg " py="xl">
     <Group spacing="xs" mb="md">
       <IconUserPlus size={28} className="text-blue-600 dark:text-blue-400" />
       <Title order={2} className="text-gray-800 dark:text-white">Add New Team Member</Title>
@@ -94,10 +94,9 @@ return (
       withBorder
       shadow="sm"
       radius="md"
-      p="lg"
-      className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-    >
-      <ScrollArea>
+      p="sm"
+      className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+ 
         <SimpleGrid cols={2} spacing="lg" breakpoints={[{ maxWidth: 'sm', cols: 1 }]}>
           <TextInput
             label="First Name"
@@ -219,7 +218,7 @@ return (
             Save
           </Button>
         </Group>
-      </ScrollArea>
+ 
     </Card>
   </Container>
 );

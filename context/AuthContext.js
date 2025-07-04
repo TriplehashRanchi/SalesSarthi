@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }) => {
                     admin_id: role.admin_id,
                     status: role.status,
                     expires_at: role.expires_at,
+                    trial_used : role.trial_used,     
                 });
             } else {
                 setUser(null);
@@ -63,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         return () => unsubscribe(); // Cleanup on unmount
     }, []);
 
-    return <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, logout }}>{children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={{ user, setUser, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, logout }}>{children}</AuthContext.Provider>;
 };
 
 // Custom Hook to use Auth Context

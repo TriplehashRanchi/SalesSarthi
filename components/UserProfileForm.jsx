@@ -292,7 +292,7 @@ const AccountSettingsTabs = () => {
                     <div className="mb-6 flex items-center justify-between">
                         <div>
                             <p className="font-semibold">
-                                {subscription.subscription_plan || 'Basic'} Plan&nbsp;
+                                {subscription?.plan || 'Basic'} Plan&nbsp;
                                 <span className="text-xs text-white-dark">({subscription.subscription_status || 'Active'})</span>
                             </p>
                             <p className="text-sm text-white-dark">Next renewal – {new Date(subscription.expires_at).toLocaleDateString()}</p>
