@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { auth } from '@/utils/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail, logout, getFirebaseToken } from '@/utils/auth';
@@ -10,6 +10,7 @@ const AuthContext = createContext(null);
 // Auth Provider Component
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [profile, setProfile] = useState(null); // NEW ➜ /me payload
     const [loading, setLoading] = useState(true); // Track loading state
     const router = useRouter();
 
@@ -34,6 +35,15 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // 🔸 Helper – wraps a fetch that needs the Firebase JWT
+    const callApi = async (url, token) => {
+        const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    };
+
     // Listen to Firebase Auth Changes
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -53,7 +63,7 @@ export const AuthProvider = ({ children }) => {
                     admin_id: role.admin_id,
                     status: role.status,
                     expires_at: role.expires_at,
-                    trial_used : role.trial_used,     
+                    trial_used: role.trial_used,
                 });
             } else {
                 setUser(null);
@@ -64,8 +74,41 @@ export const AuthProvider = ({ children }) => {
         return () => unsubscribe(); // Cleanup on unmount
     }, []);
 
-    return <AuthContext.Provider value={{ user, setUser, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, logout }}>{children}</AuthContext.Provider>;
-};
+    // 🔸 Once we have role + token, pull /me
+    useEffect(() => {
+        if (!user?.token || !user?.role) return;
+        let isMounted = true;
+        const loadProfile = async () => {
+            try {
+                const endpoint = user.role === 'admin' ? `${API_URL}/api/admin/me` : `${API_URL}/api/users/me`;
+                const data = await callApi(endpoint, user.token);
+                if (isMounted) setProfile(data);
+            } catch (err) {
+                console.error('Failed to fetch profile', err);
+            }
+        };
+        loadProfile();
+        return () => {
+            isMounted = false;
+        };
+    }, [user?.token, user?.role]);
+
+
+      const value = useMemo(
+        () => ({
+          user,
+          profile,         
+          loading,
+          setUser,
+          signInWithGoogle,
+          signInWithEmail,
+          signUpWithEmail,
+          logout,
+        }),
+        [user, profile, loading]
+      );
+      return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    };
 
 // Custom Hook to use Auth Context
 export const useAuth = () => {

@@ -38,13 +38,14 @@ import MobileBottomNav from '@/components/layouts/MobileBottomNav'; // Assuming 
 
 // --- Firebase Auth Imports ---
 import { getAuth, signOut, User, onAuthStateChanged } from 'firebase/auth';
+import { useAuth } from '@/context/AuthContext';
 
 // --- Component Definition ---
 const Header = () => {
 
-    // --- Internal State for User and Loading ---
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [authLoading, setAuthLoading] = useState(true); // Start loading until auth state is known
+    // // --- Internal State for User and Loading ---
+    // const [currentUser, setCurrentUser] = useState<User | null>(null);
+    // const [authLoading, setAuthLoading] = useState(true);
 
     const pathname = usePathname();
     const dispatch = useDispatch();
@@ -52,17 +53,23 @@ const Header = () => {
     const { t, i18n } = getTranslation();
 
     // --- Listen to Auth State Changes ---
-    useEffect(() => {
-        const auth = getAuth();
-        setAuthLoading(true);
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            console.log("Auth State Changed:", user ? user.uid : 'No User');
-            setCurrentUser(user);
-            setAuthLoading(false);
-        });
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
-    }, []);
+    // useEffect(() => {
+    //     const auth = getAuth();
+    //     setAuthLoading(true);
+    //     const unsubscribe = onAuthStateChanged(auth, (user) => {
+    //         console.log("Auth State Changed:", user ? user.uid : 'No User');
+    //         setCurrentUser(user);
+    //         setAuthLoading(false);
+    //     });
+    //     // Cleanup subscription on unmount
+    //     return () => unsubscribe();
+    // }, []);
+
+    const { user, profile, loading } = useAuth() as any;   
+
+    console.log('user:', user);
+    console.log('profile:', profile);
+    console.log('loading:', loading);
 
     // --- Handle Sign Out ---
     const handleSignOut = async () => {
@@ -158,7 +165,7 @@ const Header = () => {
                          <div> {themeConfig.theme === 'light' ? ( <button className={`flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60`} onClick={() => dispatch(toggleTheme('dark'))} > <IconSun /> </button> ) : ( '' )} {themeConfig.theme === 'dark' && ( <button className={`flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60`} onClick={() => dispatch(toggleTheme('system'))} > <IconMoon /> </button> )} {themeConfig.theme === 'system' && ( <button className={`flex items-center rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60`} onClick={() => dispatch(toggleTheme('light'))} > <IconLaptop /> </button> )} </div>
 
                         {/* Conditional User Section */}
-                        {!authLoading && currentUser && ( // Render only when auth check is done and user exists
+                          {!loading && user && (  
                             <>
                                 {/* Messages Dropdown - RESTORED 
                                 <div className="dropdown shrink-0">
@@ -192,14 +199,14 @@ const Header = () => {
 
                                 {/* Profile Dropdown */}
                                 <div className="dropdown flex shrink-0">
-                                    <Dropdown offset={[0, 8]} placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`} btnClassName="relative group block" button={ <UserAvatar src={currentUser.photoURL} name={currentUser.displayName} size={36} className="saturate-50 group-hover:saturate-100" /> } >
+                                    <Dropdown offset={[0, 8]} placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`} btnClassName="relative group block" button={ <UserAvatar src={profile?.avatar_url || user.photoURL}  name={profile?.name || user.displayName}  size={36} className="saturate-50 group-hover:saturate-100" /> } >
                                         <ul className="w-[230px] !py-0 font-semibold text-dark dark:text-white-dark dark:text-white-light/90">
                                             <li>
                                                 <div className="flex items-center px-4 py-4">
-                                                    <UserAvatar src={currentUser.photoURL} name={currentUser.displayName} size={40} className="rounded-md" />
+                                                    <UserAvatar src={profile?.avatar_url || user.photoURL}  name={profile?.name || user.displayName} size={40} className="rounded-md" />
                                                     <div className="truncate ltr:pl-4 rtl:pr-4">
-                                                        <h4 className="text-base"> {currentUser.displayName || 'User'} </h4>
-                                                        <button type="button" className="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white"> {currentUser.email || ''} </button>
+                                                        <h4 className="text-base"> {profile?.name ?? user.displayName ?? 'User'}  </h4>
+                                                        <button type="button" className="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white"> {profile?.email ?? user.email ?? ''} </button>
                                                     </div>
                                                 </div>
                                             </li>
@@ -216,7 +223,7 @@ const Header = () => {
                         )}
 
                         {/* Show Sign In Button if Logged Out */}
-                        {!authLoading && !currentUser && ( // Render only when auth check is done and user is null
+                        {!loading && !user && ( // Render only when auth check is done and user is null
                              <Link href="/login" className="btn btn-primary"> Sign In </Link>
                         )}
 

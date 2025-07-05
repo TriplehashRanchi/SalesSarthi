@@ -15,6 +15,7 @@ import IconMailDot from '../icon/icon-mail-dot';
 import { getAuth } from 'firebase/auth';
 import { IconDotsVertical, IconFileExport, IconUpload } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
+import { Pagination } from '@mantine/core';
 
 const CustomerTable = () => {
     /* ─────────── existing state ─────────── */
@@ -281,7 +282,7 @@ const CustomerTable = () => {
 
                 <input type="text" className="form-input w-auto md:ml-4" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
-                <div className="ml-auto flex gap-2">
+                <div className="hidden md:flex ml-auto gap-2">
                     <Button size="sm" color="red" disabled={!selectedIds.length} leftSection={<IconTrash />} onClick={deleteSelected}>
                         Delete&nbsp;Selected&nbsp;({selectedIds.length})
                     </Button>
@@ -299,7 +300,7 @@ const CustomerTable = () => {
             </div>
 
             {/* ⬇︎ DataTable */}
-            <div className="datatables">
+            <div className="datatables hidden md:block">
                 <DataTable
                     highlightOnHover
                     className="table-hover whitespace-nowrap"
@@ -397,7 +398,7 @@ const CustomerTable = () => {
     </Button>
   </Group>
 
-  <ScrollArea style={{ height: 'calc(100vh - 160px)' }} px="xs">
+  <ScrollArea style={{ height: 'calc(100vh - 160px)' }} px="xs" scrollbarSize={0}>
     {recordsData.map((cust) => {
       const isSel = selectedIds.includes(cust.id);
       const nextAppt = getNextAppointment(cust.appointments);
@@ -450,7 +451,16 @@ const CustomerTable = () => {
         </Paper>
       );
     })}
+   
   </ScrollArea>
+   <Group position="center" spacing="xs" my="xs">
+  <Pagination
+    page={page}
+    onChange={setPage}
+    total={Math.ceil(customers.length / pageSize)}
+    size="xs"
+  />
+ </Group>
 </div>
 
 

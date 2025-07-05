@@ -10,8 +10,8 @@ const MultiColumn = () => {
     return (
         <div>
             <div className="panel flex items-center justify-between overflow-x-auto whitespace-nowrap p-3 text-primary bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700 rounded-md mb-4 shadow-md">
-                <div className="text-lg font-semibold text-white">{user ? `Hello ${user.displayName || 'User'} !` : 'Hello User !'}</div>
-                <div className="text-sm italic text-gray-200"> More the customers merrier the business </div>
+                <div className="text-xs md:text-lg font-semibold text-white">{user ? `Hello ${user.displayName || 'User'} !` : 'Hello User !'}</div>
+                <div className="hidden md:blocktext-sm italic text-gray-200"> More the customers merrier the business </div>
             </div>
             {/* Action Buttons Bar */}
             {/* <div className="panel flex mt-8 items-center justify-between overflow-x-auto whitespace-nowrap p-3 text-primary bg-gradient-to-r from-green-500 via-teal-200 to-white-700 rounded-md mb-4 shadow-md">
