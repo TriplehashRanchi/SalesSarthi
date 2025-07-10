@@ -31,12 +31,14 @@ import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
 import IconNotes from '../icon/icon-notes';
 import IconUserPlus from '../icon/icon-user-plus';
 import IconUsersGroup from '../icon/icon-users-group';
+import { IconDiscount2, IconPlant2 } from '@tabler/icons-react';
+import IconCode from '../icon/icon-code';
 
 const UserSide = () => {
     const dispatch = useDispatch();
@@ -68,6 +70,8 @@ const UserSide = () => {
             }
         }
     }, []);
+
+    const router = useRouter();
 
     useEffect(() => {
         setActiveRoute();
@@ -109,33 +113,31 @@ const UserSide = () => {
                     <PerfectScrollbar className="relative h-[calc(100vh-80px)]">
                         <ul className="relative space-y-0.5 p-4 py-0 font-semibold">
                             <li className="menu nav-item">
-                                <button type="button" className={`${currentMenu === 'dashboard' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('dashboard')}>
+                                <button type="button" className={`${currentMenu === 'dashboard' ? 'active' : ''} nav-link group w-full`} onClick={() => router.push('/superadmin')}>
                                     <div className="flex items-center">
                                         <IconMenuDashboard className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('dashboard')}</span>
                                     </div>
 
-                                    <div className={currentMenu !== 'dashboard' ? '-rotate-90 rtl:rotate-90' : ''}>
-                                        <IconCaretDown />
-                                    </div>
+                                   
                                 </button>
 
-                                <AnimateHeight duration={300} height={currentMenu === 'dashboard' ? 'auto' : 0}>
+                               {/* <AnimateHeight duration={300} height={currentMenu === 'dashboard' ? 'auto' : 0}>
                                     <ul className="sub-menu text-gray-500">
                                         <li>
                                             <Link href="/superadmin">{t('Dashboard')}</Link>
                                         </li>
-                                        {/* <li>
+                                         <li>
                                             <Link href="/analytics">{t('analytics')}</Link>
                                         </li>
                                         <li>
                                             <Link href="/finance">{t('finance')}</Link>
-                                        </li> */}
-                                        {/* <li>
+                                        </li> 
+                                        <li>
                                             <Link href="/crypto">{t('crypto')}</Link>
-                                        </li> */}
+                                        </li> 
                                     </ul>
-                                </AnimateHeight>
+                                </AnimateHeight>*/}
                             </li>
                             <li className="menu nav-item">
                                 <Link href="/superadmin/customers">
@@ -161,11 +163,27 @@ const UserSide = () => {
                                     </div>
                                 </Link>
                             </li>
-                            <li className="menu nav-item">
+                            {/* <li className="menu nav-item">
                                 <Link href="/superadmin/banner-view">
                                     <div className="flex items-center">
                                         <IconNotes className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('All Banners')}</span>
+                                    </div>
+                                </Link>
+                            </li> */}
+                             <li className="menu nav-item">
+                                <Link href="/superadmin/plans">
+                                    <div className="flex items-center">
+                                        <IconPlant2 className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Plans')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                             <li className="menu nav-item">
+                                <Link href="/superadmin/coupons">
+                                    <div className="flex items-center">
+                                        <IconDiscount2 className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Coupons')}</span>
                                     </div>
                                 </Link>
                             </li>

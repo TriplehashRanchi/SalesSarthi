@@ -54,7 +54,12 @@ export const AuthProvider = ({ children }) => {
                     await logout();
                     return;
                 }
-
+                if (role.status !== 'active') {
+                    console.warn(`⛔ Access blocked: ${role.status}`);
+                    alert(`Your access is currently ${role.status}. Please contact support.`);
+                    await logout();
+                    return;
+                }
                 // ✅ Do NOT logout if status is pending or expired
                 setUser({
                     ...firebaseUser,
@@ -93,22 +98,21 @@ export const AuthProvider = ({ children }) => {
         };
     }, [user?.token, user?.role]);
 
-
-      const value = useMemo(
+    const value = useMemo(
         () => ({
-          user,
-          profile,         
-          loading,
-          setUser,
-          signInWithGoogle,
-          signInWithEmail,
-          signUpWithEmail,
-          logout,
+            user,
+            profile,
+            loading,
+            setUser,
+            signInWithGoogle,
+            signInWithEmail,
+            signUpWithEmail,
+            logout,
         }),
-        [user, profile, loading]
-      );
-      return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-    };
+        [user, profile, loading],
+    );
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
 
 // Custom Hook to use Auth Context
 export const useAuth = () => {
