@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'; // Added useMemo
 import axios from 'axios';
-import { Box, Table, Tabs, Loader, Title, Text, Button, Group, TextInput, Paper, Badge } from '@mantine/core'; // Added Paper, Badge
+import { Box, Table, Tabs, Loader, Title, Text, Button, Group, TextInput, Paper, Badge, ScrollArea, Stack, Divider } from '@mantine/core'; // Added Paper, Badge
 import { showNotification } from '@mantine/notifications';
 import { getAuth } from 'firebase/auth';
 import { 
@@ -59,32 +59,54 @@ const replacePlaceholders = (templateMessage, record) => {
 };
 
 // Helper function to format reminder dates for display
-const formatReminderDate = (dateString, category) => {
-  if (!dateString) return 'N/A';
+const formatReminderDate = (record, category) => {
+  // 1) Pick the raw ISO string based on category
+  let raw;
+  switch (category) {
+    case 'nurturing':
+      raw = record.created_at;
+      break;
+    case 'birthday':
+      raw = record.date_of_birth;
+      break;
+    case 'anniversary':
+      raw = record.anniversary;
+      break;
+    case 'renewal':
+      raw = record.renewal_date;
+      break;
+    default:
+      return '—';
+  }
+  if (!raw) return '—';
 
-    const now = dayjs();
-    // Try parsing as UTC then converting to local to handle potential timezone issues like '1995-04-12T18:30:00.000Z' vs '1995-04-13'
-    const date = dayjs.utc(dateString).local();
-    console.log(dateString, date); 
+  // 2) Parse in UTC, convert to local
+  const now = dayjs();
+  const date = dayjs.utc(raw).local();
+  if (!date.isValid()) return 'Invalid date';
 
-    if (!date.isValid()) return 'Invalid Date';
+  // 3) If it’s a recurring event, compute its next occurrence
+  let displayDate = date;
+  if (['birthday', 'anniversary', 'renewal'].includes(category)) {
+    displayDate = getNextEventDate(date);
+  }
 
-    switch (category) {
-      case 'nurturing': // Typically uses 'created_at' which is a timestamp
-        return `Added ${date.fromNow()}`; // e.g., "Added 2 days ago"
-      case 'birthday':
-      case 'anniversary':
-        // Calculate next occurrence for display
-        const nextEventDateForDisplay = getNextEventDate(date);
-        // Use calendar format relative to next occurrence
-        return `on ${date.format('MMMM D')} (${nextEventDateForDisplay.calendar(now)})`; // e.g., "on April 13 (in 5 days)"
-      case 'renewal':
-        // Use calendar format relative to the actual renewal date
-        return `on ${date.format('MMMM D, YYYY')} (${date.calendar(now)})`; // e.g., "on May 15, 2025 (Tomorrow at 12:00 AM)"
-      default:
-        return date.format('MMMM D, YYYY'); // Fallback basic format
-    }
-  };
+  // 4) Format:
+  if (category === 'nurturing') {
+    // “Added 2 days ago”
+    return `Added ${date.fromNow()}`;
+  }
+
+  // For all other tabs, use calendar-style:
+  return displayDate.calendar(now, {
+    sameDay: `[Today at] h:mm A`,
+    nextDay: `[Tomorrow at] h:mm A`,
+    nextWeek: `dddd [at] h:mm A`,
+    lastDay: `[Yesterday at] h:mm A`,
+    lastWeek: `[Last] dddd [at] h:mm A`,
+    sameElse: 'MMMM D, YYYY h:mm A',
+  });
+};
 
 // Helper function to calculate the next occurrence of a date (for sorting)
 const getNextEventDate = (date) => {
@@ -399,6 +421,8 @@ const RemindersPage = () => {
           <Loader />
         </Group>
       ) : sortedAndFilteredRecords.length > 0 ? (
+        <>
+        <div className='hidden md:block'>
         <Paper className="shadow-md p-4 rounded-md border dark:bg-gray-700 dark:border-gray-600">
           <table className="w-full text-sm table-auto">
             <thead className="bg-gray-100 dark:bg-gray-600 dark:text-white">
@@ -420,7 +444,7 @@ const RemindersPage = () => {
                   )}
                   <td className="flex items-center">
                     {getCategoryIcon(activeTab)}
-                    {formatReminderDate(/* params */)}
+                    {formatReminderDate(record, activeTab)}
                   </td>
                   <td className="text-center p-2">
                     <Button
@@ -437,6 +461,59 @@ const RemindersPage = () => {
             </tbody>
           </table>
         </Paper>
+        </div>
+
+         {/* ── Mobile Cards ── */}
+          <div className="block md:hidden">
+            <ScrollArea style={{ height: '60vh' }} mx="0" px="0">
+              <Stack spacing="sm">
+                {sortedAndFilteredRecords.map((record) => (
+                  <Paper
+                    key={record.id}
+                    p="sm"
+                    withBorder
+                    radius="md"
+                    className="flex flex-col gap-2"
+                  >
+                    <Group position="apart" noWrap>
+                      <Text weight={500} lineClamp={1}>
+                        {record.full_name}
+                      </Text>
+                      {activeTab === 'nurturing' && (
+                        <Badge
+                          size="xs"
+                          variant="light"
+                          color={
+                            record.status === 'sent'
+                              ? 'green'
+                              : record.status === 'pending'
+                              ? 'orange'
+                              : 'gray'
+                          }
+                        >
+                          {record.status}
+                        </Badge>
+                      )}
+                    </Group>
+                    <Group spacing="xs" align="center">
+                      {getCategoryIcon(activeTab)}
+                      <Text size="xs">{formatReminderDate(record, activeTab)}</Text>
+                    </Group>
+                    <Divider my="xs" />
+                    <Button
+                      size="xs"
+                      fullWidth
+                      leftIcon={<IconBrandWhatsapp size={16} />}
+                      onClick={() => handleSendReminder(record)}
+                    >
+                      Send
+                    </Button>
+                  </Paper>
+                ))}
+              </Stack>
+            </ScrollArea>
+          </div>
+          </>
       ) : (
         <Text align="center" className="text-gray-500 dark:text-gray-400 mt-10 text-lg">
           🎉 No pending reminders for this category!

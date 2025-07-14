@@ -9,7 +9,7 @@ import IconPlus from '@/components/icon/icon-plus';
 import TemplateParameterInput from '@/components/TemplateParmeterInput';
 import { useAuth } from '@/context/AuthContext';
 import { set } from 'lodash';
-import { MultiSelect } from '@mantine/core';
+import { ActionIcon, Checkbox, Divider, Group, MultiSelect, Paper, ScrollArea, Stack, Text } from '@mantine/core';
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URI || 'http://localhost:8000';
@@ -102,38 +102,118 @@ export default function EmailCampaignDashboard() {
   );
 }
 
-/** List */
-function EmailCampaignList({ campaigns, onEdit, onDelete }) {
+ function EmailCampaignList({ campaigns, onEdit, onDelete }) {
   return (
-    <table className="table-hover w-full">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Provider</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {campaigns.map(c => (
-          <tr key={c.id}>
-            <td>{c.campaign_name}</td>
-            <td>{c.automation_type}</td>
-            <td>{c.provider}</td>
-            <td>{c.is_active ? 'Active' : 'Inactive'}</td>
-            <td>
-              <button onClick={()=>onEdit(c)} className="btn btn-sm btn-outline-primary mr-2">
-                <IconPencil /> Edit
-              </button>
-              <button onClick={()=>onDelete(c.id)} className="btn btn-sm btn-outline-danger">
-                <IconTrashLines /> Delete
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <>
+      {/* ─── Desktop Table ─── */}
+      <div className="hidden md:block">
+        <table className="table-auto w-full text-sm">
+          <thead className="bg-gray-100 dark:bg-gray-800">
+            <tr>
+              <th className="px-4 py-2 text-left">Name</th>
+              <th className="px-4 py-2 text-left">Type</th>
+              <th className="px-4 py-2 text-left">Provider</th>
+              <th className="px-4 py-2 text-left">Status</th>
+              <th className="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {campaigns.map((c, i) => (
+              <tr
+                key={c.id}
+                className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50 dark:bg-gray-700'}
+              >
+                <td className="px-4 py-2">{c.campaign_name}</td>
+                <td className="px-4 py-2">{c.automation_type}</td>
+                <td className="px-4 py-2">{c.provider}</td>
+                <td className="px-4 py-2">
+                  {c.is_active ? (
+                    <span className="text-green-600">Active</span>
+                  ) : (
+                    <span className="text-red-600">Inactive</span>
+                  )}
+                </td>
+                <td className="px-4 py-2">
+                  <button
+                    onClick={() => onEdit(c)}
+                    className="inline-flex items-center px-2 py-1 border border-blue-500 text-blue-500 rounded mr-2"
+                    title="Edit campaign"
+                  >
+                    <IconPencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(c.id)}
+                    className="inline-flex items-center px-2 py-1 border border-red-500 text-red-500 rounded"
+                    title="Delete campaign"
+                  >
+                    <IconTrashLines className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ─── Mobile Cards ─── */}
+      <div className="block md:hidden">
+        <ScrollArea style={{ height: '60vh' }} px="0">
+          <Stack spacing="sm">
+            {campaigns.map((c) => (
+              <Paper
+                key={c.id}
+                p="sm"
+                withBorder
+                radius="md"
+                className="flex flex-col gap-2 bg-white dark:bg-gray-800"
+              >
+                <Group position="apart" noWrap>
+                  <Text weight={500} lineClamp={1}>
+                    {c.campaign_name}
+                  </Text>
+                  <Checkbox
+                    checked={c.is_active}
+                    readOnly
+                    label="Active"
+                    size="xs"
+                    className="text-xs"
+                  />
+                </Group>
+
+                <Text size="xs" className="text-gray-600 dark:text-gray-400">
+                  Type: {c.automation_type}
+                </Text>
+                <Text size="xs" className="text-gray-600 dark:text-gray-400">
+                  Provider: {c.provider}
+                </Text>
+
+                <Divider my="xs" />
+
+                <Group spacing="xs">
+                  <ActionIcon
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(c)}
+                    title="Edit"
+                  >
+                    <IconPencil size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="outline"
+                    color="red"
+                    size="sm"
+                    onClick={() => onDelete(c.id)}
+                    title="Delete"
+                  >
+                    <IconTrashLines size={16} />
+                  </ActionIcon>
+                </Group>
+              </Paper>
+            ))}
+          </Stack>
+        </ScrollArea>
+      </div>
+    </>
   );
 }
 
