@@ -7,8 +7,31 @@ import html2canvas from 'html2canvas';
 import { getAuth } from 'firebase/auth';
 
 const MAIN_CATEGORIES = ['Facebook Ads', 'Daily Motivation', 'Concepts', 'Life Insurance', 'Health Insurance', 'Motor Insurance', 'Mutual Fund', 'Greetings'];
-
+const CATEGORY_ICONS = {
+  'Facebook Ads': '📢',
+  'Daily Motivation': '💡',
+  'Concepts': '📚',
+  'Life Insurance': '🧬',
+  'Health Insurance': '🏥',
+  'Motor Insurance': '🚗',
+  'Mutual Fund': '💰',
+  'Greetings': '🎉',
+};
 const GREETINGS_SUBCATEGORIES = ['Good Morning', 'Good Night', 'Congratulations', 'Birthday', 'Anniversary', 'Thank You', 'Reminder', 'Special Days', 'Quote', 'Sorry', 'RIP', 'General'];
+const GREETINGS_ICONS = {
+  'Good Morning': '🌅',
+  'Good Night': '🌙',
+  'Congratulations': '🎊',
+  'Birthday': '🎂',
+  'Anniversary': '💞',
+  'Thank You': '🙏',
+  'Reminder': '⏰',
+  'Special Days': '📅',
+  'Quote': '📝',
+  'Sorry': '😔',
+  'RIP': '🕊️',
+  'General': '📨',
+};
 
 const ProfessionalBannerMaker = () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -209,15 +232,16 @@ const ProfessionalBannerMaker = () => {
             <div className="container mx-auto p-4 sm:p-6">
                 <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-center">Choose a Category</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                    {MAIN_CATEGORIES.map((cat) => (
-                        <button
-                            key={cat}
-                            onClick={() => setCategory(cat)}
-                            className="bg-white p-4 sm:p-6 shadow rounded text-center hover:bg-gray-100 text-xs sm:text-sm font-medium min-h-[80px] sm:min-h-[100px] flex items-center justify-center"
-                        >
-                            {cat}
-                        </button>
-                    ))}
+                {MAIN_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className="bg-white p-4 sm:p-6 shadow rounded text-center hover:bg-gray-100 text-xs sm:text-sm font-medium min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center"
+                  >
+                    <div className="text-2xl sm:text-3xl mb-1">{CATEGORY_ICONS[cat]}</div>
+                    <span className="text-center">{cat}</span>
+                  </button>
+                ))}
                 </div>
             </div>
         );
@@ -235,15 +259,16 @@ const ProfessionalBannerMaker = () => {
                     <div />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                    {GREETINGS_SUBCATEGORIES.map((subcat) => (
-                        <button
-                            key={subcat}
-                            onClick={() => setSubcategory(subcat)}
-                            className="bg-white p-4 sm:p-6 shadow rounded text-center hover:bg-gray-100 text-xs sm:text-sm font-medium min-h-[80px] sm:min-h-[100px] flex items-center justify-center"
-                        >
-                            {subcat}
-                        </button>
-                    ))}
+                {GREETINGS_SUBCATEGORIES.map((subcat) => (
+                  <button
+                    key={subcat}
+                    onClick={() => setSubcategory(subcat)}
+                    className="bg-white p-4 sm:p-6 shadow rounded text-center hover:bg-gray-100 text-xs sm:text-sm font-medium min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center"
+                  >
+                    <div className="text-2xl sm:text-3xl mb-1">{GREETINGS_ICONS[subcat]}</div>
+                    <span className="text-center">{subcat}</span>
+                  </button>
+                ))}
                 </div>
             </div>
         );
