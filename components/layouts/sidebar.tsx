@@ -21,7 +21,7 @@ import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
 import {IconBrandFacebook, IconBrandWhatsappFilled, IconForms, IconHistory, IconReport} from '@tabler/icons-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
 import IconNotes from '../icon/icon-notes';
@@ -32,6 +32,8 @@ import IconUserPlus from '../icon/icon-user-plus';
 import IconTrendingUp from '../icon/icon-trending-up';
 import IconBell from '../icon/icon-bell';
 import IconMail from '../icon/icon-mail';
+import IconLogout from '../icon/icon-logout';
+import { getAuth, signOut } from 'firebase/auth';
 
 const Sidebar = () => {
     const dispatch = useDispatch();
@@ -46,6 +48,19 @@ const Sidebar = () => {
             return oldValue === value ? '' : value;
         });
     };
+
+    const router = useRouter()
+
+     // --- Handle Sign Out ---
+     const handleSignOut = async () => {
+         const auth = getAuth();
+         try {
+             await signOut(auth);
+             router.push('/login'); // Adjust redirect path as needed
+         } catch (error) {
+             console.error("Error signing out: ", error);
+         }
+     };
 
     useEffect(() => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
@@ -233,7 +248,7 @@ const Sidebar = () => {
                                 <Link href="/appointments">
                                     <div className="flex items-center">
                                         <IconNotes className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Appointments')}</span>
+                                        <span className="text-red-300 ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Appointments')}</span>
                                     </div>
                                 </Link>
                             </li>
@@ -282,6 +297,15 @@ const Sidebar = () => {
                                     </div>
                                 </Link>
                             </li>
+                            <li className="block md:hidden menu nav-item">
+                                <a onClick={handleSignOut}>
+                                    <div className="flex items-center">
+                                        <IconLogout className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Log Out')}</span>
+                                    </div>
+                                </a>
+                            </li>
+
                             {/* <li className="menu nav-item">
                                 <Link href="/notes">
                                     <div className="flex items-center">

@@ -193,7 +193,7 @@ export default function ComponentsAuthLoginForm() {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="btn btn-outline-primary shadow-sm w-full flex justify-center items-center"
+        className="btn btn-outline-primary w-full flex justify-center items-center"
         disabled={isLoading}
       >
         {isLoading ? (

@@ -31,13 +31,15 @@ import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
 import IconNotes from '../icon/icon-notes';
 import IconUserPlus from '../icon/icon-user-plus';
 import IconUsersGroup from '../icon/icon-users-group';
 import { IconHistory } from '@tabler/icons-react';
+import { getAuth, signOut } from 'firebase/auth';
+import IconLogout from '../icon/icon-logout';
 
 const UserSide = () => {
     const dispatch = useDispatch();
@@ -52,6 +54,19 @@ const UserSide = () => {
             return oldValue === value ? '' : value;
         });
     };
+
+        const router = useRouter()
+
+     // --- Handle Sign Out ---
+     const handleSignOut = async () => {
+         const auth = getAuth();
+         try {
+             await signOut(auth);
+             router.push('/login'); // Adjust redirect path as needed
+         } catch (error) {
+             console.error("Error signing out: ", error);
+         }
+     };
 
     useEffect(() => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
@@ -173,13 +188,13 @@ const UserSide = () => {
                                     </div>
                                 </Link>
                             </li>
-                            <li className="menu nav-item">
-                                <Link href="/notes">
+                            <li className="block md:hidden menu nav-item">
+                                <a onClick={handleSignOut}>
                                     <div className="flex items-center">
-                                        <IconNotes className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('To do')}</span>
+                                        <IconLogout className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-red-300 ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Log Out')}</span>
                                     </div>
-                                </Link>
+                                </a>
                             </li>
 
                             {/* <h2 className="-mx-4 mb-1 flex items-center bg-white-light/30 px-7 py-3 font-extrabold uppercase dark:bg-dark dark:bg-opacity-[0.08]">
