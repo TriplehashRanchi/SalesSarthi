@@ -1,21 +1,42 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep all Capacitor classes
+-keep class com.getcapacitor.** { *; }
+-dontwarn com.getcapacitor.**
+
+# Keep all Capacitor plugins
+-keep class com.getcapacitor.plugin.** { *; }
+-dontwarn com.getcapacitor.plugin.**
+
+# Keep all classes that use @CapacitorPlugin annotations
+-keep @com.getcapacitor.Plugin class * {
+    *;
+}
+
+# Keep Plugin configuration
+-keepclassmembers class ** {
+    @com.getcapacitor.PluginMethod <methods>;
+}
+
+# React specific: keep ReactActivity & related bridge
+-keep class com.facebook.react.** { *; }
+-dontwarn com.facebook.react.**
+
+# For JSON serialization
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Optional: keep WebView and JS bridge behavior
+-keep class android.webkit.** { *; }
+
+# If you're using Camera plugin or similar with FileProvider
+-keep class androidx.core.content.FileProvider { *; }
+
+# Prevent removal of JavaScriptInterface (used in bridge)
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Optional: If using any community plugin, check their docs
