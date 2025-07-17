@@ -950,35 +950,8 @@ const FinancialHealthCalculator = () => {
                                 return (
                                     <tr key={index} className="hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
                                         <td className="border px-3 py-2 font-medium">{row.item}</td>
-                                        <td className="border px-3 py-2">{row.formula || '-'}</td> {/* 🔥 Display Formula */}
-                                        <td className="border px-3 py-2 text-right">{displayTarget}</td>
-                                        <td className="border px-3 py-2 text-center">
-                                            {isNumericInput && (
-                                                <NumberInput
-                                                    value={row.currentStatus === 0 ? '' : row.currentStatus}
-                                                    onChange={(val) => handleChecklistNumericChange(index, val ?? 0)}
-                                                    min={0}
-                                                    placeholder="Enter Value"
-                                                    size="xs"
-                                                    hideControls
-                                                    classNames={{
-                                                        input: 'text-sm text-right bg-dark-6 text-dark dark:text-gray-100 form-input',
-                                                    }}
-                                                />
-                                            )}
-                                            {isYesNoInput && (
-                                                <select
-                                                    value={row.currentStatus}
-                                                    onChange={(e) => handleYesNoChange(index, e.target.value)}
-                                                    className="form-select w-full mx-auto border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-1"
-                                                >
-                                                    <option value="">Select</option>
-                                                    <option value="Yes">Yes</option>
-                                                    <option value="No">No</option>
-                                                </select>
-                                            )}
-
-                                            {isInvestmentInput && (
+                                        <td className="border px-3 py-2">
+                                            {isInvestmentInput ? (
                                                 <Popover width={300} position="bottom" withArrow shadow="md">
                                                     <Popover.Target>
                                                         <Button size="xs" variant="light" color="indigo" className="text-xs">
@@ -1021,7 +994,7 @@ const FinancialHealthCalculator = () => {
                                                                                         checked={row.options[key]}
                                                                                         onChange={(e) => handleInvestmentDiversificationChange(key, e.target.checked)}
                                                                                         size="xs"
-                                                                                        className='text-start'
+                                                                                        className="text-start"
                                                                                         radius="sm"
                                                                                     />
                                                                                 ),
@@ -1073,8 +1046,57 @@ const FinancialHealthCalculator = () => {
                                                         </div>
                                                     </Popover.Dropdown>
                                                 </Popover>
+                                            ) : (
+                                                row.formula || '-'
                                             )}
                                         </td>
+                                        <td className="border px-3 py-2 text-right">{displayTarget}</td>
+                                        <td className="border px-3 py-2 text-center">
+                                            {isInvestmentInput ? (
+                                                <div className="space-y-2 min-w-[160px]">
+                                                    <div>
+                                                        <div className="flex justify-between text-xs mb-1">
+                                                            <span className="font-medium text-gray-700 dark:text-gray-300">Risk:</span>
+                                                            <span className="font-semibold text-red-600 dark:text-red-400">{row.currentStatus.risk?.toFixed(0)}%</span>
+                                                        </div>
+                                                        <Progress value={row.currentStatus.risk} color="red" size="md" radius="xl" striped animate />
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="flex justify-between text-xs mb-1">
+                                                            <span className="font-medium text-gray-700 dark:text-gray-300">Safe:</span>
+                                                            <span className="font-semibold text-green-600 dark:text-green-400">{row.currentStatus.guaranteed?.toFixed(0)}%</span>
+                                                        </div>
+                                                        <Progress value={row.currentStatus.guaranteed} color="teal" size="md" radius="xl" striped animate />
+                                                    </div>
+                                                </div>
+                                            ) : isNumericInput ? (
+                                                <NumberInput
+                                                    value={row.currentStatus === 0 ? '' : row.currentStatus}
+                                                    onChange={(val) => handleChecklistNumericChange(index, val ?? 0)}
+                                                    min={0}
+                                                    placeholder="Enter Value"
+                                                    size="xs"
+                                                    hideControls
+                                                    classNames={{
+                                                        input: 'text-sm text-right bg-dark-6 text-dark dark:text-gray-100 form-input',
+                                                    }}
+                                                />
+                                            ) : isYesNoInput ? (
+                                                <select
+                                                    value={row.currentStatus}
+                                                    onChange={(e) => handleYesNoChange(index, e.target.value)}
+                                                    className="form-select w-full mx-auto border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-1"
+                                                >
+                                                    <option value="">Select</option>
+                                                    <option value="Yes">Yes</option>
+                                                    <option value="No">No</option>
+                                                </select>
+                                            ) : (
+                                                <span>{row.currentStatus}</span>
+                                            )}
+                                        </td>
+
                                         <td className="border px-3 py-2 text-right">{displayGap}</td>
                                         <td className="border px-3 py-2 text-center font-semibold text-lg">
                                             <span
