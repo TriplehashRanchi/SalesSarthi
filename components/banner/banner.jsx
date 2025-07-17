@@ -6,6 +6,11 @@ import { Button } from '@mantine/core';
 import html2canvas from 'html2canvas';
 import { getAuth } from 'firebase/auth';
 
+// 1. Import Capacitor plugins and the platform checker
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
 const MAIN_CATEGORIES = ['Facebook Ads', 'Daily Motivation', 'Concepts', 'Life Insurance', 'Health Insurance', 'Motor Insurance', 'Mutual Fund', 'Greetings'];
 const CATEGORY_ICONS = {
   'Facebook Ads': '📢',
@@ -98,125 +103,126 @@ const ProfessionalBannerMaker = () => {
         loadData();
     }, []);
 
+   // Helper function to get the banner as a blob
+    const getBannerBlob = async () => {
+        if (!exportRef.current) return null;
+
+        const exportDiv = exportRef.current;
+        // Logic to make div visible for capture (no changes needed here)
+        const originalStyle = {
+            opacity: exportDiv.style.opacity,
+            transform: exportDiv.style.transform,
+            position: exportDiv.style.position,
+            top: exportDiv.style.top,
+            left: exportDiv.style.left,
+            zIndex: exportDiv.style.zIndex,
+        };
+        exportDiv.style.opacity = '1';
+        exportDiv.style.transform = 'scale(1)';
+        exportDiv.style.position = 'fixed';
+        exportDiv.style.top = '-2000px';
+        exportDiv.style.left = '0';
+        exportDiv.style.zIndex = '9999';
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const canvas = await html2canvas(exportDiv, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            width: 1080,
+            height: 1080,
+            scrollX: 0,
+            scrollY: 0,
+        });
+
+        // Restore original styles
+        Object.assign(exportDiv.style, originalStyle);
+
+        return new Promise((resolve) => {
+            canvas.toBlob(resolve, 'image/png');
+        });
+    };
+
+
+    // 2. UPDATED handleExport function
     const handleExport = async () => {
-        if (!exportRef.current) return;
         try {
-            // Temporarily make the export div visible for capturing
-            const exportDiv = exportRef.current;
-            const originalStyle = {
-                opacity: exportDiv.style.opacity,
-                transform: exportDiv.style.transform,
-                position: exportDiv.style.position,
-                top: exportDiv.style.top,
-                left: exportDiv.style.left,
-                zIndex: exportDiv.style.zIndex,
-            };
+            const blob = await getBannerBlob();
+            if (!blob) return;
 
-            // Make it visible and properly positioned
-            exportDiv.style.opacity = '1';
-            exportDiv.style.transform = 'scale(1)';
-            exportDiv.style.position = 'fixed';
-            exportDiv.style.top = '-2000px'; // Move it off-screen but visible
-            exportDiv.style.left = '0';
-            exportDiv.style.zIndex = '9999';
-
-            // Wait a bit for styles to apply
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            const canvas = await html2canvas(exportDiv, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                width: 1080,
-                height: 1080,
-                scrollX: 0,
-                scrollY: 0,
-            });
-
-            // Restore original styles
-            exportDiv.style.opacity = originalStyle.opacity;
-            exportDiv.style.transform = originalStyle.transform;
-            exportDiv.style.position = originalStyle.position;
-            exportDiv.style.top = originalStyle.top;
-            exportDiv.style.left = originalStyle.left;
-            exportDiv.style.zIndex = originalStyle.zIndex;
-
-            canvas.toBlob((blob) => {
+            // If on a native platform (iOS/Android), save to the device's filesystem.
+            if (Capacitor.isNativePlatform()) {
+                // Convert blob to base64
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = async () => {
+                    const base64data = reader.result;
+                    try {
+                        await Filesystem.writeFile({
+                            path: `banner-${Date.now()}.png`,
+                            data: base64data,
+                            directory: Directory.Documents, // Or Directory.Photos for auto-gallery save
+                        });
+                        alert('Banner saved to your Documents folder!');
+                    } catch (e) {
+                        console.error('Unable to save file', e);
+                        alert('Error: Could not save banner.');
+                    }
+                };
+            } else {
+                // Keep original desktop browser functionality
                 const url = URL.createObjectURL(blob);
-                setExportBlobUrl(url);
-
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = 'professional-banner.png';
                 link.click();
-            }, 'image/png');
+                URL.revokeObjectURL(url); // Clean up
+            }
         } catch (error) {
             console.error('Export failed:', error);
+            alert('An error occurred during export.');
         }
     };
 
-    const handleMobileShare = async () => {
-        if (!exportRef.current || !navigator.share) {
-            alert('Sharing not supported on this browser.');
-            return;
-        }
-
+    // 3. UPDATED handleMobileShare function (renamed to handleShare for clarity)
+    const handleShare = async () => {
         try {
-            // Temporarily make the export div visible for capturing
-            const exportDiv = exportRef.current;
-            const originalStyle = {
-                opacity: exportDiv.style.opacity,
-                transform: exportDiv.style.transform,
-                position: exportDiv.style.position,
-                top: exportDiv.style.top,
-                left: exportDiv.style.left,
-                zIndex: exportDiv.style.zIndex,
-            };
+            const blob = await getBannerBlob();
+            if (!blob) return;
 
-            // Make it visible and properly positioned
-            exportDiv.style.opacity = '1';
-            exportDiv.style.transform = 'scale(1)';
-            exportDiv.style.position = 'fixed';
-            exportDiv.style.top = '-2000px'; // Move it off-screen but visible
-            exportDiv.style.left = '0';
-            exportDiv.style.zIndex = '9999';
+            // If on native platform OR browser supports Web Share API with files
+            // The 'canShare' check handles both Capacitor and modern browsers.
+            const canShare = await Share.canShare();
 
-            // Wait a bit for styles to apply
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            const canvas = await html2canvas(exportDiv, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                width: 1080,
-                height: 1080,
-                scrollX: 0,
-                scrollY: 0,
-            });
-
-            // Restore original styles
-            exportDiv.style.opacity = originalStyle.opacity;
-            exportDiv.style.transform = originalStyle.transform;
-            exportDiv.style.position = originalStyle.position;
-            exportDiv.style.top = originalStyle.top;
-            exportDiv.style.left = originalStyle.left;
-            exportDiv.style.zIndex = originalStyle.zIndex;
-
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], 'banner.png', { type: 'image/png' });
-
-                try {
-                    await navigator.share({
+            if (canShare.value && Capacitor.isNativePlatform()) {
+                 const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = async () => {
+                    const base64data = reader.result;
+                    await Share.share({
                         title: 'Check out this banner',
                         text: 'Created using DG Sarthi Banner Maker',
-                        files: [file],
+                        files: [base64data], // Share as base64 data URL
                     });
-                } catch (err) {
-                    console.error('Share failed:', err);
                 }
-            }, 'image/png');
+            } else if (navigator.share) {
+                // Fallback to web share for browsers
+                 const file = new File([blob], 'banner.png', { type: 'image/png' });
+                 await navigator.share({
+                    title: 'Check out this banner',
+                    text: 'Created using DG Sarthi Banner Maker',
+                    files: [file],
+                 });
+            }
+            else {
+                alert('Sharing is not supported on this device/browser.');
+            }
         } catch (error) {
             console.error('Share failed:', error);
+            // Don't alert if the user cancels the share dialog
+            if (error.name !== 'AbortError') {
+              alert('An error occurred while trying to share.');
+            }
         }
     };
 
@@ -352,7 +358,7 @@ const ProfessionalBannerMaker = () => {
                     >
                         Export Banner
                     </Button>
-                    <Button onClick={handleMobileShare} className="bg-green-600 text-white hover:bg-green-700 flex-1 sm:flex-none" size={isMobile ? 'sm' : 'md'}>
+                    <Button onClick={handleShare} className="bg-green-600 text-white hover:bg-green-700 flex-1 sm:flex-none" size={isMobile ? 'sm' : 'md'}>
                         Share via WhatsApp
                     </Button>
                 </div>
