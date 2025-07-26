@@ -229,7 +229,7 @@ const UserSide = () => {
                                         <AnimateHeight duration={300} height={currentMenu === 'sales' ? 'auto' : 0}>
                                             <ul className="sub-menu text-gray-500">
                                                 <li>
-                                                    <Link href="/superadmin/tran_chart">{t('Total Earning Dashboard')}</Link>
+                                                    <Link href="/superadmin/tran_chart">{t('Total Earning')}</Link>
                                                 </li>
                                                 <li>
                                                     <Link href="/superadmin/transactions">{t('Transactions')}</Link>
