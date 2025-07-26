@@ -10,9 +10,12 @@
     },
     "dependencies": {
         "@capacitor/android": "^7.4.0",
+        "@capacitor/camera": "^7.0.1",
         "@capacitor/cli": "^7.4.0",
         "@capacitor/core": "^7.4.0",
+        "@capacitor/filesystem": "^7.1.2",
         "@capacitor/ios": "^7.4.0",
+        "@capacitor/share": "^7.0.1",
         "@emotion/react": "^11.10.6",
         "@ffmpeg/core": "^0.12.10",
         "@ffmpeg/ffmpeg": "^0.12.15",
