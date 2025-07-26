@@ -39,6 +39,7 @@ const Superdash = () => {
     { title: 'Total Appointments', count: stats.totals.appointments, bg: 'from-green-500 to-green-400' },
     { title: 'Total Follow-ups', count: stats.totals.followups, bg: 'from-red-500 to-red-400' },
     { title: 'Total Renewal Reminders', count: stats.totals.renewals, bg: 'from-orange-500 to-orange-400' },
+    { title: 'Total health Checkups', count: stats.totals.logs, bg: 'from-amber-500 to-amber-400' },
   ];
 
   const weeklyLeadChart = {

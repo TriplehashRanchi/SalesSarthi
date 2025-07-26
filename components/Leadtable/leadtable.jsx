@@ -20,9 +20,6 @@ import {
 import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
 import { IconAlertCircle, IconBrandWhatsapp, IconCalculator, IconHistory, IconListCheck, IconMenu4, IconUserCheck } from '@tabler/icons-react';
-
-import IconMessage   from '../icon/icon-message';
-import IconPhoneCall from '../icon/icon-phone-call';
 import IconChatDot   from '../icon/icon-chat-dot';
 import IconFacebook  from '@/components/icon/icon-facebook';
 import IconPencil    from '../icon/icon-pencil';
@@ -36,7 +33,8 @@ import IconChecks from '../icon/icon-checks';
 import IconClock from '../icon/icon-clock';
 import IconPhone from '../icon/icon-phone';
 
-const LeadTable = ({ userId }) => {
+const LeadTable = ({ profile }) => {
+  console.log('profile in leadtable', profile);
   /* ───────────────────── state ───────────────────── */
   const [leads, setLeads] = useState([]);
   const [page, setPage] = useState(1);
@@ -237,7 +235,7 @@ console.log(payload);
   /* ───────────────────── filter / sort / paginate ───────────────────── */
   useEffect(() => {
     let data = [...leads];
-    if (userId) data = data.filter(l => l.user_id === userId);
+    // if (userId) data = data.filter(l => l.user_id === userId);
     data = data.filter(l => l.lead_status?.toLowerCase() !== 'customer');
 
     if (search) {
@@ -263,7 +261,7 @@ console.log(payload);
     // const from = (page-1)*pageSize, to = from + pageSize;
     // setRecordsData(data.slice(from,to));
     
-  }, [leads, search, statusFilter, sortStatus, userId]);
+  }, [leads, search, statusFilter, sortStatus, ]);
 
   useEffect(() => {
     // This effect only runs when the full list or the page/pageSize changes.
@@ -850,7 +848,7 @@ function formatDateWithOrdinal(dateString) {
         <Menu.Item
             icon={<IconCalculator size={14} />}
             onClick={() => {
-                const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email }).toString();
+                const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email, doctor : profile.name  }).toString();
                 router.push(`/calc?${qs}`);
             }}
         >

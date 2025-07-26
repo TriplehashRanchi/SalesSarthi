@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const MultiColumn = () => {
 
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
 
     return (
         <div>
@@ -19,7 +19,7 @@ const MultiColumn = () => {
             </div>
             {/* Action Buttons Bar */}
           
-            <ComponentsDatatablesMultiColumn  userId = {null}/>
+            <ComponentsDatatablesMultiColumn  profile = {profile || null}/>
         </div>
     );
 };

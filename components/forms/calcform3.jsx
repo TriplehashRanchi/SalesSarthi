@@ -240,6 +240,7 @@ const FinancialHealthCalculator = () => {
     });
 
     const searchParams = useSearchParams();
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     // NEW EFFECT: Prefill form fields from URL query parameters
     useEffect(() => {
@@ -248,6 +249,7 @@ const FinancialHealthCalculator = () => {
             const nameFromUrl = searchParams.get('name');
             const phoneFromUrl = searchParams.get('phone');
             const emailFromUrl = searchParams.get('email');
+            const DoctorFromUrl = searchParams.get('doctor');
             // const idFromUrl = searchParams.get('id'); // Optional: if you need to use/store the ID
 
             // Check if any relevant params exist to avoid unnecessary state updates
@@ -257,6 +259,7 @@ const FinancialHealthCalculator = () => {
                     clientName: nameFromUrl || prev.clientName,
                     mobileNumber: phoneFromUrl || prev.mobileNumber,
                     emailId: emailFromUrl || prev.emailId,
+                    financialDoctorName: DoctorFromUrl || prev.financialDoctorName,
                     // Example if you want to store the ID:
                     // clientQueryId: idFromUrl || prev.clientQueryId,
                 }));
@@ -643,7 +646,7 @@ const FinancialHealthCalculator = () => {
     ]);
 
     // --- Submission ---
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         // Prepare data for the report modal
         const reportData = {
             // Updated/Added Fields
@@ -675,6 +678,21 @@ const FinancialHealthCalculator = () => {
                 score: item.score,
             })),
         };
+               
+        try {
+          await fetch(`${API_URL}/api/logs/log-health-usage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clientName: formData.clientName,
+              mobileNumber: formData.mobileNumber,
+              emailId: formData.emailId,
+              date: Date.now(),
+            }),
+          });
+        } catch (err) {
+          console.error('Error logging usage:', err);
+  }
 
         setFormDataForReport(reportData);
         setIsModalOpen(true);
