@@ -37,7 +37,7 @@ import IconLaptop from '../icon/icon-laptop';
 import IconNotes from '../icon/icon-notes';
 import IconUserPlus from '../icon/icon-user-plus';
 import IconUsersGroup from '../icon/icon-users-group';
-import { IconDiscount2, IconPlant2, IconTransactionRupee } from '@tabler/icons-react';
+import { IconCommand, IconDiscount2, IconPlant2, IconTransactionRupee } from '@tabler/icons-react';
 import IconCode from '../icon/icon-code';
 
 const UserSide = () => {
@@ -187,6 +187,17 @@ const UserSide = () => {
                                     </div>
                                 </Link>
                             </li>
+
+                            <li className="menu nav-item">
+                                <Link href="/superadmin/user_comment">
+                                    <div className="flex items-center">
+                                        <IconCommand className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('User Comment')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
+
                             {/* <li className="menu nav-item">
                                 <Link href="/superadmin/transactions">
                                     <div className="flex items-center">
