@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import superAdminAxios from '@/utils/superAdminAxios';
 import { useRouter } from 'next/navigation';
+const Superdash = dynamic(() => import('@/components/dashboard/superdash'), {
+  ssr: false
+});
 
 const SuperAdminDashboard = () => {
   const router = useRouter();
@@ -30,11 +34,7 @@ const SuperAdminDashboard = () => {
   if (!stats) return <div className="text-center mt-10">Loading dashboard...</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Super Admin Dashboard</h1>
-      <p>Total Admins: {stats.totalAdmins}</p>
-      <p>Total Revenue: ₹{stats.totalRevenue}</p>
-    </div>
+    <Superdash/>
   );
 };
 
