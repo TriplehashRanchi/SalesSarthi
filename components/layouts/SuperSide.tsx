@@ -137,7 +137,7 @@ const UserSide = () => {
                                             <Link href="/crypto">{t('crypto')}</Link>
                                         </li> 
                                     </ul>
-                                </AnimateHeight>*/}
+                                </AnimateHeight> */}
                             </li>
                             <li className="menu nav-item">
                                 <Link href="/superadmin/customers">
@@ -147,14 +147,14 @@ const UserSide = () => {
                                     </div>
                                 </Link>
                             </li>   
-                            <li className="menu nav-item">
+                            {/* <li className="menu nav-item">
                                 <Link href="/calc">
                                     <div className="flex items-center">
                                         <IconMenuCharts className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Fin Health Calculator')}</span>
                                     </div>
                                 </Link>
-                            </li>
+                            </li> */}
                             <li className="menu nav-item">
                                 <Link href="/superadmin/banner-maker">
                                     <div className="flex items-center">
@@ -187,21 +187,44 @@ const UserSide = () => {
                                     </div>
                                 </Link>
                             </li>
-                            <li className="menu nav-item">
+                            {/* <li className="menu nav-item">
                                 <Link href="/superadmin/transactions">
                                     <div className="flex items-center">
                                         <IconTransactionRupee className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Transactions')}</span>
                                     </div>
                                 </Link>
-                            </li>
-                            <li className="menu nav-item">
+                            </li> */}
+                            {/* <li className="menu nav-item">
                                 <Link href="/notes">
                                     <div className="flex items-center">
                                         <IconNotes className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('to do')}</span>
                                     </div>
                                 </Link>
+                            </li> */}
+                            <li className="menu nav-item">
+                                        <button type="button" className={`${currentMenu === 'sales' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('sales')}>
+                                            <div className="flex items-center">
+                                                <IconTransactionRupee className="shrink-0 group-hover:!text-primary" />
+                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('sales')}</span>
+                                            </div>
+
+                                            <div className={currentMenu !== 'sales' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                                <IconCaretDown />
+                                            </div>
+                                        </button>
+
+                                        <AnimateHeight duration={300} height={currentMenu === 'sales' ? 'auto' : 0}>
+                                            <ul className="sub-menu text-gray-500">
+                                                <li>
+                                                    <Link href="/superadmin/tran_chart">{t('Total Earning Dashboard')}</Link>
+                                                </li>
+                                                <li>
+                                                    <Link href="/superadmin/transactions">{t('Transactions')}</Link>
+                                                </li>
+                                            </ul>
+                                        </AnimateHeight>
                             </li>
 
 

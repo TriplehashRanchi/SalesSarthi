@@ -20,7 +20,7 @@ import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
-import {IconBrandFacebook, IconBrandWhatsappFilled, IconForms, IconHistory, IconReport} from '@tabler/icons-react';
+import {IconAi, IconBrandFacebook, IconBrandWhatsappFilled, IconCursorText, IconForms, IconHistory, IconLeafOff, IconReport, IconSettings, IconUserCheck} from '@tabler/icons-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
@@ -147,23 +147,61 @@ const Sidebar = () => {
                                     </ul>
                                 </AnimateHeight> */}
                             </li>
-                            <li className="menu nav-item">
-                                <Link href="/addlead">
-                                    <div className="flex items-center">
-                                        <IconUserPlus className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Add Leads')}</span>
-                                    </div>
-                                </Link>
+
+                             <li className="menu nav-item">
+                                        <button type="button" className={`${currentMenu === 'customer_tab' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('customer_tab')}>
+                                            <div className="flex items-center">
+                                                <IconUserCheck className="shrink-0 group-hover:!text-primary" />
+                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
+                                            </div>
+
+                                           <div className={currentMenu !== 'automation' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                                <IconCaretDown />
+                                            </div>
+                                        </button>
+
+                                        <AnimateHeight duration={300} height={currentMenu === 'customer_tab' ? 'auto' : 0}>
+                                            <ul className="sub-menu text-gray-500">
+                                                 <li>
+                                                    <Link href="/addlead">{t('Add Leads')}</Link>
+                                                </li>
+
+                                                <li>
+                                                    <Link href="/leadtable">{t('All leads')}</Link>
+                                                </li>
+                                               
+                                                <li>
+                                                    <Link href="/customers">{t('Clients')}</Link>
+                                                </li>
+                                            </ul>
+                                        </AnimateHeight>
                             </li>
 
                             <li className="menu nav-item">
-                                <Link href="/leadtable">
-                                    <div className="flex items-center">
-                                        <IconListCheck className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('All leads')}</span>
-                                    </div>
-                                </Link>
+                                        <button type="button" className={`${currentMenu === 'lead' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('lead')}>
+                                            <div className="flex items-center">
+                                                <IconListCheck className="shrink-0 group-hover:!text-primary" />
+                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Leads Source')}</span>
+                                            </div>
+
+                                           <div className={currentMenu !== 'lead' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                                <IconCaretDown />
+                                            </div>
+                                        </button>
+
+                                        <AnimateHeight duration={300} height={currentMenu === 'lead' ? 'auto' : 0}>
+                                            <ul className="sub-menu text-gray-500">
+                                                 <li>
+                                                    <Link href="/facebook-leads">{t('Facebook Leads')}</Link>
+                                                </li>
+
+                                                <li>
+                                                    <Link href="/webhook">{t('Lead Form')}</Link>
+                                                </li>
+                                            </ul>
+                                        </AnimateHeight>
                             </li>
+                           
                             <li className="menu nav-item">
                                 <Link href="/fincalc">
                                     <div className="flex items-center">
@@ -172,6 +210,35 @@ const Sidebar = () => {
                                     </div>
                                 </Link>
                             </li>
+
+                             <li className="menu nav-item">
+                                <Link href="/appointments">
+                                    <div className="flex items-center">
+                                        <IconNotes className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Appointments')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
+                             <li className="menu nav-item">
+                                <Link href="/followups">
+                                    <div className="flex items-center">
+                                        <IconHistory className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Follow Ups')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
+                             <li className="menu nav-item">
+                                <Link href="/reminders">
+                                    <div className="flex items-center">
+                                        <IconBell className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Reminders')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                           
+{/* 
                             <li className="menu nav-item">
                                 <Link href="/adduser">
                                     <div className="flex items-center">
@@ -187,71 +254,72 @@ const Sidebar = () => {
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('My Team')}</span>
                                     </div>
                                 </Link>
-                            </li>
-                            <li className="menu nav-item">
-                                <Link href="/followups">
-                                    <div className="flex items-center">
-                                        <IconHistory className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Follow Ups')}</span>
-                                    </div>
-                                </Link>
-                            </li>
-                            <li className="menu nav-item">
-                                <Link href="/customers">
-                                    <div className="flex items-center">
-                                        <IconNotes className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
-                                    </div>
-                                </Link>
-                            </li>
-                            <li className="menu nav-item">
-                                <Link href="/facebook-leads">
-                                    <div className="flex items-center">
-                                        <IconBrandFacebook className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Facebook Leads')}</span>
-                                    </div>
-                                </Link>
-                            </li>
-                            <li className="menu nav-item">
-                                <Link href="/reminders">
-                                    <div className="flex items-center">
-                                        <IconBell className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Reminders')}</span>
-                                    </div>
-                                </Link>
-                            </li>
-                            <li className="menu nav-item">
-                                <Link href="/webhook">
-                                    <div className="flex items-center">
-                                        <IconForms className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Lead Form')}</span>
-                                    </div>
-                                </Link>
-                            </li>
-                            <li className="menu nav-item">
-                                <Link href="/automation">
-                                    <div className="flex items-center">
-                                        <IconBrandWhatsappFilled className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Automation')}</span>
-                                    </div>
-                                </Link>
-                            </li>
+                            </li> */}
+                           
+                            
+                           
+                           
                              <li className="menu nav-item">
-                                <Link href="/emails">
+                                        <button type="button" className={`${currentMenu === 'automation' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('automation')}>
+                                            <div className="flex items-center">
+                                                <IconAi className="shrink-0 group-hover:!text-primary" />
+                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('automation')}</span>
+                                            </div>
+
+                                            <div className={currentMenu !== 'automation' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                                <IconCaretDown />
+                                            </div>
+                                        </button>
+
+                                        <AnimateHeight duration={300} height={currentMenu === 'automation' ? 'auto' : 0}>
+                                            <ul className="sub-menu text-gray-500">
+                                                <li>
+                                                    <Link href="/automation">{t('WhatsApp')}</Link>
+                                                </li>
+                                                <li>
+                                                    <Link href="/emails">{t('Email')}</Link>
+                                                </li>
+                                            </ul>
+                                        </AnimateHeight>
+                            </li>
+                            
+                           
+
+                             {/* <li className="menu nav-item">
+                                <Link href="/reports">
                                     <div className="flex items-center">
-                                        <IconMail className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Email Automation')}</span>
+                                        <IconReport className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Report')}</span>
                                     </div>
                                 </Link>
-                            </li>
+                            </li> */}
                             <li className="menu nav-item">
-                                <Link href="/appointments">
+                                <Link href="/ad-banner">
                                     <div className="flex items-center">
-                                        <IconNotes className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-red-300 ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Appointments')}</span>
+                                        <IconLaptop className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>
                                     </div>
                                 </Link>
                             </li>
+
+                             <li className="menu nav-item">
+                                <Link href="/profile">
+                                    <div className="flex items-center">
+                                        <IconSettings className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Settings')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
+                            <li className="block md:hidden menu nav-item">
+                                <a onClick={handleSignOut}>
+                                    <div className="flex items-center">
+                                        <IconLogout className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Log Out')}</span>
+                                    </div>
+                                </a>
+                            </li>
+ 
                             {/* <li className="menu nav-item">
                                 <button type="button" className={`${currentMenu === 'report' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('report')}>
                                     <div className="flex items-center">
@@ -281,30 +349,8 @@ const Sidebar = () => {
                                     </ul>
                                 </AnimateHeight>
                             </li> */}
-                            <li className="menu nav-item">
-                                <Link href="/reports">
-                                    <div className="flex items-center">
-                                        <IconReport className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Report')}</span>
-                                    </div>
-                                </Link>
-                            </li>
-                            <li className="menu nav-item">
-                                <Link href="/ad-banner">
-                                    <div className="flex items-center">
-                                        <IconLaptop className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>
-                                    </div>
-                                </Link>
-                            </li>
-                            <li className="block md:hidden menu nav-item">
-                                <a onClick={handleSignOut}>
-                                    <div className="flex items-center">
-                                        <IconLogout className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Log Out')}</span>
-                                    </div>
-                                </a>
-                            </li>
+                           
+
 
                             {/* <li className="menu nav-item">
                                 <Link href="/notes">
