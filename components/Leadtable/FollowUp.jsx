@@ -14,7 +14,6 @@ import { getAuth } from 'firebase/auth';
 import FollowupForm from '@/components/forms/followupform'; // Adjust path if needed
 import { useAuth } from '@/context/AuthContext';
 
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // --- Helper Functions (Fully Expanded) ---
@@ -25,8 +24,6 @@ const getAuthHeader = async () => {
     const token = await auth.currentUser.getIdToken(true);
     return { headers: { Authorization: `Bearer ${token}` } };
 };
-
-
 
 const useFollowupData = (events) => {
     return useMemo(() => {
@@ -39,9 +36,11 @@ const useFollowupData = (events) => {
         const now = new Date();
         const todayStart = new Date(now.setHours(0, 0, 0, 0));
         const todayEnd = new Date(now.setHours(23, 59, 59, 999));
-        let pending = 0, completed = 0, dueToday = 0;
+        let pending = 0,
+            completed = 0,
+            dueToday = 0;
         const upcoming = [];
-        events.forEach(event => {
+        events.forEach((event) => {
             const eventStart = new Date(event.start);
             const status = event.extendedProps.status;
             if (status === 'Completed') {
@@ -75,14 +74,17 @@ function StatCard({ title, value, icon }) {
     return (
         <Paper withBorder p="md" radius="md">
             <Group position="apart">
-                <Text size="xs" color="dimmed" tt="uppercase" fw={700}>{title}</Text>
+                <Text size="xs" color="dimmed" tt="uppercase" fw={700}>
+                    {title}
+                </Text>
                 {icon}
             </Group>
-            <Text fz={32} fw={700} mt="md">{value}</Text>
+            <Text fz={32} fw={700} mt="md">
+                {value}
+            </Text>
         </Paper>
     );
 }
-
 
 // --- Main Component ---
 export default function FollowupsCalendar() {
@@ -98,52 +100,49 @@ export default function FollowupsCalendar() {
 
     const { stats, upcoming } = useFollowupData(events);
 
-    console.log(selectedEvent)
+    console.log(selectedEvent);
 
-    const {user} = useAuth();
+    const { user } = useAuth();
 
-// This is the new fetchData function
-const fetchData = async () => {
-    try {
-        setLoading(true);
-        setError(null);
-        const config = await getAuthHeader();
+    // This is the new fetchData function
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const config = await getAuthHeader();
 
-        // --- THIS IS THE ROLE-BASED LOGIC ---
-        // Determine which API endpoint to call for leads based on the user's role.
-        const leadsEndpoint = user.role === 'admin' 
-            ? `${API_URL}/api/leads/all` 
-            : `${API_URL}/api/users/leads`;
+            // --- THIS IS THE ROLE-BASED LOGIC ---
+            // Determine which API endpoint to call for leads based on the user's role.
+            const leadsEndpoint = user.role === 'admin' ? `${API_URL}/api/leads/all` : `${API_URL}/api/users/leads`;
 
-        // Fetch both follow-ups and the correct list of leads in parallel
-        const [followupsResponse, leadsResponse] = await Promise.all([
-            axios.get(`${API_URL}/api/followups/view/calendar`, config),
-            axios.get(leadsEndpoint, config) // Use the dynamically determined endpoint
-        ]);
+            // Fetch both follow-ups and the correct list of leads in parallel
+            const [followupsResponse, leadsResponse] = await Promise.all([
+                axios.get(`${API_URL}/api/followups/view/calendar`, config),
+                axios.get(leadsEndpoint, config), // Use the dynamically determined endpoint
+            ]);
 
-        setEvents(followupsResponse.data);
-        
-        const formattedLeads = leadsResponse.data
-            .filter(lead => lead.lead_status !== 'Customer')
-            .map(lead => ({ value: lead.id.toString(), label: lead.full_name }));
-        setAllLeads(formattedLeads);
+            setEvents(followupsResponse.data);
 
-    } catch (err) {
-        console.error("Failed to fetch page data:", err);
-        setError(err.response?.data?.message || "Could not load data.");
-    } finally {
-        setLoading(false);
-    }
-};
+            const formattedLeads = leadsResponse.data.filter((lead) => lead.lead_status !== 'Customer').map((lead) => ({ value: lead.id.toString(), label: lead.full_name }));
+            setAllLeads(formattedLeads);
+        } catch (err) {
+            console.error('Failed to fetch page data:', err);
+            setError(err.response?.data?.message || 'Could not load data.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     const handleEventClick = (clickInfo) => {
         const eventData = {
             id: clickInfo.event.id,
             ...clickInfo.event.extendedProps,
             title: clickInfo.event.title,
-            follow_up_date: clickInfo.event.startStr
+            follow_up_date: clickInfo.event.startStr,
         };
         setSelectedEvent(eventData);
         setIsEditing(false);
@@ -156,7 +155,7 @@ const fetchData = async () => {
         setIsEditing(false);
         setModalOpen(true);
     };
-    
+
     const handleAddNewClick = () => {
         setSelectedDate(new Date().toISOString());
         setSelectedEvent(null);
@@ -187,25 +186,37 @@ const fetchData = async () => {
             </Group>
 
             <Grid gutter="xl" mb="xl">
-                <Grid.Col md={6} lg={3}><StatCard title="Due Today" value={stats.dueToday} icon={<IconCalendarEvent size={24} />} /></Grid.Col>
-                <Grid.Col md={6} lg={3}><StatCard title="Pending" value={stats.pending} icon={<IconClock size={24} />} /></Grid.Col>
-                <Grid.Col md={6} lg={3}><StatCard title="Completed" value={stats.completed} icon={<IconCircleCheck size={24} />} /></Grid.Col>
-                <Grid.Col md={6} lg={3}><StatCard title="Total" value={stats.total} icon={<IconListCheck size={24} />} /></Grid.Col>
+                <Grid.Col md={6} lg={3}>
+                    <StatCard title="Due Today" value={stats.dueToday} icon={<IconCalendarEvent size={24} />} />
+                </Grid.Col>
+                <Grid.Col md={6} lg={3}>
+                    <StatCard title="Pending" value={stats.pending} icon={<IconClock size={24} />} />
+                </Grid.Col>
+                <Grid.Col md={6} lg={3}>
+                    <StatCard title="Completed" value={stats.completed} icon={<IconCircleCheck size={24} />} />
+                </Grid.Col>
+                <Grid.Col md={6} lg={3}>
+                    <StatCard title="Total" value={stats.total} icon={<IconListCheck size={24} />} />
+                </Grid.Col>
             </Grid>
-            
+
             <Grid gutter="xl">
                 <Grid.Col lg={8}>
                     <Paper shadow="md" radius="md" p="md" style={{ position: 'relative', height: '100%' }}>
                         <LoadingOverlay visible={loading} overlayBlur={2} />
-                        {error && <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red">{error}</Alert>}
+                        {error && (
+                            <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red">
+                                {error}
+                            </Alert>
+                        )}
                         {!loading && !error && (
                             <FullCalendar
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
                                 initialView="dayGridMonth"
                                 headerToolbar={{
-                                    left: 'prev,next today',
+                                    left: 'prev,next',
                                     center: 'title',
-                                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                                    right: window.innerWidth < 640 ? 'listWeek' : 'dayGridMonth,timeGridWeek,listWeek',
                                 }}
                                 events={events}
                                 eventClick={handleEventClick}
@@ -233,24 +244,36 @@ const fetchData = async () => {
 
                 <Grid.Col lg={4}>
                     <Paper withBorder p="md" radius="md" style={{ height: '100%' }}>
-                        <Title order={4} mb="md">Upcoming Follow-ups</Title>
+                        <Title order={4} mb="md">
+                            Upcoming Follow-ups
+                        </Title>
                         <ScrollArea style={{ height: 'calc(70vh - 60px)' }}>
                             <Stack spacing="sm">
-                                {upcoming.length > 0 ? upcoming.map(event => (
-                                    <Paper key={event.id} withBorder p="xs" radius="sm">
-                                        <Group noWrap>
-                                            <Avatar color={event.backgroundColor} radius="xl" size="md">
-                                                <IconClock size={18} />
-                                            </Avatar>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Text size="sm" weight={500} lineClamp={1}>{event.title}</Text>
-                                                <Text color="dimmed" size="xs">{new Date(event.start).toLocaleString()}</Text>
-                                                <Text color="dimmed" size="xs">by <strong>{event.creatorName}</strong></Text>
-                                            </Box>
-                                        </Group>
-                                    </Paper>
-                                )) : (
-                                    <Text color="dimmed" size="sm" align="center" mt="lg">No upcoming follow-ups.</Text>
+                                {upcoming.length > 0 ? (
+                                    upcoming.map((event) => (
+                                        <Paper key={event.id} withBorder p="xs" radius="sm">
+                                            <Group noWrap>
+                                                <Avatar color={event.backgroundColor} radius="xl" size="md">
+                                                    <IconClock size={18} />
+                                                </Avatar>
+                                                <Box sx={{ flex: 1 }}>
+                                                    <Text size="sm" weight={500} lineClamp={1}>
+                                                        {event.title}
+                                                    </Text>
+                                                    <Text color="dimmed" size="xs">
+                                                        {new Date(event.start).toLocaleString()}
+                                                    </Text>
+                                                    <Text color="dimmed" size="xs">
+                                                        by <strong>{event.creatorName}</strong>
+                                                    </Text>
+                                                </Box>
+                                            </Group>
+                                        </Paper>
+                                    ))
+                                ) : (
+                                    <Text color="dimmed" size="sm" align="center" mt="lg">
+                                        No upcoming follow-ups.
+                                    </Text>
                                 )}
                             </Stack>
                         </ScrollArea>
@@ -258,28 +281,17 @@ const fetchData = async () => {
                 </Grid.Col>
             </Grid>
 
-            <Modal
-                opened={modalOpen}
-                onClose={handleModalClose}
-                title={selectedEvent ? (isEditing ? "Edit Follow-up" : "Follow-up Details") : "Create New Follow-up"}
-                centered
-                size="md"
-            >
+            <Modal opened={modalOpen} onClose={handleModalClose} title={selectedEvent ? (isEditing ? 'Edit Follow-up' : 'Follow-up Details') : 'Create New Follow-up'} centered size="md">
                 {selectedEvent ? (
                     isEditing ? (
-                        <FollowupForm
-                            leadId={selectedEvent.leadId}
-                            existingFollowUp={selectedEvent}
-                            onFollowupChange={handleFormSuccess}
-                            onCancel={() => setIsEditing(false)}
-                        />
+                        <FollowupForm leadId={selectedEvent.leadId} existingFollowUp={selectedEvent} onFollowupChange={handleFormSuccess} onCancel={() => setIsEditing(false)} />
                     ) : (
                         <Stack spacing="md">
-                            <Text size="lg" weight={700}>{selectedEvent.title}</Text>
+                            <Text size="lg" weight={700}>
+                                {selectedEvent.title}
+                            </Text>
                             <Group>
-                                <Badge color={selectedEvent.status === 'Completed' ? 'green' : 'orange'}>
-                                    {selectedEvent.status}
-                                </Badge>
+                                <Badge color={selectedEvent.status === 'Completed' ? 'green' : 'orange'}>{selectedEvent.status}</Badge>
                                 <Text color="dimmed">{new Date(selectedEvent.follow_up_date).toLocaleString()}</Text>
                             </Group>
                             {selectedEvent.notes && (
@@ -287,9 +299,13 @@ const fetchData = async () => {
                                     <Text size="sm">{selectedEvent.notes}</Text>
                                 </Blockquote>
                             )}
-                            <Text size="sm">Created by: <strong>{selectedEvent.creatorName}</strong></Text>
+                            <Text size="sm">
+                                Created by: <strong>{selectedEvent.creatorName}</strong>
+                            </Text>
                             <Group position="right" mt="md">
-                                <Button variant="default" onClick={handleModalClose}>Close</Button>
+                                <Button variant="default" onClick={handleModalClose}>
+                                    Close
+                                </Button>
                                 <Button leftIcon={<IconPencil size={16} />} onClick={() => setIsEditing(true)}>
                                     Edit
                                 </Button>
@@ -309,12 +325,7 @@ const fetchData = async () => {
                             mb="md"
                         />
                         {selectedLeadForNewFollowup && (
-                            <FollowupForm
-                                leadId={selectedLeadForNewFollowup}
-                                existingFollowUp={{ follow_up_date: selectedDate }}
-                                onFollowupChange={handleFormSuccess}
-                                onCancel={handleModalClose}
-                            />
+                            <FollowupForm leadId={selectedLeadForNewFollowup} existingFollowUp={{ follow_up_date: selectedDate }} onFollowupChange={handleFormSuccess} onCancel={handleModalClose} />
                         )}
                     </Box>
                 )}
