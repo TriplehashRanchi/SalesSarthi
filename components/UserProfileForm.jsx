@@ -188,23 +188,26 @@ const AccountSettingsTabs = () => {
 
             {/* tab nav */}
             <ul className="mb-5 overflow-y-auto whitespace-nowrap border-b border-[#ebedf2] font-semibold dark:border-[#191e3a] sm:flex">
-                {[
-                    { id: 'home', label: 'Home', icon: <IconHome /> },
-                    { id: 'subscription', label: 'Subscription', icon: <IconDollarSignCircle /> },
-                    { id: 'company', label: 'Company Details', icon: <IconUser className="h-5 w-5" /> },
-                    { id: 'danger-zone', label: 'Danger Zone', icon: <IconAlertTriangle /> },
-                ].map((t) => (
-                    <li key={t.id} className="inline-block">
-                        <button
-                            onClick={() => setActiveTab(t.id)}
-                            className={`flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${activeTab === t.id ? '!border-primary text-primary' : ''}`}
-                        >
-                            {t.icon}
-                            {t.label}
-                        </button>
-                    </li>
-                ))}
-            </ul>
+  {[
+    { id: 'home', label: 'Home', icon: <IconHome /> },
+    { id: 'subscription', label: 'Subscription', icon: <IconDollarSignCircle />, className: 'hidden md:inline-block' },
+    { id: 'company', label: 'Company Details', icon: <IconUser className="h-5 w-5" /> },
+    { id: 'danger-zone', label: 'Danger Zone', icon: <IconAlertTriangle />, className: 'hidden md:inline-block' },
+  ].map((t) => (
+    <li key={t.id} className={`inline-block ${t.className || ''}`}>
+      <button
+        onClick={() => setActiveTab(t.id)}
+        className={`md:flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
+          activeTab === t.id ? '!border-primary text-primary' : ''
+        }`}
+      >
+        {t.icon}
+        {t.label}
+      </button>
+    </li>
+  ))}
+</ul>
+
 
             {/* ============ HOME ============ */}
             {activeTab === 'home' && (
