@@ -7,9 +7,10 @@ import html2canvas from 'html2canvas';
 import { getAuth } from 'firebase/auth';
 
 // 1. Import Capacitor plugins and the platform checker
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+
 
 const MAIN_CATEGORIES = ['Facebook Ads', 'Daily Motivation', 'Concepts', 'Life Insurance', 'Health Insurance', 'Motor Insurance', 'Mutual Fund', 'Greetings'];
 const CATEGORY_ICONS = {
@@ -185,46 +186,67 @@ const ProfessionalBannerMaker = () => {
     };
 
     // 3. UPDATED handleMobileShare function (renamed to handleShare for clarity)
-    const handleShare = async () => {
-        try {
-            const blob = await getBannerBlob();
-            if (!blob) return;
+const blobToBase64 = (blob) =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onloadend = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
 
-            // If on native platform OR browser supports Web Share API with files
-            // The 'canShare' check handles both Capacitor and modern browsers.
-            const canShare = await Share.canShare();
+const handleShare = async () => {
+  try {
+    const blob = await getBannerBlob();
+    if (!blob) return;
 
-            if (canShare.value && Capacitor.isNativePlatform()) {
-                 const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = async () => {
-                    const base64data = reader.result;
-                    await Share.share({
-                        title: 'Check out this banner',
-                        text: 'Created using DG Sarthi Banner Maker',
-                        files: [base64data], // Share as base64 data URL
-                    });
-                }
-            } else if (navigator.share) {
-                // Fallback to web share for browsers
-                 const file = new File([blob], 'banner.png', { type: 'image/png' });
-                 await navigator.share({
-                    title: 'Check out this banner',
-                    text: 'Created using DG Sarthi Banner Maker',
-                    files: [file],
-                 });
-            }
-            else {
-                alert('Sharing is not supported on this device/browser.');
-            }
-        } catch (error) {
-            console.error('Share failed:', error);
-            // Don't alert if the user cancels the share dialog
-            if (error.name !== 'AbortError') {
-              alert('An error occurred while trying to share.');
-            }
-        }
-    };
+    if (Capacitor.isNativePlatform()) {
+      // 1) Convert to base64 (strip the data URL header)
+      const dataUrl = await blobToBase64(blob);               // "data:image/png;base64,...."
+      const base64 = dataUrl.split(',')[1];
+
+      // 2) Write to Cache (Android’s share allows Cache by default)
+      const fileName = `banner-${Date.now()}.png`;
+      await Filesystem.writeFile({
+        path: fileName,
+        data: base64,
+        directory: Directory.Cache,
+      });
+
+      // 3) Get a shareable URI (content:// on Android, file:// on iOS)
+      const { uri } = await Filesystem.getUri({
+        directory: Directory.Cache,
+        path: fileName,
+      });
+
+      // 4) Share the file (files[] is supported on iOS/Android)
+      await Share.share({
+        text: 'Created using DG Sarthi Banner Maker',
+        files: [uri],                 // ← real attachment
+        dialogTitle: 'Share your banner', // Android only
+      });
+
+      // Optional: clean up
+      // await Filesystem.deleteFile({ path: fileName, directory: Directory.Cache });
+      return;
+    }
+
+    // Web fallback (Web Share Level 2)
+    if (navigator.share) {
+      const file = new File([blob], 'banner.png', { type: 'image/png' });
+      await navigator.share({
+        title: 'Share your banner',
+        text: 'Created using DG Sarthi Banner Maker',
+        files: [file],
+      });
+      return;
+    }
+
+    alert('Sharing is not supported on this device/browser.');
+  } catch (error) {
+    console.error('Share failed:', error);
+    if (error?.name !== 'AbortError') alert('An error occurred while trying to share.');
+  }
+};
 
     const filteredTemplates = templates.filter((t) => {
         if (category === 'Greetings') {
