@@ -1,3 +1,4 @@
+//app/(users)/layout.jsx
 "use client";
 import ContentAnimation from '@/components/layouts/content-animation';
 import Footer from '@/components/layouts/footer';
