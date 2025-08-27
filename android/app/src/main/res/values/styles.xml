@@ -2,7 +2,7 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">#0B1220</item>        <!-- any opaque color -->
         <item name="android:navigationBarColor">#0B1220</item>
         <item name="android:windowTranslucentStatus">false</item>
@@ -20,4 +20,5 @@
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
     </style>
-</resources>
+
+        </resources>
