@@ -26,7 +26,7 @@ export default function MobileBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 pb-20 left-0 right-0 z-50 flex justify-around items-center border-t bg-white dark:bg-black py-2 shadow-inner md:hidden">
+    <nav className="fixed bottom-0 pb-[5%] left-0 right-0 z-50 flex justify-around items-center border-t bg-white dark:bg-black py-2 shadow-inner md:hidden">
       {navItems.map((item) => (
         <button
           key={item.label}
