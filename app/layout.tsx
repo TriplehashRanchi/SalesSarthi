@@ -28,8 +28,15 @@ const righteous = Righteous({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <Head> <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" /></Head>
-            <body className={`${nunito.variable} ${righteous.variable}`}>
+            <Head>
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+            </Head>
+            <body
+                className={`${nunito.variable} ${righteous.variable}`}
+                style={{
+                    paddingBottom: 'env(safe-area-inset-bottom)',
+                }}
+            >
                 <ProviderComponent>{children}</ProviderComponent>
             </body>
         </html>
