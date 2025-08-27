@@ -8,6 +8,13 @@ const config: CapacitorConfig = {
     url: 'https://app.digitalgyanisaarthi.com',
     cleartext: true
   },
+   plugins: {
+    StatusBar: {
+      overlays: false,          // webview starts below status bar
+      style: 'DARK',            // or 'LIGHT' depending on your header color
+      backgroundColor: '#0B1220'// match your app header color
+    }
+  }
   // bundledWebRuntime: false
 };
 

@@ -6,6 +6,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* globals.css */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* A utility container that wraps your app layout */
+.safe-area {
+  padding-top: var(--safe-top);
+  padding-bottom: calc(var(--safe-bottom) + 8px); /* keep above gesture/nav bar */
+}
+
 @layer components {
     html {
         @apply scroll-smooth;
