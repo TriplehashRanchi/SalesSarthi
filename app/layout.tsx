@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <body
                 className={`${nunito.variable} ${righteous.variable}`}
                 style={{
-                    paddingBottom: 'env(safe-area-inset-bottom)',
+                    paddingBottom: '10rem',
                 }}
             >
                 <ProviderComponent>{children}</ProviderComponent>
