@@ -33,7 +33,9 @@ async function ensureSocialLoginInit() {
 
 // -------- Google Sign-in (native vs web) --------
 export const signInWithGoogle = async () => {
+  console.log('isNative?', Capacitor.isNativePlatform());
   if (Capacitor.isNativePlatform()) {
+    console.log('Using native Google login');
     // ✅ Native: get Google ID token, then sign into Firebase Web SDK
     await ensureSocialLoginInit();
     const res = await SocialLogin.login({ provider: "google" });
@@ -49,6 +51,7 @@ export const signInWithGoogle = async () => {
     const cred = GoogleAuthProvider.credential(idToken);
     return (await signInWithCredential(auth, cred)).user;
   }
+  console.log('Using web Google login');
 
   // ✅ Web/PWA: popup → redirect fallback
   try {
