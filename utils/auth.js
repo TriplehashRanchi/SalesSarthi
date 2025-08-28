@@ -59,14 +59,27 @@ export const signInWithGoogle = async () => {
     try {
       await ensureSocialLoginInit();
       log("Using native SocialLogin…");
-      const res = await SocialLogin.login({ provider: "google" });
-      log("SocialLogin.login() result:", JSON.stringify(res)?.slice(0, 200));
 
+      // Ask for openid/email/profile to ensure an ID token is minted
+      const res = await SocialLogin.login({
+        provider: "google",
+        options: { scopes: ["openid", "email", "profile"] },
+      });
+
+      // Helpful debug: see what the plugin actually returned
+      log(
+        "SocialLogin.login() keys:",
+        Object.keys(res || {}).join(","),
+        "result keys:",
+        Object.keys(res?.result || {}).join(",")
+      );
+
+      // ✅ Capgo returns idToken here:
       const idToken =
-        res?.idToken ||
-        res?.credential?.idToken ||
-        res?.authentication?.idToken ||
-        res?.token;
+        res?.result?.idToken ||
+        res?.result?.authentication?.idToken || // (some versions)
+        res?.authentication?.idToken ||         // (very old fallbacks)
+        null;
 
       if (!idToken) {
         maybeAlert("Native login: no idToken returned");
@@ -81,11 +94,10 @@ export const signInWithGoogle = async () => {
     } catch (e) {
       err("Native sign-in failed:", e);
       maybeAlert(`Native sign-in failed: ${e?.message || e}`);
-      // fall through to web as a last-resort if you want:
-      // return await signInWithGoogleWebFallback();
       throw e;
     }
   }
+
 
   // Web / PWA path
   log("Using web popup → redirect fallback");
