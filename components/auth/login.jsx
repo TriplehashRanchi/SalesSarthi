@@ -88,16 +88,18 @@ export default function ComponentsAuthLoginForm() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await signInWithGoogle(auth, googleProvider);
-    } catch {
-      setError('Failed to sign in with Google. Please try again.');
-      setLoading(false);
-    }
-  };
+ const handleGoogleLogin = async () => {
+  setError('');
+  setLoading(true);
+  try {
+    await signInWithGoogle();
+    // success will trigger onAuthStateChanged in your AuthContext
+  } catch (e) {
+    setError(e?.message || 'Failed to sign in with Google. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleForgotPassword = async () => {
     if (!email) {
