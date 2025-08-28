@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';   // ← added useSearchParams
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
   sendPasswordResetEmail,
 } from 'firebase/auth';
+import { signInWithGoogle, /* optional: */ completeWebRedirectIfAny } from '@/utils/auth';
 import { showNotification } from '@mantine/notifications';
 import { auth, googleProvider } from '@/utils/firebase';
 import { useAuth } from '@/context/AuthContext';
@@ -92,7 +92,7 @@ export default function ComponentsAuthLoginForm() {
     setError('');
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle(auth, googleProvider);
     } catch {
       setError('Failed to sign in with Google. Please try again.');
       setLoading(false);
