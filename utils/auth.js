@@ -1,53 +1,89 @@
+// utils/auth.js
 import { auth, googleProvider } from "./firebase";
-import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as fbSignOut,
+  getIdToken,
+} from "firebase/auth";
 
-// Sign in with Google
+import { Capacitor } from "@capacitor/core";
+import { SocialLogin } from "@capgo/capacitor-social-login";
+
+// ──────────────────────────────────────────────────────────────
+// Put YOUR Web OAuth Client ID (from Google Cloud) here:
+const WEB_CLIENT_ID =
+  "1015570195056-o6afslncovbr4960a7oaqh96irop4jr6.apps.googleusercontent.com";
+// ──────────────────────────────────────────────────────────────
+
+// Lazy init to avoid multiple initializations
+let socialLoginInitialized = false;
+async function ensureSocialLoginInit() {
+  if (socialLoginInitialized) return;
+  await SocialLogin.initialize({
+    google: { webClientId: WEB_CLIENT_ID },
+  });
+  socialLoginInitialized = true;
+}
+
+// -------- Google Sign-in (native vs web) --------
 export const signInWithGoogle = async () => {
+  if (Capacitor.isNativePlatform()) {
+    // ✅ Native: get Google ID token, then sign into Firebase Web SDK
+    await ensureSocialLoginInit();
+    const res = await SocialLogin.login({ provider: "google" });
+
+    const idToken =
+      res?.idToken ||
+      res?.credential?.idToken ||
+      res?.authentication?.idToken ||
+      res?.token;
+
+    if (!idToken) throw new Error("No Google ID token from native login");
+
+    const cred = GoogleAuthProvider.credential(idToken);
+    return (await signInWithCredential(auth, cred)).user;
+  }
+
+  // ✅ Web/PWA: popup → redirect fallback
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    return result.user; // Returns Firebase user object
-  } catch (error) {
-    console.error("Google Sign-In Error:", error);
-    throw error;
+    return result.user;
+  } catch {
+    await signInWithRedirect(auth, googleProvider);
+    const result = await getRedirectResult(auth);
+    return result?.user ?? null;
   }
 };
 
-// Sign in with Email & Password
+// -------- Email / Password --------
 export const signInWithEmail = async (email, password) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    console.error("Email Sign-In Error:", error);
-    throw error;
-  }
+  const { user } = await signInWithEmailAndPassword(auth, email, password);
+  return user;
 };
 
-// Register new user with Email & Password
 export const signUpWithEmail = async (email, password) => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    console.error("Signup Error:", error);
-    throw error;
-  }
+  const { user } = await createUserWithEmailAndPassword(auth, email, password);
+  return user;
 };
 
-// Sign Out
+// -------- Logout (both native & web) --------
 export const logout = async () => {
   try {
-    await signOut(auth);
-  } catch (error) {
-    console.error("Logout Error:", error);
-    throw error;
-  }
+    await SocialLogin.logout({ provider: "google" }); // safe if not logged in natively
+  } catch {}
+  await fbSignOut(auth);
 };
 
-// Get Firebase Token (for secure API calls)
+// -------- Get Firebase JWT for API calls --------
 export const getFirebaseToken = async () => {
   if (auth.currentUser) {
-    return await getIdToken(auth.currentUser);
+    return await getIdToken(auth.currentUser, true); // force refresh
   }
   return null;
 };
