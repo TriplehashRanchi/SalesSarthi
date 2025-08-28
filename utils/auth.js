@@ -1,6 +1,5 @@
 // utils/auth.js
 console.log("🚀 utils/auth.js is loaded in the bundle");
-alert("DEBUG: auth.js loaded");
 
 import { auth, googleProvider } from "./firebase";
 import {
@@ -47,14 +46,7 @@ function warn(...args) { if (DEBUG_AUTH) console.warn("[AUTH]", ...args); }
 function err(...args) { if (DEBUG_AUTH) console.error("[AUTH]", ...args); }
 function maybeAlert(msg) { if (SHOW_ALERTS) alert(msg); }
 
-// Expose a tiny console helper while debugging
-if (typeof window !== "undefined" && DEBUG_AUTH) {
-  window.debugAuth = {
-    platform: () => ({ platform: Capacitor.getPlatform?.(), isNative: (Capacitor.getPlatform?.() === 'android' || Capacitor.getPlatform?.() === 'ios') }),
-    getRedirectResult: () => getRedirectResult(auth),
-  };
-  log("debug helpers: window.debugAuth available");
-}
+
 
 // -------- Google Sign-in (native vs web) --------
 export const signInWithGoogle = async () => {
