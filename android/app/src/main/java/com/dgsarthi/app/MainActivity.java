@@ -26,9 +26,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         super.onCreate(savedInstanceState);
 
         // Your existing edge-to-edge insets code
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
-        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
 
         final View webview = findViewById(R.id.webview);   // <- from activity_main.xml
         if (webview != null) {

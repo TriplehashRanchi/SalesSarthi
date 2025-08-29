@@ -82,17 +82,17 @@ export const signInWithGoogle = async () => {
         null;
 
       if (!idToken) {
-        maybeAlert("Native login: no idToken returned");
+        maybeAlert("Something went wrong: no idToken");
         throw new Error("No Google ID token from native login");
       }
 
       const cred = GoogleAuthProvider.credential(idToken);
       const { user } = await signInWithCredential(auth, cred);
       log("Native Firebase sign-in OK, uid =", user?.uid);
-      maybeAlert("Native Google sign-in success");
+      maybeAlert("Sign-in success");
       return user;
     } catch (e) {
-      err("Native sign-in failed:", e);
+      err("Sign-in failed:", e);
       maybeAlert(`Native sign-in failed: ${e?.message || e}`);
       throw e;
     }
@@ -104,7 +104,7 @@ export const signInWithGoogle = async () => {
   try {
     const res = await signInWithPopup(auth, googleProvider);
     log("Popup success. uid =", res?.user?.uid);
-    maybeAlert("Web popup success");
+    // maybeAlert("Web popup success");
     return res.user ?? null;
   } catch (e) {
     warn("Popup failed, falling back to redirect. error =", e?.code, e?.message);
