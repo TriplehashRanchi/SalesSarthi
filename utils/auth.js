@@ -87,10 +87,10 @@ export const signInWithGoogle = async () => {
       }
 
       const cred = GoogleAuthProvider.credential(idToken);
-      const { user } = await signInWithCredential(auth, cred);
-      log("Native Firebase sign-in OK, uid =", user?.uid);
+      const result = await signInWithCredential(auth, cred);
+      log("Native Firebase sign-in OK, uid =", result?.user?.uid);
       maybeAlert("Sign-in success");
-      return user;
+      return result;
     } catch (e) {
       err("Sign-in failed:", e);
       maybeAlert(`Native sign-in failed: ${e?.message || e}`);
