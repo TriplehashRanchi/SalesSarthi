@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, googleProvider } from '@/utils/firebase';
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, } from '@/utils/firebase';
+import { 
+    createUserWithEmailAndPassword,
+    getAdditionalUserInfo           // ← Import this helper
+} from 'firebase/auth';
+import { signInWithGoogle } from '@/utils/auth'; 
 import { useAuth } from '@/context/AuthContext';
 
 // Add a simple loader icon component
@@ -109,37 +113,60 @@ const ComponentsAuthRegisterForm = () => {
         }
     };
 
+  // --- MODIFIED: The Google Sign-In handler now uses your utility ---
     const handleGoogleSignIn = async () => {
         setError('');
-        setIsLoading(true); // --- 1. Start loading ---
+        setIsLoading(true);
 
         try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const firebase_uid = result.user.uid;
-            const userEmail = result.user.email;
-            const userName = result.user.displayName;
+            // 1. Call your centralized signInWithGoogle function
+            const result = await signInWithGoogle();
 
-            // This will throw an error if it fails
-            await registerAdmin(firebase_uid, userName, userEmail, '');
-            if (isMobile) {
-                // On mobile, start trial and redirect to login
-                await startFreeTrial(firebase_uid);
-                router.push('/login?trial=started');
+            // Handle cases like redirects where the result might be null initially
+            if (!result) {
+                // The redirect is in progress, no need to do anything else here.
+                // setLoading will eventually be false when the page reloads.
+                return;
+            }
+
+            // 2. Get the additional user info from the result
+            const additionalInfo = getAdditionalUserInfo(result);
+            const firebaseUser = result.user;
+
+            // 3. Check if the user is NEW
+            if (additionalInfo?.isNewUser) {
+                // This is the registration "happy path"
+                console.log("New user detected, proceeding with registration...");
+                
+                // Register the user on your backend
+                await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
+
+                // Apply the mobile vs. desktop logic
+                if (isMobile) {
+                    await startFreeTrial(firebaseUser.uid);
+                    router.push('/login?trial=started');
+                } else {
+                    router.push(`/payment?uid=${firebaseUser.uid}`);
+                }
             } else {
-                // On desktop, go to the payment page
-                router.push(`/payment?uid=${firebase_uid}`);
+                // The user ALREADY EXISTS. Treat this as a login.
+                // The `onAuthStateChanged` listener in your AuthContext will
+                // automatically detect the signed-in user and redirect them.
+                console.log("Existing user signed in. AuthContext will handle the redirect.");
+                // No further action is needed here. The page will navigate away.
             }
 
         } catch (err) {
-             // Handle common Firebase errors
+             // Handle common errors
             if (err.code === 'auth/account-exists-with-different-credential') {
                  setError('An account already exists with this email address. Please sign in with the original method.');
-            } else {
+            } else if (err.code !== 'auth/popup-closed-by-user') {
                  setError(err.message);
             }
-            setIsLoading(false); // --- 3. Stop loading on error ---
+            setIsLoading(false);
         }
     };
+
 
     return (
         <form className="space-y-5 dark:text-white" onSubmit={handleRegister}>
