@@ -23,6 +23,8 @@ const ComponentsAuthRegisterForm = () => {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+     // --- NEW: Add state to track if the device is mobile ---
+    const [isMobile, setIsMobile] = useState(false);
 
     // --- NEW: Add a loading state ---
     const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +39,13 @@ const ComponentsAuthRegisterForm = () => {
         //     router.push('/user-dashboard');
         // }
     }, [user, router]);
+
+      // --- NEW: Add a useEffect to detect the device type on component mount ---
+    useEffect(() => {
+        // This check runs only on the client side
+        const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        setIsMobile(mobileCheck);
+    }, []); 
 
     // Helper to register the user on your backend
     const registerAdmin = async (firebase_uid, name, email, phone) => {
@@ -54,6 +63,18 @@ const ComponentsAuthRegisterForm = () => {
         // Success! The useEffect will handle the redirect.
     };
 
+       const startFreeTrial = async (firebase_uid) => {
+        const response = await fetch(`${API_URL}/api/trial/start-trial`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firebase_uid }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Could not start your free trial.');
+        }
+    };
+
     const handleRegister = async (e) => {
         e.preventDefault();
         setError('');
@@ -65,7 +86,14 @@ const ComponentsAuthRegisterForm = () => {
 
             // This will throw an error if it fails, which will be caught below
             await registerAdmin(firebase_uid, name, email, phone);
-            router.push(`/payment?uid=${firebase_uid}`);
+             if (isMobile) {
+                // On mobile, start trial and redirect to login
+                await startFreeTrial(firebase_uid);
+                router.push('/login?trial=started');
+            } else {
+                // On desktop, go to the payment page
+                router.push(`/payment?uid=${firebase_uid}`);
+            }
 
 
             // The redirect will happen via useEffect, so we don't need to do anything here.
@@ -93,8 +121,14 @@ const ComponentsAuthRegisterForm = () => {
 
             // This will throw an error if it fails
             await registerAdmin(firebase_uid, userName, userEmail, '');
-            router.push(`/payment?uid=${firebase_uid}`);
-
+            if (isMobile) {
+                // On mobile, start trial and redirect to login
+                await startFreeTrial(firebase_uid);
+                router.push('/login?trial=started');
+            } else {
+                // On desktop, go to the payment page
+                router.push(`/payment?uid=${firebase_uid}`);
+            }
 
         } catch (err) {
              // Handle common Firebase errors

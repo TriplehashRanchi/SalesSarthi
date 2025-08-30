@@ -23,7 +23,7 @@ const DefaultLayout = ({ children }) => {
     if (loading) return;
 
     if (!user) {
-        router.push("/login"); // Not logged in
+        router.push("/register"); // Not logged in
     } else if (user.role !== "Salesperson" && user.role !== "Manager") {
         router.push("/"); // Not a valid team role
     } else {
