@@ -14,7 +14,7 @@ export default function SubscriptionBanner({
     const d = daysUntil(subscription?.expires_at);
     return {
       daysLeft: d,
-      isExpiringWindow: typeof d === 'number' && d < 8, // 7..-∞
+      isExpiringWindow: typeof d === 'number' && d < 9, // 7..-∞
       isExpired: typeof d === 'number' && d <= 0,
     };
   }, [subscription?.expires_at]);
