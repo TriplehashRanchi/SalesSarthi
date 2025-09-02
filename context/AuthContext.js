@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
                     await logout();
                     return;
                 }
-                if (role.status !== 'active') {
+                if (role.status !== 'active' && role.status !== 'pending') {
                     console.warn(`⛔ Access blocked: ${role.status}`);
                     alert(`Your access is currently ${role.status}. Please contact support.`);
                     await logout();

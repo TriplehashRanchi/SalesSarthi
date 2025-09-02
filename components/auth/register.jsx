@@ -28,7 +28,7 @@ const ComponentsAuthRegisterForm = () => {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-     // --- NEW: Add state to track if the device is mobile ---
+    // --- NEW: Add state to track if the device is mobile ---
     const [isMobile, setIsMobile] = useState(false);
 
     // --- NEW: Add a loading state ---
@@ -45,12 +45,12 @@ const ComponentsAuthRegisterForm = () => {
         }
     }, [user, router]);
 
-      // --- NEW: Add a useEffect to detect the device type on component mount ---
+    // --- NEW: Add a useEffect to detect the device type on component mount ---
     useEffect(() => {
         // This check runs only on the client side
         const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         setIsMobile(mobileCheck);
-    }, []); 
+    }, []);
 
     // Helper to register the user on your backend
     const registerAdmin = async (firebase_uid, name, email, phone) => {
@@ -68,7 +68,7 @@ const ComponentsAuthRegisterForm = () => {
         // Success! The useEffect will handle the redirect.
     };
 
-       const startFreeTrial = async (firebase_uid) => {
+    const startFreeTrial = async (firebase_uid) => {
         const response = await fetch(`${API_URL}/api/trial/start-trial`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -91,7 +91,7 @@ const ComponentsAuthRegisterForm = () => {
 
             // This will throw an error if it fails, which will be caught below
             await registerAdmin(firebase_uid, name, email, phone);
-             if (isMobile) {
+            if (isMobile) {
                 // On mobile, start trial and redirect to login
                 await startFreeTrial(firebase_uid);
                 router.push('/login?trial=started');
@@ -99,7 +99,6 @@ const ComponentsAuthRegisterForm = () => {
                 // On desktop, go to the payment page
                 router.push(`/payment?uid=${firebase_uid}`);
             }
-
 
             // The redirect will happen via useEffect, so we don't need to do anything here.
             // We don't even need to set isLoading(false) on success, because the page will navigate away.
@@ -114,7 +113,7 @@ const ComponentsAuthRegisterForm = () => {
         }
     };
 
-// Replace the existing handleGoogleSignIn function with this improved version:
+    // Replace the existing handleGoogleSignIn function with this improved version:
 
     // ✅ FIX 2: Refine the Google Sign-In handler for a smoother UX.
     const handleGoogleSignIn = async () => {
@@ -132,7 +131,7 @@ const ComponentsAuthRegisterForm = () => {
             const firebaseUser = result.user;
 
             if (additionalInfo?.isNewUser) {
-                console.log("New user detected, proceeding with registration...");
+                console.log('New user detected, proceeding with registration...');
                 await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
 
                 if (isMobile) {
@@ -144,7 +143,7 @@ const ComponentsAuthRegisterForm = () => {
                 // On success, the page navigates away, so we don't need to stop the loader.
             } else {
                 // Existing user: Treat as a login.
-                console.log("Existing user signed in. Redirecting...");
+                console.log('Existing user signed in. Redirecting...');
                 showNotification({
                     title: 'Welcome Back!',
                     message: 'You have been successfully signed in.',
@@ -163,7 +162,6 @@ const ComponentsAuthRegisterForm = () => {
             setIsLoading(false);
         }
     };
-
 
     return (
         <form className="space-y-5 dark:text-white" onSubmit={handleRegister}>
@@ -198,7 +196,7 @@ const ComponentsAuthRegisterForm = () => {
                     'Sign Up'
                 )}
             </button>
-            
+
             {/* --- MODIFIED: Google Button with Loading State --- */}
             <div className="relative my-4 h-5 text-center before:absolute before:inset-0 before:m-auto before:h-[1px] before:w-full before:bg-gray-300 dark:before:bg-gray-600">
                 <span className="relative z-[1] inline-block bg-white px-2 dark:bg-gray-800">OR</span>
