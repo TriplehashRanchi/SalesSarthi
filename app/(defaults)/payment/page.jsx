@@ -19,7 +19,12 @@ const fmt = (paise) => (paise / 100).toLocaleString('en-IN');     // 2,400
 export default function PaymentPage() {
   const searchParams = useSearchParams();
   const router       = useRouter();
-  const uid          = searchParams.get('uid');
+
+  // 1. Get the user, logout function, AND the auth loading state
+  const { user, logout, loading: authLoading } = useAuth();
+
+  // 2. THE FIX: Create a single, reliable UID variable that falls back to the logged-in user.
+  const firebaseUid = useMemo(() => searchParams.get('uid') || user?.uid, [searchParams, user]);
 
   const [plans, setPlans]           = useState([]);
   const [planId, setPlanId]         = useState(null);
@@ -30,8 +35,6 @@ export default function PaymentPage() {
 
   const [loading, setLoading]       = useState(false);
   const [error,   setError]         = useState('');
-
-  const { user, logout } = useAuth();
 
   /* 1️⃣  fetch active plans */
   useEffect(() => {
@@ -102,7 +105,8 @@ export default function PaymentPage() {
 
   /* 4️⃣  Razorpay checkout */
   const handlePay = async () => {
-    if (!uid || !planId) { setError('Select a plan first'); return; }
+    // Use the reliable firebaseUid variable
+    if (!firebaseUid || !planId) { setError('Select a plan first'); return; }
     setLoading(true); setError('');
 
     try {
@@ -110,7 +114,8 @@ export default function PaymentPage() {
         method : 'POST',
         headers: { 'Content-Type':'application/json' },
         body   : JSON.stringify({
-          firebase_uid: uid,
+          // Use the reliable firebaseUid variable
+          firebase_uid: firebaseUid,
           plan_id    : planId,
           coupon_code: coupon.trim().toUpperCase() || undefined,
         }),
@@ -131,7 +136,8 @@ export default function PaymentPage() {
               razorpay_order_id  : resp.razorpay_order_id,
               razorpay_payment_id: resp.razorpay_payment_id,
               razorpay_signature : resp.razorpay_signature,
-              firebase_uid       : uid,
+              // Use the reliable firebaseUid variable
+              firebase_uid       : firebaseUid,
               plan_id            : planId,
               amount             : order.amount,
             }),
@@ -149,29 +155,51 @@ export default function PaymentPage() {
 
   /* 5️⃣  Start trial – backend should mark status = 'Active', expires_at = NOW()+7 */
   const handleTrial = async () => {
-    if (!uid) { setError('User ID missing'); return; }
+    // Use the reliable firebaseUid variable
+    if (!firebaseUid) { setError('User ID missing'); return; }
     setLoading(true);
     try {
       await fetch(`${API_URL}/api/trial/start-trial`, {
         method : 'POST',
         headers: { 'Content-Type':'application/json' },
-        body   : JSON.stringify({ firebase_uid: uid }),
+        body   : JSON.stringify({ firebase_uid: firebaseUid }),
       });
-      router.replace('/login?trial=started');
+      // Logout here as well for a consistent flow before redirecting
+      logout().then(() => router.replace('/login?trial=started'));
     } catch {
       setError('Unable to start trial');
+    } finally {
+        // Stop loading even on success, as logout() might take time
+        setLoading(false);
     }
   };
+  
+  // 3. Add an effect to intelligently set the error message
+  useEffect(() => {
+    // While the authentication is loading, don't show any error.
+    if (authLoading) {
+      setError('');
+      return;
+    }
+    // After it's done loading, if we STILL don't have a UID, it's a real error.
+    if (!firebaseUid) {
+      setError('User ID could not be found. Please sign up or log in again.');
+    } else {
+      // If we found a UID, clear any previous errors.
+      setError('');
+    }
+  }, [firebaseUid, authLoading]);
 
   /* 6️⃣  load Razorpay script once */
   useEffect(() => {
-    if (!uid) { setError('User ID missing'); return; }
+    // Depend on the reliable firebaseUid variable
+    if (!firebaseUid) { return; }
     const s = document.createElement('script');
     s.src   = 'https://checkout.razorpay.com/v1/checkout.js';
     s.async = true;
     document.body.appendChild(s);
     return () => document.body.removeChild(s);
-  }, [uid]);
+  }, [firebaseUid]);
 
   /* ─── UI ─── */
   return (
@@ -254,21 +282,23 @@ export default function PaymentPage() {
 
             <button
               onClick={handlePay}
-              disabled={loading || !uid || !planId}
+              // 4. Update the disabled logic to be more robust
+              disabled={loading || authLoading || !firebaseUid || !planId}
               className="mt-6 w-full py-2 text-white bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded font-bold disabled:opacity-50"
             >
-              {loading ? 'Processing…' : 'Proceed to Pay'}
+              {loading || authLoading ? 'Loading...' : 'Proceed to Pay'}
             </button>
 
            {(!user?.trial_used) && (
-  <button
-    onClick={handleTrial}
-    disabled={loading || !uid}
-    className="mt-3 w-full py-2 border border-blue-600 text-blue-600 rounded font-bold disabled:opacity-50"
-  >
-    Start Free 7-Day Trial
-  </button>
-)}
+             <button
+                onClick={handleTrial}
+                // 4. Update the disabled logic here as well
+                disabled={loading || authLoading || !firebaseUid}
+                className="mt-3 w-full py-2 border border-blue-600 text-blue-600 rounded font-bold disabled:opacity-50"
+            >
+                {loading || authLoading ? 'Loading...' : 'Start Free 7-Day Trial'}
+            </button>
+           )}
 
 
             {error && (

@@ -9,6 +9,7 @@ import { useCloudinaryUpload } from '@/utils/useCloudinaryUpload';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { IconAlertTriangle } from '@tabler/icons-react';
+import Link from 'next/link';
 
 /** ───────────────────────── helpers: E.164 ───────────────────────── **/
 const toE164 = (raw) => {
@@ -286,7 +287,7 @@ const AccountSettingsTabs = () => {
       <ul className="mb-5 overflow-y-auto whitespace-nowrap border-b border-[#ebedf2] font-semibold dark:border-[#191e3a] sm:flex">
         {[
           { id: 'home', label: 'Home', icon: <IconHome /> },
-          { id: 'subscription', label: 'Subscription', icon: <IconDollarSignCircle />, className: 'hidden md:inline-block' },
+          { id: 'subscription', label: 'Subscription', icon: <IconDollarSignCircle />},
           { id: 'company', label: 'Company Details', icon: <IconUser className="h-5 w-5" /> },
           { id: 'danger-zone', label: 'Danger Zone', icon: <IconAlertTriangle />, className: 'hidden md:inline-block' },
         ].map((t) => (
@@ -430,20 +431,63 @@ const AccountSettingsTabs = () => {
         <div className="panel max-w-xl rounded-md border border-[#ebedf2] bg-white p-6 dark:border-[#191e3a] dark:bg-black">
           <h6 className="mb-6 text-lg font-bold">Your Plan</h6>
 
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <p className="font-semibold">
-                {subscription?.plan || 'Basic'} Plan&nbsp;
-                <span className="text-xs text-white-dark">
-                  ({subscription?.status || 'Active'})
-                </span>
-              </p>
-              <p className="text-sm text-white-dark">
-                Next renewal – {subscription?.expires_at ? new Date(subscription.expires_at).toLocaleDateString() : '—'}
-              </p>
-            </div>
-            <button className="btn btn-dark">Change&nbsp;Plan</button>
-          </div>
+        <div className="mb-6 flex items-center justify-between">
+  <div>
+    <p className="font-semibold">
+      {subscription?.plan || 'Basic'} Plan&nbsp;
+      <span className="text-xs text-white-dark">
+        ({subscription?.status || 'Active'})
+      </span>
+    </p>
+    <p className="text-sm text-white-dark">
+      Next renewal –{' '}
+      {subscription?.expires_at
+        ? new Date(subscription.expires_at).toLocaleDateString()
+        : '—'}
+    </p>
+  </div>
+
+  {/* Desktop: Change Plan button */}
+  <Link
+    href="/payment"
+    className="hidden sm:inline-flex btn btn-dark"
+  >
+    Change&nbsp;Plan
+  </Link>
+
+  {/* Mobile: WhatsApp button */}
+  <a
+    href="https://wa.me/917011979448?text=I%20want%20to%20renew%20my%20subscription"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="sm:hidden px-3 py-2 rounded-md text-sm font-medium bg-[#25D366] text-white hover:opacity-90"
+  >
+    Contact Customer Support
+  </a>
+</div>
+
+{/* Mobile-only support info */}
+<div className="sm:hidden my-3 rounded-md bg-gray-100 dark:bg-gray-800 p-3 text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+  <p>
+    Visit{' '}
+    <a
+      href="https://app.digitalgyanisarthi.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline font-medium"
+    >
+      app.digitalgyanisarthi.com
+    </a>{' '}
+    to manage your subscription.
+  </p>
+  <p className="my-2">
+    For support, contact us at:{' '}
+    <a href="tel:+919266683105" className="underline">9266683105</a>,{' '}
+    <a href="tel:+919266683106" className="underline">9266683106</a>
+  </p>
+</div>
+
+
 
           <h6 className="mb-4 text-lg font-bold">Billing History</h6>
           <div className="space-y-3">
