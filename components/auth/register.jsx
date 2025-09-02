@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { signInWithGoogle } from '@/utils/auth'; 
 import { useAuth } from '@/context/AuthContext';
+import { showNotification } from '@mantine/notifications';
 
 // Add a simple loader icon component
 const IconLoader = () => (
@@ -113,59 +114,69 @@ const ComponentsAuthRegisterForm = () => {
         }
     };
 
-  // --- MODIFIED: The Google Sign-In handler now uses your utility ---
-    const handleGoogleSignIn = async () => {
-        setError('');
-        setIsLoading(true);
+// Replace the existing handleGoogleSignIn function with this improved version:
+const handleGoogleSignIn = async () => {
+    setError('');
+    setIsLoading(true);
 
-        try {
-            // 1. Call your centralized signInWithGoogle function
-            const result = await signInWithGoogle();
+    try {
+        // 1. Call your centralized signInWithGoogle function
+        const result = await signInWithGoogle();
 
-            // Handle cases like redirects where the result might be null initially
-            if (!result) {
-                // The redirect is in progress, no need to do anything else here.
-                // setLoading will eventually be false when the page reloads.
-                return;
-            }
-
-            // 2. Get the additional user info from the result
-            const additionalInfo = getAdditionalUserInfo(result);
-            const firebaseUser = result.user;
-
-            // 3. Check if the user is NEW
-            if (additionalInfo?.isNewUser) {
-                // This is the registration "happy path"
-                console.log("New user detected, proceeding with registration...");
-                
-                // Register the user on your backend
-                await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
-
-                // Apply the mobile vs. desktop logic
-                if (isMobile) {
-                    await startFreeTrial(firebaseUser.uid);
-                    router.push('/login?trial=started');
-                } else {
-                    router.push(`/payment?uid=${firebaseUser.uid}`);
-                }
-            } else {
-                // The user ALREADY EXISTS. Treat this as a login.
-                // The `onAuthStateChanged` listener in your AuthContext will
-                // automatically detect the signed-in user and redirect them.
-                console.log("Existing user signed in. AuthContext will handle the redirect.");
-                // No further action is needed here. The page will navigate away.
-            }
-
-        } catch (err) {
-             // Handle common errors
-            if (err.code === 'auth/account-exists-with-different-credential') {
-                 setError('An account already exists with this email address. Please sign in with the original method.');
-            } else if (err.code !== 'auth/popup-closed-by-user') {
-                 setError(err.message);
-            }
-            setIsLoading(false);
+        // Handle cases like redirects where the result might be null initially
+        if (!result) {
+            // The redirect is in progress, no need to do anything else here.
+            return;
         }
-    };
+
+        // 2. Get the additional user info from the result
+        const additionalInfo = getAdditionalUserInfo(result);
+        const firebaseUser = result.user;
+
+        // 3. Check if the user is NEW
+        if (additionalInfo?.isNewUser) {
+            // This is the registration "happy path" for a brand new user
+            console.log("New user detected, proceeding with registration...");
+            
+            // Register the user on your backend
+            await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
+
+            // Apply the mobile vs. desktop logic
+            if (isMobile) {
+                await startFreeTrial(firebaseUser.uid);
+                router.push('/login?trial=started');
+            } else {
+                router.push(`/payment?uid=${firebaseUser.uid}`);
+            }
+        } else {
+            // --- ✅ FIX STARTS HERE ---
+            // The user ALREADY EXISTS. Treat this as a login.
+            console.log("Existing user signed in. AuthContext will handle the redirect.");
+            showNotification({
+                title: 'Welcome Back!',
+                message: 'You have been successfully signed in.',
+                color: 'green',
+            });
+            // The `onAuthStateChanged` listener in your AuthContext will
+            // automatically detect the signed-in user and redirect them to their dashboard.
+            // No further action is needed here, we can simply stop loading.
+            setIsLoading(false);
+            // --- ✅ FIX ENDS HERE ---
+        }
+
+    } catch (err) {
+         // Handle common errors
+        if (err.code === 'auth/account-exists-with-different-credential') {
+             setError('An account already exists with this email address. Please sign in using the original method you used.');
+        } else if (err.code === 'auth/popup-closed-by-user') {
+            // This is not a real error, so we don't need to show a message.
+            console.log("User closed the Google Sign-In popup.");
+        } else {
+             setError(err.message);
+        }
+        setIsLoading(false);
+    }
+};
 
 
     return (

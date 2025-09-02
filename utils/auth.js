@@ -16,10 +16,10 @@ import {
 
 import { Capacitor } from "@capacitor/core";
 import { SocialLogin } from "@capgo/capacitor-social-login";
+import { showNotification } from '@mantine/notifications'; // 👈 Import Mantine's notification system
 
 // ── DEBUG SWITCH ─────────────────────────────────────────────
 const DEBUG_AUTH = true;       // set to false when done
-const SHOW_ALERTS = true;      // set to false to silence alerts
 // ────────────────────────────────────────────────────────────
 
 // Put YOUR Web OAuth Client ID (from Google Cloud):
@@ -44,9 +44,6 @@ async function ensureSocialLoginInit() {
 function log(...args) { if (DEBUG_AUTH) console.log("[AUTH]", ...args); }
 function warn(...args) { if (DEBUG_AUTH) console.warn("[AUTH]", ...args); }
 function err(...args) { if (DEBUG_AUTH) console.error("[AUTH]", ...args); }
-function maybeAlert(msg) { if (SHOW_ALERTS) alert(msg); }
-
-
 
 // -------- Google Sign-in (native vs web) --------
 export const signInWithGoogle = async () => {
@@ -60,61 +57,50 @@ export const signInWithGoogle = async () => {
       await ensureSocialLoginInit();
       log("Using native SocialLogin…");
 
-      // Ask for openid/email/profile to ensure an ID token is minted
       const res = await SocialLogin.login({
         provider: "google",
         options: { scopes: ["openid", "email", "profile"] },
       });
+      
+      log("SocialLogin.login() keys:", Object.keys(res || {}).join(","), "result keys:", Object.keys(res?.result || {}).join(","));
 
-      // Helpful debug: see what the plugin actually returned
-      log(
-        "SocialLogin.login() keys:",
-        Object.keys(res || {}).join(","),
-        "result keys:",
-        Object.keys(res?.result || {}).join(",")
-      );
-
-      // ✅ Capgo returns idToken here:
       const idToken =
         res?.result?.idToken ||
-        res?.result?.authentication?.idToken || // (some versions)
-        res?.authentication?.idToken ||         // (very old fallbacks)
+        res?.result?.authentication?.idToken ||
+        res?.authentication?.idToken ||
         null;
 
       if (!idToken) {
-        maybeAlert("Something went wrong: no idToken");
+        showNotification({ title: 'Login Failed', message: 'Could not retrieve Google ID token.', color: 'red' });
         throw new Error("No Google ID token from native login");
       }
 
       const cred = GoogleAuthProvider.credential(idToken);
       const result = await signInWithCredential(auth, cred);
       log("Native Firebase sign-in OK, uid =", result?.user?.uid);
-      maybeAlert("Sign-in success");
+      showNotification({ title: 'Sign-In Success', message: 'You are now signed in.', color: 'green' });
       return result;
     } catch (e) {
       err("Sign-in failed:", e);
-      maybeAlert(`Native sign-in failed: ${e?.message || e}`);
+      showNotification({ title: 'Native Sign-In Failed', message: e?.message || 'An unknown error occurred.', color: 'red' });
       throw e;
     }
   }
-
 
   // Web / PWA path
   log("Using web popup → redirect fallback");
   try {
     const res = await signInWithPopup(auth, googleProvider);
     log("Popup success. uid =", res?.user?.uid);
-    // maybeAlert("Web popup success");
-    return res.user ?? null;
+    return res; // Return the full UserCredential object
   } catch (e) {
     warn("Popup failed, falling back to redirect. error =", e?.code, e?.message);
     try {
       await signInWithRedirect(auth, googleProvider);
-      // The page will navigate; on return, a separate call to getRedirectResult will resolve.
       return null;
     } catch (e2) {
       err("Redirect start failed:", e2?.code, e2?.message);
-      maybeAlert(`Redirect failed: ${e2?.message || e2}`);
+      showNotification({ title: 'Login Failed', message: `Could not start Google Sign-In: ${e2?.message || e2}`, color: 'red' });
       throw e2;
     }
   }
@@ -126,8 +112,8 @@ export const completeWebRedirectIfAny = async () => {
     const res = await getRedirectResult(auth);
     if (res?.user) {
       log("getRedirectResult: success. uid =", res.user.uid);
-      maybeAlert("Redirect completed: signed in");
-      return res.user;
+      showNotification({ title: 'Signed In', message: 'Welcome back!', color: 'green' });
+      return res; // Return the full UserCredential object
     }
     log("getRedirectResult: no pending redirect");
     return null;
@@ -139,15 +125,11 @@ export const completeWebRedirectIfAny = async () => {
 
 // -------- Email / Password --------
 export const signInWithEmail = async (email, password) => {
-  const { user } = await signInWithEmailAndPassword(auth, email, password);
-  log("Email sign-in uid =", user?.uid);
-  return user;
+  return signInWithEmailAndPassword(auth, email, password);
 };
 
 export const signUpWithEmail = async (email, password) => {
-  const { user } = await createUserWithEmailAndPassword(auth, email, password);
-  log("Signup uid =", user?.uid);
-  return user;
+  return createUserWithEmailAndPassword(auth, email, password);
 };
 
 // -------- Logout (both native & web) --------
