@@ -38,11 +38,11 @@ const ComponentsAuthRegisterForm = () => {
 
     // ✅ Redirect logic remains the same.
     useEffect(() => {
-        // if (user?.role === 'admin') {
-        //     router.push('/dashboard');
-        // } else if (user?.role === 'user') {
-        //     router.push('/user-dashboard');
-        // }
+        if (user?.role === 'admin') {
+            router.push('/dashboard');
+        } else if (user?.role === 'user') {
+            router.push('/user-dashboard');
+        }
     }, [user, router]);
 
       // --- NEW: Add a useEffect to detect the device type on component mount ---
@@ -115,68 +115,54 @@ const ComponentsAuthRegisterForm = () => {
     };
 
 // Replace the existing handleGoogleSignIn function with this improved version:
-const handleGoogleSignIn = async () => {
-    setError('');
-    setIsLoading(true);
 
-    try {
-        // 1. Call your centralized signInWithGoogle function
-        const result = await signInWithGoogle();
+    // ✅ FIX 2: Refine the Google Sign-In handler for a smoother UX.
+    const handleGoogleSignIn = async () => {
+        setError('');
+        setIsLoading(true);
 
-        // Handle cases like redirects where the result might be null initially
-        if (!result) {
-            // The redirect is in progress, no need to do anything else here.
-            return;
-        }
-
-        // 2. Get the additional user info from the result
-        const additionalInfo = getAdditionalUserInfo(result);
-        const firebaseUser = result.user;
-
-        // 3. Check if the user is NEW
-        if (additionalInfo?.isNewUser) {
-            // This is the registration "happy path" for a brand new user
-            console.log("New user detected, proceeding with registration...");
-            
-            // Register the user on your backend
-            await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
-
-            // Apply the mobile vs. desktop logic
-            if (isMobile) {
-                await startFreeTrial(firebaseUser.uid);
-                router.push('/login?trial=started');
-            } else {
-                router.push(`/payment?uid=${firebaseUser.uid}`);
+        try {
+            const result = await signInWithGoogle();
+            if (!result) {
+                // Redirect is in progress, component will unmount.
+                return;
             }
-        } else {
-            // --- ✅ FIX STARTS HERE ---
-            // The user ALREADY EXISTS. Treat this as a login.
-            console.log("Existing user signed in. AuthContext will handle the redirect.");
-            showNotification({
-                title: 'Welcome Back!',
-                message: 'You have been successfully signed in.',
-                color: 'green',
-            });
-            // The `onAuthStateChanged` listener in your AuthContext will
-            // automatically detect the signed-in user and redirect them to their dashboard.
-            // No further action is needed here, we can simply stop loading.
-            setIsLoading(false);
-            // --- ✅ FIX ENDS HERE ---
-        }
 
-    } catch (err) {
-         // Handle common errors
-        if (err.code === 'auth/account-exists-with-different-credential') {
-             setError('An account already exists with this email address. Please sign in using the original method you used.');
-        } else if (err.code === 'auth/popup-closed-by-user') {
-            // This is not a real error, so we don't need to show a message.
-            console.log("User closed the Google Sign-In popup.");
-        } else {
-             setError(err.message);
+            const additionalInfo = getAdditionalUserInfo(result);
+            const firebaseUser = result.user;
+
+            if (additionalInfo?.isNewUser) {
+                console.log("New user detected, proceeding with registration...");
+                await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
+
+                if (isMobile) {
+                    await startFreeTrial(firebaseUser.uid);
+                    router.push('/login?trial=started');
+                } else {
+                    router.push(`/payment?uid=${firebaseUser.uid}`);
+                }
+                // On success, the page navigates away, so we don't need to stop the loader.
+            } else {
+                // Existing user: Treat as a login.
+                console.log("Existing user signed in. Redirecting...");
+                showNotification({
+                    title: 'Welcome Back!',
+                    message: 'You have been successfully signed in.',
+                    color: 'green',
+                });
+                // Do NOT stop loading here. Let the loader spin until the
+                // useEffect above triggers the redirect. This prevents a UI flash.
+            }
+        } catch (err) {
+            if (err.code === 'auth/account-exists-with-different-credential') {
+                setError('An account already exists with this email address. Please sign in with the original method.');
+            } else if (err.code !== 'auth/popup-closed-by-user') {
+                setError(err.message);
+            }
+            // Only stop the loader if there's an error.
+            setIsLoading(false);
         }
-        setIsLoading(false);
-    }
-};
+    };
 
 
     return (
