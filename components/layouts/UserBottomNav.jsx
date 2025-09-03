@@ -19,7 +19,7 @@ export default function UserBottomNav() {
   const navItems = [
     { icon: <IconMenu className="w-6 h-6" />, label: 'Menu', action: () => dispatch(toggleSidebar()) },
     { icon: <IconMenuDashboard className="w-6 h-6" />, label: 'Home', path: '/user-dashboard' },
-    { icon: <IconHistory className="w-6 h-6" />, label: 'History', path: '/user-followup' },
+    { icon: <IconHistory className="w-6 h-6" />, label: 'Followup', path: '/user-followup' },
     { icon: <IconUser className="w-6 h-6" />, label: 'Profile', path: '/user-profile' },
     { icon: <IconUsers className="w-6 h-6" />, label: 'Leads', path: '/userleadtable' },
    

@@ -316,7 +316,7 @@ const AccountSettingsTabs = () => {
                         <div className="flex flex-col sm:flex-row">
                             <div className="mb-5 w-full sm:w-2/12 ltr:sm:mr-4 rtl:sm:ml-4">
                                 <label htmlFor="avatarInput">
-                                    <img src={avatarPreview || '/assets/images/profile-34.jpeg'} alt="avatar" className="mx-auto h-20 w-20 rounded-full object-cover md:h-32 md:w-32 cursor-pointer" />
+                                    <img src={avatarPreview || '/assets/images/image.png'} alt="avatar" className="mx-auto h-20 w-20 rounded-full object-cover md:h-32 md:w-32 cursor-pointer" />
                                 </label>
                                 <input id="avatarInput" type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                             </div>
@@ -445,7 +445,7 @@ const AccountSettingsTabs = () => {
                     <div className="sm:hidden my-3 rounded-md bg-gray-100 dark:bg-gray-800 p-3 text-xs leading-relaxed text-gray-700 dark:text-gray-300">
                         <p>
                             Visit{' '}
-                            <a href="https://app.digitalgyanisarthi.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                            <a href="https://app.digitalgyanisaarthi.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">
                                 app.digitalgyanisarthi.com
                             </a>{' '}
                             to manage your subscription.
