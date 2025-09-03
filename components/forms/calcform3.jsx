@@ -723,7 +723,7 @@ const FinancialHealthCalculator = () => {
                             id="financialDoctorName"
                             type="text"
                             name="financialDoctorName"
-                            placeholder="Enter Doctor Name"
+                            placeholder="Enter Your Name"
                             value={formData.financialDoctorName}
                             onChange={handleInputChange}
                             className="form-input w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50"

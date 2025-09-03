@@ -13,7 +13,7 @@ const ParentComponent = () => {
         <div className="text-lg font-semibold text-white">
          {user ? `Hello ${user.displayName || 'User'} !` : 'Hello User !'}
         </div>
-        <div className="text-sm italic text-gray-200">
+        <div className="text-sm hidden md:block italic text-gray-200">
          A new lead is a start of a new adventure.
         </div>
       </div>

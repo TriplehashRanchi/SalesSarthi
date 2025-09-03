@@ -342,8 +342,8 @@ const FinancialHealthReport = ({ data, onClose }) => {
                 </div>
 
                 {/* --- Action Buttons (Outside the captured ref) --- */}
-                <div className="export-buttons flex flex-wrap items-center justify-center gap-2 px-6 pb-6 text-center md:px-8 md:gap-4">
-                    <button onClick={handleExportPDF} className="rounded-lg bg-indigo-600 px-5 py-2 font-semibold text-white shadow-md transition hover:bg-indigo-700">
+                <div className="export-buttons  flex flex-wrap items-center justify-center gap-2 px-6 pb-6 text-center md:px-8 md:gap-4">
+                    <button onClick={handleExportPDF} className="rounded-lg hidden md:block bg-indigo-600 px-5 py-2 font-semibold text-white shadow-md transition hover:bg-indigo-700">
                         Export PDF
                     </button>
                     {isMobile && (
