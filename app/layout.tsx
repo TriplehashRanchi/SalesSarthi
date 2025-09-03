@@ -38,9 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <body
                 className={`${nunito.variable} ${righteous.variable} mt-10 md:mt-0`}
             >
-                  <SafeArea edges={['top','bottom']} className="min-h-screen flex flex-col">
+                  {/* <div className="main-app-container"> */}
                 <ProviderComponent>{children}</ProviderComponent>
-                </SafeArea>
+                {/* </div> */}
             </body>
         </html>
     );
