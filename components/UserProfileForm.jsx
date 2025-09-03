@@ -42,6 +42,50 @@ const AccountSettingsTabs = () => {
   const [profileErrors, setProfileErrors] = useState({ phone: '' });
   const [avatarPreview, setAvatarPreview] = useState(null);
 
+    const handleLogoChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const url = await cloudUpload(file);
+            setCompany((c) => ({ ...c, logo_url: url }));
+            setLogoPreview(url);
+        } catch (err) {
+            console.error('Logo upload failed', err);
+        }
+    };
+    const handleCompanyChange = (id, val) => {
+        setCompany((c) => ({ ...c, [id]: val }));
+    };
+
+     const handlePhoneNumberChange = (id, value, handler) => {
+        const numericValue = value.replace(/\D/g, ''); // Allow only numbers
+        if (numericValue.length <= 10) {
+            const finalValue = numericValue ? `+91${numericValue}` : '';
+            handler(id, finalValue);
+        }
+    };
+    const saveCompanyInfo = async () => {
+        try {
+            const token = await getAuth().currentUser.getIdToken();
+            // now everything is plain JSON, including logo_url
+            await axios.put(
+                `${API_URL}/api/companies/me`,
+                {
+                    name: company.companyName,
+                    gst_number: company.gst,
+                    address: company.regAddress,
+                    billing_email: company.contactEmail,
+                    phone_1: company.phone1,
+                    phone_2: company.phone2,
+                    logo_url: company.logo_url,
+                },
+                { headers: { Authorization: `Bearer ${token}` } },
+            );
+            alert('Company info saved');
+        } catch (err) {
+            console.error(err);
+            alert('Error saving company info');
+        }
   // ───── company state ─────
   const [company, setCompany] = useState({
     companyName: '',
@@ -267,6 +311,106 @@ const AccountSettingsTabs = () => {
     }
   };
 
+            {/* tab nav */}
+            <ul className="mb-5 overflow-y-auto whitespace-nowrap border-b border-[#ebedf2] font-semibold dark:border-[#191e3a] sm:flex">
+  {[
+    { id: 'home', label: 'Home', icon: <IconHome /> },
+    { id: 'subscription', label: 'Subscription', icon: <IconDollarSignCircle />, className: 'hidden md:inline-block' },
+    { id: 'company', label: 'Company Details', icon: <IconUser className="h-5 w-5" /> },
+    { id: 'danger-zone', label: 'Danger Zone', icon: <IconAlertTriangle />, className: 'hidden md:inline-block' },
+  ].map((t) => (
+    <li key={t.id} className={`inline-block ${t.className || ''}`}>
+      <button
+        onClick={() => setActiveTab(t.id)}
+        className={`md:flex gap-2 border-b border-transparent p-4 hover:border-primary hover:text-primary ${
+          activeTab === t.id ? '!border-primary text-primary' : ''
+        }`}
+      >
+        {t.icon}
+        {t.label}
+      </button>
+    </li>
+  ))}
+</ul>
+
+
+            {/* ============ HOME ============ */}
+            {activeTab === 'home' && (
+                <form className="mb-5 rounded-md border border-[#ebedf2] bg-white p-4 dark:border-[#191e3a] dark:bg-black">
+                    <h6 className="mb-5 text-lg font-bold">General Information</h6>
+                    <div className="flex flex-col sm:flex-row">
+                        <div className="mb-5 w-full sm:w-2/12 ltr:sm:mr-4 rtl:sm:ml-4">
+                            <label htmlFor="avatarInput">
+                                <img src={avatarPreview || '/assets/images/profile-34.jpeg'} alt="avatar" className="mx-auto h-20 w-20 rounded-full object-cover md:h-32 md:w-32 cursor-pointer" />
+                            </label>
+                            <input id="avatarInput" type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                        </div>
+                        <div className="grid flex-1 grid-cols-1 gap-5 sm:grid-cols-2">
+                             {[
+                                { id: 'name', label: 'Full Name', placeholder: 'Your Name ' },
+                                { id: 'profession', label: 'Profession', placeholder: 'Enter Your Profession' },
+                                { id: 'location', label: 'Location', placeholder: 'Location' },
+                                { id: 'phone', label: 'Phone', placeholder: '+91 98755-XXXXX' },
+                                { id: 'email', label: 'Email', placeholder: 'jimmy@example.com', type: 'email' },
+                            ].map((f) => (
+                                <div key={f.id}>
+                                    <label htmlFor={f.id}>{f.label}</label>
+                                    {f.id === 'phone' ? (
+                                        <PhoneInput
+                                            country={'in'}
+                                            onlyCountries={['in']}
+                                            disableDropdown={true}
+                                            value={profile.phone}
+                                            onChange={(value) => handleProfileChange('phone', `+${value}`)}
+                                            inputProps={{
+                                                id: f.id,
+                                                placeholder: f.placeholder,
+                                            }}
+                                        />
+                                    ) : (
+                                        <input
+                                            id={f.id}
+                                            type={f.type || 'text'}
+                                            placeholder={f.placeholder}
+                                            className="form-input"
+                                            value={profile[f.id]}
+                                            onChange={(e) => handleProfileChange(f.id, e.target.value)}
+                                        />
+                                    )}
+                                </div>
+                            ))}
+
+                            {/* country + address row */}
+                            <div>
+                                <label htmlFor="country">Country</label>
+                                <select
+                                    id="country"
+                                    className="form-select text-white-dark"
+                                    value={profile.country}
+                                    onChange={(e) => handleProfileChange('country', e.target.value)}
+                                    placeholder="Select Country"
+                                >
+                                    {['All Countries', 'United States', 'India', 'Japan', 'China', 'Brazil', 'Norway', 'Canada'].map((c) => (
+                                        <option key={c} value={c}>
+                                            {c}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor="address">Address</label>
+                                <input id="address" className="form-input" placeholder="Enter Your Address" value={profile.address} onChange={(e) => handleProfileChange('address', e.target.value)} />
+                            </div>
+
+                            <div className="mt-3 sm:col-span-2">
+                                <button type="button" className="btn btn-primary" onClick={saveProfileInfo}>
+                                    Save Profile
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            )}
   // computed disabled flags
   const profileDisabled = useMemo(() => {
     return savingProfile || !!profileErrors.phone || (profile.phone && !isValidE164(profile.phone)) || cloudUploading;
@@ -370,6 +514,71 @@ const AccountSettingsTabs = () => {
                   </select>
                 </div>
 
+            {/* ============ COMPANY DETAILS ============ */}
+            {activeTab === 'company' && (
+                <form className="panel max-w-full rounded-md border border-[#ebedf2] bg-white p-6 dark:border-[#191e3a] dark:bg-black">
+                    <h6 className="mb-6 text-lg font-bold">Company Information</h6>
+
+                    {/* company logo */}
+                    <div className="mb-6">
+                        <label htmlFor="companyLogo" className="block mb-2 font-medium">
+                            Company Logo
+                        </label>
+                        <label
+                            htmlFor="companyLogo"
+                            className="flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded border-2 border-dashed border-[#cbd5e1] dark:border-[#334155] hover:border-primary"
+                        >
+                            {logoPreview ? <img src={logoPreview} alt="logo" className="h-full w-full object-cover" /> : <span className="text-xs text-[#94a3b8]">Add Logo</span>}
+                        </label>
+                        <input id="companyLogo" type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        {[
+                            { id: 'companyName', label: 'Company Name', placeholder: 'Acme Corp.' },
+                            { id: 'gst', label: 'GST / VAT No.', placeholder: '22AAAAA0000A1Z5' },
+                            { id: 'regAddress', label: 'Registered Address', placeholder: 'Street, City' },
+                            {
+                                id: 'contactEmail',
+                                label: 'Billing Email',
+                                type: 'email',
+                                placeholder: 'accounts@acme.com',
+                            },
+                            { id: 'phone1', label: 'Primary Phone', placeholder: '+91 98765 43210' },
+                            { id: 'phone2', label: 'Secondary Phone', placeholder: '+91 91234 56789' },
+                        ].map((f) => (
+                            <div key={f.id}>
+                                <label htmlFor={f.id}>{f.label}</label>
+                                {f.id === 'phone1' || f.id === 'phone2' ? (
+                                    <PhoneInput
+                                        inputClass="form-input"
+                                        country={'in'}
+                                        onlyCountries={['in']}
+                                        disableDropdown={true}
+                                        value={company[f.id]}
+                                        onChange={(phone) => handleCompanyChange(f.id, phone)}
+                                    />
+                                ) : (
+                                    <input
+                                        id={f.id}
+                                        type={f.type || 'text'}
+                                        placeholder={f.placeholder}
+                                        className="form-input"
+                                        value={company[f.id]}
+                                        onChange={(e) => handleCompanyChange(f.id, e.target.value)}
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-6 text-right">
+                        <button type="button" className="btn btn-primary" onClick={saveCompanyInfo}>
+                            Save Company Info
+                        </button>
+                    </div>
+                </form>
+            )}
                 <div>
                   <label htmlFor="address">Address</label>
                   <input
@@ -417,6 +626,7 @@ const AccountSettingsTabs = () => {
                     <p className="mt-1 text-xs text-red-500">{profileErrors.phone}</p>
                   )}
                 </div>
+
 
                 <div className="mt-3 sm:col-span-2">
                   <button
