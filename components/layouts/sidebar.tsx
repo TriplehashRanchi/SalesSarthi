@@ -20,7 +20,7 @@ import IconMenuUsers from '@/components/icon/menu/icon-menu-users';
 import IconMenuPages from '@/components/icon/menu/icon-menu-pages';
 import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authentication';
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
-import {IconAi, IconBrandFacebook, IconBrandWhatsappFilled, IconCursorText, IconForms, IconHistory, IconLeafOff, IconReport, IconSettings, IconUserCheck} from '@tabler/icons-react';
+import {IconAi, IconBrandFacebook, IconBrandWhatsappFilled, IconCubeSend, IconCursorText, IconForms, IconHistory, IconLeafOff, IconReport, IconSettings, IconSpherePlus, IconUserCheck} from '@tabler/icons-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getTranslation } from '@/i18n';
 import IconLaptop from '../icon/icon-laptop';
@@ -152,7 +152,7 @@ const Sidebar = () => {
                                         <button type="button" className={`${currentMenu === 'customer_tab' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('customer_tab')}>
                                             <div className="flex items-center">
                                                 <IconUserCheck className="shrink-0 group-hover:!text-primary" />
-                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
+                                                <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Leads')}</span>
                                             </div>
 
                                            <div className={currentMenu !== 'automation' ? '-rotate-90 rtl:rotate-90' : ''}>
@@ -170,9 +170,9 @@ const Sidebar = () => {
                                                     <Link href="/leadtable">{t('All leads')}</Link>
                                                 </li>
                                                
-                                                <li>
+                                                {/* <li>
                                                     <Link href="/customers">{t('Clients')}</Link>
-                                                </li>
+                                                </li> */}
                                             </ul>
                                         </AnimateHeight>
                             </li>
@@ -201,6 +201,16 @@ const Sidebar = () => {
                                             </ul>
                                         </AnimateHeight>
                             </li>
+                            
+                            <li className="menu nav-item">
+                                <Link href="/customers">
+                                    <div className="flex items-center">
+                                        <IconSpherePlus className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
                            
                             <li className="menu nav-item">
                                 <Link href="/fincalc">

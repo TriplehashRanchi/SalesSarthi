@@ -155,6 +155,14 @@ const AccountSettingsTabs = () => {
     const handleCompanyChange = (id, val) => {
         setCompany((c) => ({ ...c, [id]: val }));
     };
+
+     const handlePhoneNumberChange = (id, value, handler) => {
+        const numericValue = value.replace(/\D/g, ''); // Allow only numbers
+        if (numericValue.length <= 10) {
+            const finalValue = numericValue ? `+91${numericValue}` : '';
+            handler(id, finalValue);
+        }
+    };
     const saveCompanyInfo = async () => {
         try {
             const token = await getAuth().currentUser.getIdToken();
@@ -221,7 +229,7 @@ const AccountSettingsTabs = () => {
                             <input id="avatarInput" type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                         </div>
                         <div className="grid flex-1 grid-cols-1 gap-5 sm:grid-cols-2">
-                            {[
+                             {[
                                 { id: 'name', label: 'Full Name', placeholder: 'Your Name ' },
                                 { id: 'profession', label: 'Profession', placeholder: 'Enter Your Profession' },
                                 { id: 'location', label: 'Location', placeholder: 'Location' },
@@ -232,11 +240,11 @@ const AccountSettingsTabs = () => {
                                     <label htmlFor={f.id}>{f.label}</label>
                                     {f.id === 'phone' ? (
                                         <PhoneInput
-                                            country="in"
+                                            country={'in'}
+                                            onlyCountries={['in']}
+                                            disableDropdown={true}
                                             value={profile.phone}
                                             onChange={(value) => handleProfileChange('phone', `+${value}`)}
-                                            enableSearch
-                                            countryCodeEditable={false}
                                             inputProps={{
                                                 id: f.id,
                                                 placeholder: f.placeholder,
@@ -358,22 +366,22 @@ const AccountSettingsTabs = () => {
                                 {f.id === 'phone1' || f.id === 'phone2' ? (
                                     <PhoneInput
                                         inputClass="form-input"
-                                        country="in"
+                                        country={'in'}
+                                        onlyCountries={['in']}
+                                        disableDropdown={true}
                                         value={company[f.id]}
                                         onChange={(phone) => handleCompanyChange(f.id, phone)}
                                     />
                                 ) : (
                                     <input
-                                    id={f.id}
-                                    type={f.type || 'text'}
-                                    placeholder={f.placeholder}
-                                    className="form-input"
-                                    value={company[f.id]}
-                                    onChange={(e) => handleCompanyChange(f.id, e.target.value)}
-                                />
-                                )
-                                }
-                              
+                                        id={f.id}
+                                        type={f.type || 'text'}
+                                        placeholder={f.placeholder}
+                                        className="form-input"
+                                        value={company[f.id]}
+                                        onChange={(e) => handleCompanyChange(f.id, e.target.value)}
+                                    />
+                                )}
                             </div>
                         ))}
                     </div>
