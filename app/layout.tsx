@@ -29,14 +29,8 @@ const righteous = Righteous({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-        <head>
-            <meta
-            name="viewport"
-            content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
-            />
-        </head>
             <body
-                className={`${nunito.variable} ${righteous.variable} mt-10 md:mt-0`}
+                className={`${nunito.variable} ${righteous.variable} safe-area`}
             >
                   {/* <div className="main-app-container"> */}
                 <ProviderComponent>{children}</ProviderComponent>
