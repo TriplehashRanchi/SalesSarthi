@@ -49,7 +49,6 @@ function App({ children }: PropsWithChildren) {
 
     return (
         <NotificationsProvider>
-            <div className="safe-area-container"></div>
             <MantineProvider
   theme={{ colorScheme: themeConfig.theme === 'dark' ? 'dark' : 'light' }}
 >
