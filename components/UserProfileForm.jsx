@@ -37,6 +37,7 @@ const AccountSettingsTabs = () => {
     country: '',
     address: '',
     avatar: null,
+    website: '',
   });
   const [profileErrors, setProfileErrors] = useState({ phone: '' });
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -182,6 +183,7 @@ const AccountSettingsTabs = () => {
           country: nextProfile.country,
           address: nextProfile.address,
           avatar_url: nextProfile.avatar,
+          website: nextProfile.website,
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -376,6 +378,16 @@ const AccountSettingsTabs = () => {
                     placeholder="Enter Your Address"
                     value={profile.address}
                     onChange={(e) => handleProfileChange('address', e.target.value)}
+                  />
+                </div>
+                 <div>
+                  <label htmlFor="website">Website</label>
+                  <input
+                    id="website"
+                    className="form-input"
+                    placeholder="Enter Your Website"
+                    value={profile.website}
+                    onChange={(e) => handleProfileChange('website', e.target.value)}
                   />
                 </div>
 

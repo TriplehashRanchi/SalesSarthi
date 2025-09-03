@@ -45,13 +45,12 @@ const ProfessionalBannerMaker = () => {
     const exportRef = useRef(null);
     const [isMobile, setIsMobile] = useState(false);
 
-    const [company, setCompany] = useState({
-        companyName: '',
-        gst: '',
-        regAddress: '',
-        contactEmail: '',
-        phone1: '',
-        phone2: '',
+   const [profile, setProfile] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        avatarUrl: '',
+        profession:'',
         website: '',
     });
     const [logoPreview, setLogoPreview] = useState('');
@@ -78,20 +77,23 @@ const ProfessionalBannerMaker = () => {
                 const auth = getAuth();
                 const token = await auth.currentUser.getIdToken();
 
-                const { data: comp } = await axios.get(`${API_URL}/api/companies/me`, {
+                const { data: comp } = await axios.get(`${API_URL}/api/admin/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
-                setCompany({
-                    companyName: comp.name || '',
-                    gst: comp.gst_number || '',
-                    regAddress: comp.address || '',
-                    contactEmail: comp.billing_email || '',
-                    phone1: comp.phone_1 || '',
-                    phone2: comp.phone_2 || '',
+                console.log(comp);
+
+               setProfile({
+                    name: comp.name || '',
+                    email: comp.email || '', // Or comp.billing_email if that's correct
+                    phone: comp.phone || '',
+                    avatarUrl: comp.avatar_url || '',
+                    profession: comp.profession || 'Financial Advisor',
                     website: comp.website || '',
                 });
-                if (comp.logo_url) setLogoPreview(comp.logo_url);
+                if (comp.avatar_url) setLogoPreview(comp.avatar_url);
+
+                console.log(profile);
 
                 const { data: banners } = await axios.get(`${API_URL}/api/banners`, {
                     headers: { Authorization: `Bearer ${token}` },
@@ -396,20 +398,20 @@ const handleShare = async () => {
                         style={{ transform: 'scale(0.1)', transformOrigin: 'top left' }}
                     >
                         <img src={selectedTemplate.url} alt="Selected Template" className="absolute w-full h-full object-cover" />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-black/70 to-black/40 text-white p-6 flex items-center space-x-6">
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-black/90 to-black/70 text-white p-6 flex items-center space-x-6">
                             <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center overflow-hidden">
                                 {logoPreview && <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />}
                             </div>
                             <div className="flex-grow">
-                                <h2 className="text-2xl font-bold">{company.companyName}</h2>
-                                <p className="text-sm">GST: {company.gst}</p>
-                                <p className="text-sm">{company.regAddress}</p>
+                                <h2 className="text-4xl -mt-6 font-bold">{profile.name}</h2>
+                                {/* <p className="text-sm">GST: {company.gst}</p> */}
+                                <p className="text-2xl mt-2">{profile.profession}</p>
                             </div>
-                            <div className="text-right text-sm space-y-1">
-                                <p>{company.contactEmail}</p>
-                                <p>{company.phone1}</p>
-                                {company.phone2 && <p>{company.phone2}</p>}
-                                {company.website && <p>{company.website}</p>}
+                            <div className="text-right text-2xl -mt-6 space-y-1">
+                                <p>{profile.email}</p>
+                                {/* <p>{company.phone1}</p> */}
+                                {profile.phone && <p>{profile.phone}</p>}
+                                {profile.website && <p>{profile.website}</p>}
                             </div>
                         </div>
                     </div>
@@ -428,17 +430,17 @@ const handleShare = async () => {
 
                                 {/* Company Info */}
                                 <div className="flex flex-col justify-center flex-grow min-w-[0]">
-                                    <h2 className="text-[10px] sm:text-base lg:text-lg font-semibold leading-tight whitespace-normal">{company.companyName}</h2>
-                                    <p className="text-[8px] sm:text-xs lg:text-sm leading-tight">GST: {company.gst}</p>
-                                    <p className="text-[8px] sm:text-xs lg:text-sm leading-tight">{company.regAddress}</p>
+                                    <h2 className="text-[10px] sm:text-base lg:text-3xl font-semibold leading-tight whitespace-normal">{profile.name}</h2>
+                                    {/* <p className="text-[8px] sm:text-xs lg:text-sm leading-tight">GST: {company.gst}</p>*/}
+                                     <p className="text-[8px] sm:text-xs lg:text-xl leading-tight">{profile.profession}</p> 
                                 </div>
 
                                 {/* Contact Info */}
-                                <div className="flex flex-col items-end text-[8px] sm:text-xs lg:text-sm leading-tight flex-shrink-0">
-                                    {company.contactEmail && <p className="truncate max-w-[150px] sm:max-w-none">{company.contactEmail}</p>}
-                                    {company.phone1 && <p>{company.phone1}</p>}
-                                    {company.phone2 && <p>{company.phone2}</p>}
-                                    {company.website && <p className="truncate max-w-[150px] sm:max-w-none">{company.website}</p>}
+                                <div className="flex flex-col items-end text-[8px] sm:text-xs lg:text-xl leading-tight flex-shrink-0">
+                                    {profile.email && <p className="truncate max-w-[150px] sm:max-w-none">{profile.email}</p>}
+                                    {profile.phone && <p>{profile.phone}</p>}
+                                    {/* {company.phone2 && <p>{company.phone2}</p>} */}
+                                    {profile.website && <p className="truncate max-w-[150px] sm:max-w-none">{profile.website}</p>}
                                 </div>
                             </div>
 
