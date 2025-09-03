@@ -38,7 +38,6 @@
         "@types/react-dom": "^18.3.0",
         "apexcharts": "^4.3.0",
         "axios": "^1.7.9",
-        "capacitor-plugin-safe-area": "^4.0.0",
         "date-fns": "^4.1.0",
         "dayjs": "^1.11.13",
         "eslint": "8.57.0",

@@ -8,8 +8,6 @@ import { getTranslation } from '@/i18n';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationsProvider } from '@mantine/notifications';
 import { MantineProvider } from '@mantine/core';
-import { SafeArea } from 'capacitor-plugin-safe-area';
-import { log } from 'util';
 
 function App({ children }: PropsWithChildren) {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
@@ -31,21 +29,6 @@ function App({ children }: PropsWithChildren) {
 
         setIsLoading(false);
     }, [dispatch, initLocale, themeConfig.theme, themeConfig.menu, themeConfig.layout, themeConfig.rtlClass, themeConfig.animation, themeConfig.navbar, themeConfig.locale, themeConfig.semidark]);
-
-    useEffect(() => {
-    (async () => {
-      // Get safe area insets
-      const { insets } = await SafeArea.getSafeAreaInsets();
-      // Apply insets as CSS custom properties
-      for (const [key, value] of Object.entries(insets)) {
-        document.documentElement.style.setProperty(
-          `--safe-area-inset-${key}`,
-          `${value}px`
-        );
-      }
-      console.log('Safe area insets applied:', insets);
-    })();
-  }, []);
 
     return (
         <NotificationsProvider>
