@@ -20,7 +20,7 @@ const DefaultLayout = ({ children }) => {
     if (loading) return; // Wait until loading is false
 
     if (!user) {
-      router.push("/login");
+      router.push("/register");
     } else if (user.role !== "admin") {
       router.push("/user-dashboard");
     } else {

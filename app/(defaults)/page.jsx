@@ -13,13 +13,13 @@ export default function Home() {
     if (loading) return;                           // still checking session
 
     if (!user) {
-      router.replace('/login');
+      router.replace('/register');
     } else if (user.role === 'admin') {
       router.replace('/dashboard');
     } else if (user.role === 'salesperson' || user.role === 'manager') {
       router.replace('/user-dashboard');
     } else {
-      router.replace('/login');                    // fallback
+      router.replace('/register');                    // fallback
     }
   }, [loading, user, router]);
 

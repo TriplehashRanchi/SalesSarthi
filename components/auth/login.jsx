@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';   // ← added useSearchParams
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
   sendPasswordResetEmail,
+  getAdditionalUserInfo,
 } from 'firebase/auth';
+import { signInWithGoogle, /* optional: */ completeWebRedirectIfAny } from '@/utils/auth';
 import { showNotification } from '@mantine/notifications';
 import { auth, googleProvider } from '@/utils/firebase';
 import { useAuth } from '@/context/AuthContext';
@@ -35,6 +36,16 @@ export default function ComponentsAuthLoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
   const [isLoading, setLoading] = useState(false);
+
+
+    // --- 1. NEW: Add state and logic to detect if the device is mobile ---
+  const [isMobile, setIsMobile] = useState(false);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobile(mobileCheck);
+  }, []);
 
   /* 1️⃣  Show success banner if redirected from checkout */
   useEffect(() => {
@@ -67,6 +78,31 @@ export default function ComponentsAuthLoginForm() {
     }
   }, [user, router]);
 
+
+  // --- 2. NEW: Copy the helper functions from the register form ---
+  const registerAdmin = async (firebase_uid, name, email, phone) => {
+    const response = await fetch(`${API_URL}/api/admin/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firebase_uid, name, email, phone }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to register on our server.');
+    }
+  };
+
+  const startFreeTrial = async (firebase_uid) => {
+    const response = await fetch(`${API_URL}/api/trial/start-trial`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firebase_uid }),
+    });
+    if (!response.ok) {
+      throw new Error('Could not start your free trial.');
+    }
+  };
+
   /* handlers unchanged … */
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -88,16 +124,65 @@ export default function ComponentsAuthLoginForm() {
     }
   };
 
+  // --- 3. THE FIX: Replace the old handleGoogleLogin with this smarter version ---
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch {
-      setError('Failed to sign in with Google. Please try again.');
+      const result = await signInWithGoogle();
+      if (!result) {
+        // Redirect is in progress.
+        return;
+      }
+
+      const additionalInfo = getAdditionalUserInfo(result);
+      const firebaseUser = result.user;
+
+      // Check if the user is brand new
+      if (additionalInfo?.isNewUser) {
+        console.log('New user detected via login page, creating account...');
+
+        // Create the user in your database
+        await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
+
+        // If they are on mobile, also start their free trial
+        if (isMobile) {
+          await startFreeTrial(firebaseUser.uid);
+          showNotification({
+            title: 'Account Created & Trial Started!',
+            message: 'Your 7-day trial is active. Welcome!',
+            color: 'blue',
+          });
+        } else {
+          // If on desktop, just create the account. They will be in a 'pending' state.
+           showNotification({
+            title: 'Account Created!',
+            message: 'Please complete the payment to activate your account.',
+            color: 'green',
+          });
+          // Redirect them to the payment page to complete signup
+          router.push(`/payment?uid=${firebaseUser.uid}`);
+          return; // Exit here to prevent loading spinner issues
+        }
+        // For mobile users, the AuthProvider's useEffect will now see the new user and redirect them.
+      } else {
+        // Existing user: Treat as a normal login.
+        console.log('Existing user signed in.');
+        showNotification({
+          title: 'Welcome Back!',
+          message: 'You have been successfully signed in.',
+          color: 'green',
+        });
+        // The AuthProvider's useEffect will handle the redirect.
+      }
+    } catch (e) {
+      if (e.code !== 'auth/popup-closed-by-user') {
+        setError(e?.message || 'Failed to sign in with Google. Please try again.');
+      }
+    } finally {
       setLoading(false);
     }
-  };
+  };    
 
   const handleForgotPassword = async () => {
     if (!email) {

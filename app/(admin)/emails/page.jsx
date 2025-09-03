@@ -12,7 +12,7 @@ import { set } from 'lodash';
 import { ActionIcon, Checkbox, Divider, Group, MultiSelect, Paper, ScrollArea, Stack, Text } from '@mantine/core';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URI || 'http://localhost:8000';
+const API_BASE_URL = 'https://api.digitalgyanisaarthi.com' || 'http://localhost:8000';
 
 export default function EmailCampaignDashboard() {
   const [adminId, setAdminId] = useState(null);

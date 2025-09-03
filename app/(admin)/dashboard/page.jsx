@@ -14,6 +14,8 @@ import IconUsersGroup from '@/components/icon/icon-users-group';
 import IconSquareCheck from '@/components/icon/icon-square-check';
 import IconTrendingUp from '@/components/icon/icon-trending-up';
 import IconChecks from '@/components/icon/icon-checks';
+import SubscriptionBanner from '@/components/SubscriptionBanner';
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -93,6 +95,57 @@ const ReportingDashboard = () => {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+      const [fetchError, setFetchError] = useState('');
+  const [admin, setAdmin] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+
+
+   useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setFetchError('');
+
+        const currentUser = getAuth().currentUser;
+        if (!currentUser) {
+          setFetchError('You are not signed in.');
+          setLoading(false);
+          return;
+        }
+
+        const token = await currentUser.getIdToken();
+
+        // 1) Admin profile (includes subscription fields)
+        const { data: adminRes } = await axios.get(`${API_URL}/api/admin/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!alive) return;
+
+        setAdmin(adminRes || null);
+
+        // Normalize subscription object for the banner
+        setSubscription({
+          plan: adminRes?.subscription_plan || 'Basic',
+          status: adminRes?.subscription_status || 'Active',
+          expires_at: adminRes?.expires_at || '',
+        });
+
+        // (Optional) Anything else you want to load for the dashboard:
+        // const { data: widgets } = await axios.get(`${API_URL}/api/admin/widgets`, { headers: { Authorization: `Bearer ${token}` }});
+
+      } catch (err) {
+        console.error(err);
+        if (alive) setFetchError('Failed to load your dashboard. Please try again.');
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => { alive = false; };
+  }, []);
 
     // --- Chart Configurations (Keep existing chart options) ---
     const sourceChartOptions = {
@@ -500,6 +553,9 @@ const ReportingDashboard = () => {
                 {/* Repeat for other KPIs with same pattern */}
                 {/* Conversions, Conversion Rate, Total Sales Value, Appointment Success Rate */}
             </div>
+
+
+              {subscription && <SubscriptionBanner subscription={subscription} />}
 
             {/* **** RENDER CHILD ONLY WHEN DATA IS FETCHED **** */}
             {!loading && !error && fetchedRawData && (

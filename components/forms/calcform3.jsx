@@ -727,7 +727,7 @@ const FinancialHealthCalculator = () => {
                             value={formData.financialDoctorName}
                             onChange={handleInputChange}
                             className="form-input w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50"
-                            readOnly
+                            
                         />
                     </div>
 
@@ -857,7 +857,7 @@ const FinancialHealthCalculator = () => {
                             onChange={handleInputChange}
                             className="form-input w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             min="0"
-                        />
+                        />  
                     </div>
                     <div>
                         <label htmlFor="monthlyExpenses" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">

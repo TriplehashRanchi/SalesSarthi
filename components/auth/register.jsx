@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, googleProvider } from '@/utils/firebase';
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, } from '@/utils/firebase';
+import { 
+    createUserWithEmailAndPassword,
+    getAdditionalUserInfo           // ← Import this helper
+} from 'firebase/auth';
+import { signInWithGoogle } from '@/utils/auth'; 
 import { useAuth } from '@/context/AuthContext';
+import { showNotification } from '@mantine/notifications';
 
 // Add a simple loader icon component
 const IconLoader = () => (
@@ -23,6 +28,8 @@ const ComponentsAuthRegisterForm = () => {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    // --- NEW: Add state to track if the device is mobile ---
+    const [isMobile, setIsMobile] = useState(false);
 
     // --- NEW: Add a loading state ---
     const [isLoading, setIsLoading] = useState(false);
@@ -31,12 +38,19 @@ const ComponentsAuthRegisterForm = () => {
 
     // ✅ Redirect logic remains the same.
     useEffect(() => {
-        // if (user?.role === 'admin') {
-        //     router.push('/dashboard');
-        // } else if (user?.role === 'user') {
-        //     router.push('/user-dashboard');
-        // }
+        if (user?.role === 'admin') {
+            router.push('/dashboard');
+        } else if (user?.role === 'user') {
+            router.push('/user-dashboard');
+        }
     }, [user, router]);
+
+    // --- NEW: Add a useEffect to detect the device type on component mount ---
+    useEffect(() => {
+        // This check runs only on the client side
+        const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        setIsMobile(mobileCheck);
+    }, []);
 
     // Helper to register the user on your backend
     const registerAdmin = async (firebase_uid, name, email, phone) => {
@@ -54,6 +68,18 @@ const ComponentsAuthRegisterForm = () => {
         // Success! The useEffect will handle the redirect.
     };
 
+    const startFreeTrial = async (firebase_uid) => {
+        const response = await fetch(`${API_URL}/api/trial/start-trial`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firebase_uid }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Could not start your free trial.');
+        }
+    };
+
     const handleRegister = async (e) => {
         e.preventDefault();
         setError('');
@@ -65,8 +91,14 @@ const ComponentsAuthRegisterForm = () => {
 
             // This will throw an error if it fails, which will be caught below
             await registerAdmin(firebase_uid, name, email, phone);
-            router.push(`/payment?uid=${firebase_uid}`);
-
+            if (isMobile) {
+                // On mobile, start trial and redirect to login
+                await startFreeTrial(firebase_uid);
+                router.push('/login?trial=started');
+            } else {
+                // On desktop, go to the payment page
+                router.push(`/payment?uid=${firebase_uid}`);
+            }
 
             // The redirect will happen via useEffect, so we don't need to do anything here.
             // We don't even need to set isLoading(false) on success, because the page will navigate away.
@@ -81,29 +113,53 @@ const ComponentsAuthRegisterForm = () => {
         }
     };
 
+    // Replace the existing handleGoogleSignIn function with this improved version:
+
+    // ✅ FIX 2: Refine the Google Sign-In handler for a smoother UX.
     const handleGoogleSignIn = async () => {
         setError('');
-        setIsLoading(true); // --- 1. Start loading ---
+        setIsLoading(true);
 
         try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const firebase_uid = result.user.uid;
-            const userEmail = result.user.email;
-            const userName = result.user.displayName;
-
-            // This will throw an error if it fails
-            await registerAdmin(firebase_uid, userName, userEmail, '');
-            router.push(`/payment?uid=${firebase_uid}`);
-
-
-        } catch (err) {
-             // Handle common Firebase errors
-            if (err.code === 'auth/account-exists-with-different-credential') {
-                 setError('An account already exists with this email address. Please sign in with the original method.');
-            } else {
-                 setError(err.message);
+            const result = await signInWithGoogle();
+            if (!result) {
+                // Redirect is in progress, component will unmount.
+                return;
             }
-            setIsLoading(false); // --- 3. Stop loading on error ---
+
+            const additionalInfo = getAdditionalUserInfo(result);
+            const firebaseUser = result.user;
+
+            if (additionalInfo?.isNewUser) {
+                console.log('New user detected, proceeding with registration...');
+                await registerAdmin(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, '');
+
+                if (isMobile) {
+                    await startFreeTrial(firebaseUser.uid);
+                    router.push('/login?trial=started');
+                } else {
+                    router.push(`/payment?uid=${firebaseUser.uid}`);
+                }
+                // On success, the page navigates away, so we don't need to stop the loader.
+            } else {
+                // Existing user: Treat as a login.
+                console.log('Existing user signed in. Redirecting...');
+                showNotification({
+                    title: 'Welcome Back!',
+                    message: 'You have been successfully signed in.',
+                    color: 'green',
+                });
+                // Do NOT stop loading here. Let the loader spin until the
+                // useEffect above triggers the redirect. This prevents a UI flash.
+            }
+        } catch (err) {
+            if (err.code === 'auth/account-exists-with-different-credential') {
+                setError('An account already exists with this email address. Please sign in with the original method.');
+            } else if (err.code !== 'auth/popup-closed-by-user') {
+                setError(err.message);
+            }
+            // Only stop the loader if there's an error.
+            setIsLoading(false);
         }
     };
 
@@ -140,7 +196,7 @@ const ComponentsAuthRegisterForm = () => {
                     'Sign Up'
                 )}
             </button>
-            
+
             {/* --- MODIFIED: Google Button with Loading State --- */}
             <div className="relative my-4 h-5 text-center before:absolute before:inset-0 before:m-auto before:h-[1px] before:w-full before:bg-gray-300 dark:before:bg-gray-600">
                 <span className="relative z-[1] inline-block bg-white px-2 dark:bg-gray-800">OR</span>

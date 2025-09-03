@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { auth } from '@/utils/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { getRedirectResult, onAuthStateChanged } from 'firebase/auth';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail, logout, getFirebaseToken } from '@/utils/auth';
 import { useRouter } from 'next/navigation';
 
@@ -44,6 +44,11 @@ export const AuthProvider = ({ children }) => {
         return res.json();
     };
 
+    useEffect(() => {
+  if (typeof window === 'undefined') return;
+  getRedirectResult(auth).catch(() => {});
+}, []);
+
     // Listen to Firebase Auth Changes
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -54,7 +59,7 @@ export const AuthProvider = ({ children }) => {
                     await logout();
                     return;
                 }
-                if (role.status !== 'active') {
+                if (role.status !== 'active' && role.status !== 'pending') {
                     console.warn(`⛔ Access blocked: ${role.status}`);
                     alert(`Your access is currently ${role.status}. Please contact support.`);
                     await logout();
