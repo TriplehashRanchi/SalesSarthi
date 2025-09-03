@@ -16,8 +16,8 @@ export default function SafeArea({
   fallback?: { top:number; bottom:number; left:number; right:number };
 }) {
   const style: React.CSSProperties = {
-    paddingTop:    edges.includes('top')    ? `max(env(safe-area-inset-top,0px), ${fallback.top}px)`       : undefined,
-    paddingBottom: edges.includes('bottom') ? `max(env(safe-area-inset-bottom,0px), ${fallback.bottom}px)` : undefined,
+    paddingTop:    edges.includes('top')    ? `var(--safe-area-inset-top, 0px)`       : undefined,
+    paddingBottom: edges.includes('bottom') ? `var(--safe-area-inset-bottom, 0px)` : undefined,
     paddingLeft:   edges.includes('left')   ? `max(env(safe-area-inset-left,0px), ${fallback.left}px)`     : undefined,
     paddingRight:  edges.includes('right')  ? `max(env(safe-area-inset-right,0px), ${fallback.right}px)`   : undefined,
   };
