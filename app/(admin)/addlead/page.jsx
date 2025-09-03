@@ -20,7 +20,7 @@ const ParentComponent = () => {
 
       {/* LeadForm Component */}
       <LeadForm existingLead={null} />
-      <a href="https://sarthiapi.vercel.app/auth/facebook">Sign in with Facebook</a>
+      {/* <a href="https://sarthiapi.vercel.app/auth/facebook">Sign in with Facebook</a> */}
 
 
 

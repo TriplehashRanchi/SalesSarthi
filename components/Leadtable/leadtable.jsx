@@ -849,7 +849,7 @@ function formatDateWithOrdinal(dateString) {
             icon={<IconCalculator size={14} />}
             onClick={() => {
                 const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email, doctor : profile.name  }).toString();
-                router.push(`/calc?${qs}`);
+                router.push(`/fincalc?${qs}`);
             }}
         >
             <Text size="xs">Health Check-up</Text>

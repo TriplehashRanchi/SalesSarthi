@@ -927,7 +927,198 @@ const FinancialHealthCalculator = () => {
             {/* Checklist Table Section */}
             <div className="form-container p-6 md:p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700">
                 <h3 className="text-xl font-semibold mb-5 text-gray-800 dark:text-gray-300">Financial Checklist & Scores</h3>
-                <div className="overflow-x-auto">
+
+                 {/* Mobile View - Cards (Hidden on Medium screens and up) */}
+    <div className="md:hidden">
+        <div className="space-y-4">
+            {formData.checklist.map((row, index) => {
+                const isNumericInput = ['standard', 'inverse', 'cibil'].includes(row.type);
+                const isYesNoInput = row.type === 'yesno';
+                const isInvestmentInput = row.type === 'investment';
+
+                // Format Target for display
+                let displayTarget = row.target;
+                if (typeof row.target === 'number') {
+                    displayTarget = `₹ ${row.target.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+                } else if (row.item === 'CIBIL Score') {
+                    displayTarget = '750+';
+                }
+
+                // Format Gap for display
+                let displayGap = 'N/A';
+                if (typeof row.target === 'number' && typeof row.currentStatus === 'number' && !isNaN(row.target) && !isNaN(row.currentStatus)) {
+                    const gapValue = row.target - row.currentStatus;
+                    const relevantGap = row.type === 'inverse' || row.type === 'cibil' ? Math.max(0, gapValue) : gapValue;
+                    displayGap = `₹ ${relevantGap.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+                    if (relevantGap < 0 && row.type !== 'inverse') displayGap = `- ₹ ${Math.abs(relevantGap).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+                    if (row.item === 'CIBIL Score') displayGap = `${Math.max(0, 750 - row.currentStatus)}`;
+                }
+
+                return (
+                    <div key={index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                        <div className="flex justify-between items-start">
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-base mb-2">{row.item}</h4>
+                            <span
+                                className={`text-lg font-bold px-2 py-0.5 rounded ${
+                                    row.score === 5
+                                        ? 'bg-green-100 text-green-800'
+                                        : row.score === 4
+                                          ? 'bg-lime-100 text-lime-800'
+                                          : row.score === 3
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : row.score === 2
+                                              ? 'bg-orange-100 text-orange-800'
+                                              : 'bg-red-100 text-red-800'
+                                }`}
+                            >
+                                {row.score}
+                            </span>
+                        </div>
+                        
+                        {!isInvestmentInput && (
+                             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Formula: {row.formula || '-'}</p>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            {/* Target */}
+                            <div className="bg-white dark:bg-gray-700 p-2 rounded">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Target</p>
+                                <p className="font-medium text-gray-900 dark:text-gray-100">{displayTarget}</p>
+                            </div>
+
+                            {/* Gap */}
+                            <div className="bg-white dark:bg-gray-700 p-2 rounded">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Gap</p>
+                                <p className="font-medium text-gray-900 dark:text-gray-100">{displayGap}</p>
+                            </div>
+                        </div>
+
+                        {/* Current Status / Input Section */}
+                        <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Status / Input</label>
+                            {isInvestmentInput ? (
+                                                                                 <Popover width={300} position="bottom" withArrow shadow="md">
+                                                    <Popover.Target>
+                                                        <Button size="xs" variant="light" color="indigo" className="text-xs">
+                                                            Manage Investments
+                                                        </Button>
+                                                    </Popover.Target>
+                                                    <Popover.Dropdown>
+                                                        <ScrollArea h={250}>
+                                                            <div className="flex flex-col gap-4">
+                                                                {/* Risky Investments */}
+                                                                <div>
+                                                                    <h3 className="text-sm font-semibold text-red-500 mb-1">Risky Investments</h3>
+                                                                    <div className="flex flex-col gap-2">
+                                                                        {riskyKeys.map(
+                                                                            (key) =>
+                                                                                row.options.hasOwnProperty(key) && (
+                                                                                    <Checkbox
+                                                                                        key={key}
+                                                                                        label={investmentDisplayNames[key]}
+                                                                                        checked={row.options[key]}
+                                                                                        onChange={(e) => handleInvestmentDiversificationChange(key, e.target.checked)}
+                                                                                        size="xs"
+                                                                                        radius="sm"
+                                                                                    />
+                                                                                ),
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Safe Investments */}
+                                                                <div>
+                                                                    <h3 className="text-sm  font-semibold text-green-600 mb-1">Safe Investments</h3>
+                                                                    <div className="flex flex-col gap-2">
+                                                                        {safeKeys.map(
+                                                                            (key) =>
+                                                                                row.options.hasOwnProperty(key) && (
+                                                                                    <Checkbox
+                                                                                        key={key}
+                                                                                        label={investmentDisplayNames[key]}
+                                                                                        checked={row.options[key]}
+                                                                                        onChange={(e) => handleInvestmentDiversificationChange(key, e.target.checked)}
+                                                                                        size="xs"
+                                                                                        className="text-start"
+                                                                                        radius="sm"
+                                                                                    />
+                                                                                ),
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </ScrollArea>
+
+                                                        <div className="mt-4 space-y-2 p-1">
+                                                            {' '}
+                                                            {/* Added space-y-2 and p-1 */}
+                                                            <div>
+                                                                <div className="flex justify-between text-xs mb-1">
+                                                                    <span className="font-medium text-gray-700 dark:text-gray-300"> Risk Allocation:</span>
+                                                                    <span className="font-semibold text-red-600 dark:text-red-400">{row.currentStatus.risk.toFixed(0)}%</span>
+                                                                </div>
+                                                                <Progress
+                                                                    value={row.currentStatus.risk}
+                                                                    color="red"
+                                                                    size="lg" // was 20
+                                                                    radius="xl"
+                                                                    striped
+                                                                    animate
+                                                                    // tooltip={`Actual Risk: ${row.currentStatus.risk.toFixed(0)}%`}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex justify-between text-xs mb-1">
+                                                                    <span className="font-medium text-gray-700 dark:text-gray-300"> Safe Allocation:</span>
+                                                                    <span className="font-semibold text-teal-600 dark:text-teal-400">{row.currentStatus.guaranteed.toFixed(0)}%</span>
+                                                                </div>
+                                                                <Progress
+                                                                    value={row.currentStatus.guaranteed}
+                                                                    color="teal" // Changed from green for better contrast with Mantine's default green
+                                                                    size="lg"
+                                                                    radius="xl"
+                                                                    striped
+                                                                    animate
+                                                                    // tooltip={`Actual Safe: ${row.currentStatus.guaranteed.toFixed(0)}%`}
+                                                                />
+                                                            </div>
+                                                            {/* Optional: Display Target Allocation for reference */}
+                                                            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                                                <Text size="xs" color="dimmed" align="center">
+                                                                    Target (based on age): {row.target} {/* row.target is already like "Balanced: (Risk: X%, Safe: Y%)" */}
+                                                                </Text>
+                                                            </div>
+                                                        </div>
+                                                    </Popover.Dropdown>
+                                                </Popover>
+                            ) : isNumericInput ? (
+                                <NumberInput
+                                    value={row.currentStatus === 0 ? '' : row.currentStatus}
+                                    onChange={(val) => handleChecklistNumericChange(index, val ?? 0)}
+                                    placeholder="Enter Value"
+                                    size="sm"
+                                    hideControls
+                                />
+                            ) : isYesNoInput ? (
+                                <select
+                                    value={row.currentStatus}
+                                    onChange={(e) => handleYesNoChange(index, e.target.value)}
+                                    className="form-select w-full border-gray-300 rounded-md shadow-sm"
+                                >
+                                    <option value="">Select</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                </select>
+                            ) : (
+                                <span>{row.currentStatus}</span>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    </div>
+                <div className="hidden md:block overflow-x-auto">
                     <table className="table-auto w-full border-collapse border border-gray-300 text-sm">
                         <thead className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 uppercase">
                             <tr>
