@@ -8,7 +8,6 @@ import { getTranslation } from '@/i18n';
 import { AuthProvider } from '@/context/AuthContext';
 import { NotificationsProvider } from '@mantine/notifications';
 import { MantineProvider } from '@mantine/core';
-import Head from 'next/head';
 
 function App({ children }: PropsWithChildren) {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
@@ -33,12 +32,6 @@ function App({ children }: PropsWithChildren) {
 
     return (
         <NotificationsProvider>
-            <Head>
-                <meta
-                name="viewport"
-                content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
-                />
-            </Head>
             <MantineProvider
   theme={{ colorScheme: themeConfig.theme === 'dark' ? 'dark' : 'light' }}
 >
