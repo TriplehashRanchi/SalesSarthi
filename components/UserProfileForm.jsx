@@ -459,6 +459,10 @@ const AccountSettingsTabs = () => {
                             <a href="tel:+919266683106" className="underline">
                                 9266683106
                             </a>
+                            ,{' '}
+                            <a href="tel:+919266683103" className="underline">
+                                9266683103
+                            </a>
                         </p>
                     </div>
 
