@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { Button, TextInput, Select, Textarea, Group, Box, Title, Alert, ScrollArea, Grid } from '@mantine/core';
 import { getAuth } from 'firebase/auth';
 
-const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel }) => {
+const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, initialDate }) => {
   const [stages, setStages] = useState([]);
   const [followUpDate, setFollowUpDate] = useState('');
   const [status, setStatus] = useState('');
@@ -35,21 +35,32 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel }) 
   // Populate form fields if editing an existing follow-up
   useEffect(() => {
     if (existingFollowUp) {
-      const utcDate = new Date(existingFollowUp.follow_up_date);
-      const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
-      setFollowUpDate(localDate.toISOString().slice(0, 16));
-      setStatus(existingFollowUp.status);
-      setPurpose(existingFollowUp.purpose);
-      setNotes(existingFollowUp.notes || '');
-      setIsUpdating(true);
+      if (existingFollowUp && existingFollowUp.id) {
+            const utcDate = new Date(existingFollowUp.follow_up_date);
+            const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+            setFollowUpDate(localDate.toISOString().slice(0, 16));
+            setStatus(existingFollowUp.status);
+            setPurpose(existingFollowUp.purpose);
+            setNotes(existingFollowUp.notes || '');
+            setIsUpdating(true);
+        }
     } else {
       setFollowUpDate('');
       setStatus('');
       setPurpose('');
       setNotes('');
       setIsUpdating(false);
-    }
-  }, [existingFollowUp]);
+
+      if (initialDate) {
+                const date = new Date(initialDate);
+                // Adjust for timezone to display correctly in the input
+                const adjustedDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                setFollowUpDate(adjustedDate.toISOString().slice(0, 16));
+            } else {
+                setFollowUpDate('');
+            }
+        }
+    }, [existingFollowUp, initialDate]); 
 
 
   const handleSubmit = async (e) => {
