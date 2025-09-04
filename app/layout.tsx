@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
             </Head>
             <body
-                className={`${nunito.variable} ${righteous.variable} mt-10 md:mt-0`}
+                className={`${nunito.variable} ${righteous.variable}`}
             >
                   <SafeArea edges={['top','bottom']} className="min-h-screen flex flex-col">
                 <ProviderComponent>{children}</ProviderComponent>
