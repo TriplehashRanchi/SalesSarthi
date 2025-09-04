@@ -14,7 +14,13 @@ const config: CapacitorConfig = {
       style: 'DARK',            // or 'LIGHT' depending on your header color
       backgroundColor: '#0B1220'// match your app header color
     }
+  },
+  
+   android: {
+    resolveServiceWorkerRequests: true,
+    adjustMarginsForEdgeToEdge: 'auto'
   }
+
   // bundledWebRuntime: false
 };
 

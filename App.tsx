@@ -16,6 +16,20 @@ function App({ children }: PropsWithChildren) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+  const handler = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      // Optional: alert("Press back again to exit");
+    }
+  };
+
+  window.addEventListener("androidBackButton", handler);
+  return () => window.removeEventListener("androidBackButton", handler);
+}, []);
+
+
+    useEffect(() => {
         dispatch(toggleTheme(localStorage.getItem('theme') || themeConfig.theme));
         dispatch(toggleMenu(localStorage.getItem('menu') || themeConfig.menu));
         dispatch(toggleLayout(localStorage.getItem('layout') || themeConfig.layout));

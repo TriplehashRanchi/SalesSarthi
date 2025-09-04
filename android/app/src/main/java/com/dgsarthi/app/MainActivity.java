@@ -1,14 +1,10 @@
 package com.dgsarthi.app;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.activity.OnBackPressedCallback;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.Plugin;
@@ -25,18 +21,24 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Your existing edge-to-edge insets code
+        // ✅ Force Android to place webview inside safe area (status bar + nav bar)
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+        // ✅ Handle Android back button
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (getBridge() != null && getBridge().getWebView() != null) {
+                    // Send event to WebView
+                    getBridge().getWebView().evaluateJavascript(
+                        "window.dispatchEvent(new Event('androidBackButton'));",
+                        null
+                    );
+                } else {
+                    finish(); // fallback
+                }
+            }
+        });
 
-        final View webview = findViewById(R.id.webview);   // <- from activity_main.xml
-        if (webview != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(webview, (v, insets) -> {
-                Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(bars.left, bars.top, bars.right, bars.bottom);  // <- SafeArea applied
-                return WindowInsetsCompat.CONSUMED;
-            });
-            ViewCompat.requestApplyInsets(webview);
-        }
     }
 
     // 👇 forward the Google login result back to the plugin
