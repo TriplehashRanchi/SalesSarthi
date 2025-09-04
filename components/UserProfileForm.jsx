@@ -446,7 +446,7 @@ const AccountSettingsTabs = () => {
                         <p>
                             Visit{' '}
                             <a href="https://app.digitalgyanisaarthi.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">
-                                app.digitalgyanisarthi.com
+                                app.digitalgyanisaarthi.com
                             </a>{' '}
                             to manage your subscription.
                         </p>
