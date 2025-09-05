@@ -500,7 +500,7 @@ function formatDateWithOrdinal(dateString) {
 
           {/* top controls */}
           <div className="mb-5 hidden md:flex flex-col gap-5 md:flex-row md:items-center">
-              <h5 className="text-lg font-semibold dark:text-white-light">Lead Management</h5>
+              {/* <h5 className="text-lg font-semibold dark:text-white-light">Lead Management</h5> */}
 
               {/* search + filter */}
               <div className="ltr:ml-auto rtl:mr-auto flex flex-col sm:flex-row gap-4">
@@ -528,11 +528,11 @@ function formatDateWithOrdinal(dateString) {
               </div>
 
               {/* facebook + csv buttons */}
-              <button className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50" onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
+              {/* <button className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50" onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
                   <span className="flex gap-2 items-center">
                       <IconFacebook /> Import from Facebook
                   </span>
-              </button>
+              </button> */}
 
               <button onClick={() => setCsvOpen(true)} className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">
                   CSV Bulk Upload

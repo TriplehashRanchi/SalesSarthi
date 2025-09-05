@@ -59,12 +59,18 @@ export const AuthProvider = ({ children }) => {
                     await logout();
                     return;
                 }
-                if (role.status !== 'active' && role.status !== 'pending') {
-                    console.warn(`⛔ Access blocked: ${role.status}`);
+               // --- THIS IS THE CORRECTED LOGIC ---
+                // Define which statuses are allowed to log in.
+                const ALLOWED_STATUSES = ['active', 'pending', 'expired'];
+
+                // If the user's status is NOT in the allowed list, block them.
+                if (!ALLOWED_STATUSES.includes(role.status)) {
+                    console.warn(`⛔ Access blocked for status: ${role.status}`);
                     alert(`Your access is currently ${role.status}. Please contact support.`);
                     await logout();
-                    return;
+                    return; // Stop execution here
                 }
+                
                 // ✅ Do NOT logout if status is pending or expired
                 setUser({
                     ...firebaseUser,

@@ -92,7 +92,7 @@ export default function UserPerformance() {
                 </button>
 
                 <div className="flex flex-col items-center">
-                <img className="w-20 h-20 rounded-full overflow-hidden object-cover" src="/assets/images/profile-16.jpeg" alt="img" />  
+                {/* <img className="w-20 h-20 rounded-full overflow-hidden object-cover" src="/assets/images/image.png" alt="img" />   */}
                     <h1 className="text-xl font-bold">{currentUser.username}</h1>
                     <p className="text-gray-500">{currentUser.email}</p>
                 </div>
@@ -107,7 +107,7 @@ export default function UserPerformance() {
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-5 gap-4 p-6">
+            {/* <div className="grid grid-cols-5 gap-4 p-6">
                 {['hot', 'cold', 'converted', 'contacted', 'all'].map((type) => (
                     <div
                         key={type}
@@ -119,7 +119,7 @@ export default function UserPerformance() {
                         {type.toUpperCase()}
                     </div>
                 ))}
-            </div>
+            </div> */}
 
             {/* Leads Table */}
             <LeadTable userId={userId} />

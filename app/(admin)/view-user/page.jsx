@@ -16,7 +16,7 @@ export default function ViewUsers() {
   return (
     <div className="min-h-screen">
       {/* Page Title */}
-      <h1 className="text-3xl font-bold mb-6"> Team Members</h1>
+      {/* <h1 className="text-3xl font-bold mb-6"> Team Members</h1> */}
 
       {/* User List Table */} 
       <UserList users={users.filter(user => (filter ? user.role === filter : true))} />
