@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'com.dgsarthi.app',
@@ -13,12 +14,16 @@ const config: CapacitorConfig = {
       overlays: false,          // webview starts below status bar
       style: 'DARK',            // or 'LIGHT' depending on your header color
       backgroundColor: '#0B1220'// match your app header color
-    }
+    },
+    Keyboard: {
+      resize: KeyboardResize.Body,
+      resizeOnFullScreen: true,
+    },
+
   },
-  
    android: {
     resolveServiceWorkerRequests: true,
-    adjustMarginsForEdgeToEdge: 'auto'
+    adjustMarginsForEdgeToEdge: 'force'
   }
 
   // bundledWebRuntime: false
