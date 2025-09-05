@@ -105,180 +105,122 @@ const ProfessionalBannerMaker = () => {
     }, []);
 
 
-    const handleShare = async () => {
-  try {
-    const blob = await getBannerBlob();
-    if (!blob) return;
+    // --- FIX #1: Added missing helper functions ---
 
-    if (Capacitor.isNativePlatform()) {
-      // 1) Convert to base64 (strip the data URL header)
-      const dataUrl = await blobToBase64(blob);               // "data:image/png;base64,...."
-      const base64 = dataUrl.split(',')[1];
+    // Helper function to get the banner as a blob
+    const getBannerBlob = async () => {
+        if (!exportRef.current) return null;
+        const exportDiv = exportRef.current;
+        const originalStyle = {
+            opacity: exportDiv.style.opacity,
+            transform: exportDiv.style.transform,
+            position: exportDiv.style.position,
+            top: exportDiv.style.top,
+            left: exportDiv.style.left,
+            zIndex: exportDiv.style.zIndex,
+        };
+        exportDiv.style.opacity = '1';
+        exportDiv.style.transform = 'scale(1)';
+        exportDiv.style.position = 'fixed';
+        exportDiv.style.top = '-2000px';
+        exportDiv.style.left = '0';
+        exportDiv.style.zIndex = '9999';
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // 2) Write to Cache (Android’s share allows Cache by default)
-      const fileName = `banner-${Date.now()}.png`;
-      await Filesystem.writeFile({
-        path: fileName,
-        data: base64,
-        directory: Directory.Cache,
-      });
+        const canvas = await html2canvas(exportDiv, {
+            scale: 2, useCORS: true, backgroundColor: '#ffffff',
+            width: 1080, height: 1080, scrollX: 0, scrollY: 0,
+        });
 
-      // 3) Get a shareable URI (content:// on Android, file:// on iOS)
-      const { uri } = await Filesystem.getUri({
-        directory: Directory.Cache,
-        path: fileName,
-      });
+        Object.assign(exportDiv.style, originalStyle);
 
-      // 4) Share the file (files[] is supported on iOS/Android)
-      await Share.share({
-        text: 'Created using DG Sarthi Banner Maker',
-        files: [uri],                 // ← real attachment
-        dialogTitle: 'Share your banner', // Android only
-      });
+        return new Promise((resolve) => {
+            canvas.toBlob(resolve, 'image/png');
+        });
+    };
 
-      // Optional: clean up
-      // await Filesystem.deleteFile({ path: fileName, directory: Directory.Cache });
-      return;
-    }
-
-    // Web fallback (Web Share Level 2)
-    if (navigator.share) {
-      const file = new File([blob], 'banner.png', { type: 'image/png' });
-      await navigator.share({
-        title: 'Share your banner',
-        text: 'Created using DG Sarthi Banner Maker',
-        files: [file],
-      });
-      return;
-    }
-
-    alert('Sharing is not supported on this device/browser.');
-  } catch (error) {
-    console.error('Share failed:', error);
-    if (error?.name !== 'AbortError') alert('An error occurred while trying to share.');
-  }
-};
+    // Helper to convert a blob to a base64 string
+    const blobToBase64 = (blob) =>
+        new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onloadend = () => resolve(String(r.result));
+            r.onerror = reject;
+            r.readAsDataURL(blob);
+        });
 
 
+    // --- FIX #2: Replaced with the correct cross-platform function ---
     const handleExport = async () => {
-        if (!exportRef.current) return;
         try {
-            // Temporarily make the export div visible for capturing
-            const exportDiv = exportRef.current;
-            const originalStyle = {
-                opacity: exportDiv.style.opacity,
-                transform: exportDiv.style.transform,
-                position: exportDiv.style.position,
-                top: exportDiv.style.top,
-                left: exportDiv.style.left,
-                zIndex: exportDiv.style.zIndex,
-            };
+            const blob = await getBannerBlob();
+            if (!blob) return;
 
-            // Make it visible and properly positioned
-            exportDiv.style.opacity = '1';
-            exportDiv.style.transform = 'scale(1)';
-            exportDiv.style.position = 'fixed';
-            exportDiv.style.top = '-2000px'; // Move it off-screen but visible
-            exportDiv.style.left = '0';
-            exportDiv.style.zIndex = '9999';
-
-            // Wait a bit for styles to apply
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            const canvas = await html2canvas(exportDiv, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                width: 1080,
-                height: 1080,
-                scrollX: 0,
-                scrollY: 0,
-            });
-
-            // Restore original styles
-            exportDiv.style.opacity = originalStyle.opacity;
-            exportDiv.style.transform = originalStyle.transform;
-            exportDiv.style.position = originalStyle.position;
-            exportDiv.style.top = originalStyle.top;
-            exportDiv.style.left = originalStyle.left;
-            exportDiv.style.zIndex = originalStyle.zIndex;
-
-            canvas.toBlob((blob) => {
+            if (Capacitor.isNativePlatform()) {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = async () => {
+                    const base64data = reader.result;
+                    try {
+                        await Filesystem.writeFile({
+                            path: `banner-${Date.now()}.png`,
+                            data: base64data,
+                            directory: Directory.Documents,
+                        });
+                        alert('Banner saved to your Documents folder!');
+                    } catch (e) {
+                        console.error('Unable to save file', e);
+                        alert('Error: Could not save banner.');
+                    }
+                };
+            } else {
+                // Web browser functionality
                 const url = URL.createObjectURL(blob);
-                setExportBlobUrl(url);
-
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = 'professional-banner.png';
                 link.click();
-            }, 'image/png');
+                URL.revokeObjectURL(url);
+            }
         } catch (error) {
             console.error('Export failed:', error);
+            alert('An error occurred during export.');
         }
     };
 
-    const handleMobileShare = async () => {
-        if (!exportRef.current || !navigator.share) {
-            alert('Sharing not supported on this browser.');
-            return;
-        }
-
+    // --- FIX #3: This function is correct, but now its helpers exist ---
+    const handleShare = async () => {
         try {
-            // Temporarily make the export div visible for capturing
-            const exportDiv = exportRef.current;
-            const originalStyle = {
-                opacity: exportDiv.style.opacity,
-                transform: exportDiv.style.transform,
-                position: exportDiv.style.position,
-                top: exportDiv.style.top,
-                left: exportDiv.style.left,
-                zIndex: exportDiv.style.zIndex,
-            };
+            const blob = await getBannerBlob();
+            if (!blob) return;
 
-            // Make it visible and properly positioned
-            exportDiv.style.opacity = '1';
-            exportDiv.style.transform = 'scale(1)';
-            exportDiv.style.position = 'fixed';
-            exportDiv.style.top = '-2000px'; // Move it off-screen but visible
-            exportDiv.style.left = '0';
-            exportDiv.style.zIndex = '9999';
+            if (Capacitor.isNativePlatform()) {
+                const dataUrl = await blobToBase64(blob);
+                const base64 = dataUrl.split(',')[1];
+                const fileName = `banner-${Date.now()}.png`;
+                await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache });
+                const { uri } = await Filesystem.getUri({ directory: Directory.Cache, path: fileName });
+                await Share.share({
+                    text: 'Created using DG Sarthi Banner Maker',
+                    files: [uri],
+                    dialogTitle: 'Share your banner',
+                });
+                return;
+            }
 
-            // Wait a bit for styles to apply
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            const canvas = await html2canvas(exportDiv, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                width: 1080,
-                height: 1080,
-                scrollX: 0,
-                scrollY: 0,
-            });
-
-            // Restore original styles
-            exportDiv.style.opacity = originalStyle.opacity;
-            exportDiv.style.transform = originalStyle.transform;
-            exportDiv.style.position = originalStyle.position;
-            exportDiv.style.top = originalStyle.top;
-            exportDiv.style.left = originalStyle.left;
-            exportDiv.style.zIndex = originalStyle.zIndex;
-
-            canvas.toBlob(async (blob) => {
+            if (navigator.share) {
                 const file = new File([blob], 'banner.png', { type: 'image/png' });
+                await navigator.share({
+                    title: 'Share your banner',
+                    text: 'Created using DG Sarthi Banner Maker',
+                    files: [file],
+                });
+                return;
+            }
 
-                try {
-                    await navigator.share({
-                        title: 'Check out this banner',
-                        text: 'Created using DG Sarthi Banner Maker',
-                        files: [file],
-                    });
-                } catch (err) {
-                    console.error('Share failed:', err);
-                }
-            }, 'image/png');
+            alert('Sharing is not supported on this device/browser.');
         } catch (error) {
             console.error('Share failed:', error);
+            if (error?.name !== 'AbortError') alert('An error occurred while trying to share.');
         }
     };
 
