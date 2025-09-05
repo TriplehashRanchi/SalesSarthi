@@ -315,17 +315,23 @@ export default function FollowupsCalendar() {
                 ) : (
                     <Box>
                         <Select
-                            label="Select a Lead"
-                            placeholder="Choose which lead this follow-up is for"
-                            data={allLeads}
-                            value={selectedLeadForNewFollowup}
-                            onChange={setSelectedLeadForNewFollowup}
-                            searchable
-                            required
-                            mb="md"
-                        />
+            label="Select a Lead"
+            placeholder="Choose which lead this follow-up is for"
+            data={allLeads}
+            value={selectedLeadForNewFollowup}
+            onChange={setSelectedLeadForNewFollowup}
+            searchable
+            required
+            mb="md"
+        />
                         {selectedLeadForNewFollowup && (
-                            <FollowupForm leadId={selectedLeadForNewFollowup} existingFollowUp={{ follow_up_date: selectedDate }} onFollowupChange={handleFormSuccess} onCancel={handleModalClose} />
+                            <FollowupForm
+                leadId={selectedLeadForNewFollowup}
+                existingFollowUp={null} // Pass null because we are NOT editing
+                initialDate={selectedDate} // Pass the selected date via the new prop
+                onFollowupChange={handleFormSuccess}
+                onCancel={handleModalClose}
+            />
                         )}
                     </Box>
                 )}

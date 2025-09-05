@@ -824,7 +824,7 @@ function formatDateWithOrdinal(dateString) {
           >
               {selectedLead ? (
                   // THE LAYOUT CONTAINER: Fills the entire screen height
-                  <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding:'2rem 0' }}>
                       {/* PART 1: THE FIXED HEADER */}
                       <Group
                           position="apart"
@@ -840,6 +840,27 @@ function formatDateWithOrdinal(dateString) {
                               <IconX size={18} />
                           </ActionIcon>
                       </Group>
+
+                                            {/* PART 3: THE FIXED FORM AT THE BOTTOM */}
+                      <div
+                          className="mb-8"
+                          style={{
+                              padding: 'var(--mantine-spacing-md)',
+                              borderTop: '1px solid var(--mantine-color-gray-2)',
+                              backgroundColor: 'var(--mantine-color-body)',
+                              flexShrink: 0, // Prevent shrinking
+                          }}
+                      >
+                          <FollowupForm
+                              leadId={selectedLead.id}
+                              existingFollowUp={existingFollowUp}
+                              onFollowupChange={() => {
+                                  fetchFollowupHistory(selectedLead.id);
+                                  setExisting(null);
+                              }}
+                              onCancel={() => setExisting(null)}
+                          />
+                      </div>
 
                       {/* PART 2: THE SCROLLABLE TIMELINE */}
                       {/* `flex: 1` allows this area to grow and shrink, consuming all available space */}
@@ -900,26 +921,7 @@ function formatDateWithOrdinal(dateString) {
                           )}
                       </ScrollArea>
 
-                      {/* PART 3: THE FIXED FORM AT THE BOTTOM */}
-                      <div
-                          className="mb-8"
-                          style={{
-                              padding: 'var(--mantine-spacing-md)',
-                              borderTop: '1px solid var(--mantine-color-gray-2)',
-                              backgroundColor: 'var(--mantine-color-body)',
-                              flexShrink: 0, // Prevent shrinking
-                          }}
-                      >
-                          <FollowupForm
-                              leadId={selectedLead.id}
-                              existingFollowUp={existingFollowUp}
-                              onFollowupChange={() => {
-                                  fetchFollowupHistory(selectedLead.id);
-                                  setExisting(null);
-                              }}
-                              onCancel={() => setExisting(null)}
-                          />
-                      </div>
+
                   </div>
               ) : null}
           </Drawer>

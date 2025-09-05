@@ -19,7 +19,7 @@ export default function MobileBottomNav() {
   const navItems = [
     { icon: <IconMenu className="w-6 h-6" />, label: 'Menu', action: () => dispatch(toggleSidebar()) },
     { icon: <IconMenuDashboard className="w-6 h-6" />, label: 'Home', path: '/dashboard' },
-    { icon: <IconHistory className="w-6 h-6" />, label: 'History', path: '/followups' },
+    { icon: <IconHistory className="w-6 h-6" />, label: 'Followup', path: '/followups' },
     { icon: <IconUser className="w-6 h-6" />, label: 'Profile', path: '/profile' },
     { icon: <IconUsers className="w-6 h-6" />, label: 'Leads', path: '/leadtable' },
    

@@ -54,7 +54,7 @@ const AppointmentEditDrawer = ({ appointment, opened, onClose, onUpdate }) => {
     };
 
     return (
-        <Drawer opened={opened} onClose={onClose} title="Edit Appointment" size="md">
+        <Drawer opened={opened} onClose={onClose} title="Edit Appointment" size="md" padding="md">
             {appointment ? (
                 <div className="flex flex-col gap-4 p-5">
                     <TextInput

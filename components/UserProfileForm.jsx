@@ -88,6 +88,7 @@ const AccountSettingsTabs = () => {
                     country: admin.country || '',
                     address: admin.address || '',
                     avatar: admin.avatar_url || null,
+                    website: admin.website || '',
                 });
                 if (admin.avatar_url) setAvatarPreview(admin.avatar_url);
 
