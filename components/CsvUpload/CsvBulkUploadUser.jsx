@@ -3,9 +3,9 @@
 /**
  * CsvBulkUploadUser.jsx
  *
- * Bulk‑import leads from a simple CSV. This component is enhanced with
- * Capacitor's FilePicker for a native file selection experience on mobile,
- * while using the standard web input for browsers.
+ * Bulk‑import leads from a simple CSV. This component provides a sample CSV
+ * download that uses Capacitor's Filesystem for a native save experience on
+ * mobile, while using a standard web file input for uploads on all platforms.
  *
  * REQUIRED CSV HEADERS
  * --------------------
@@ -23,34 +23,39 @@ import {
   Group,
   Badge,
   LoadingOverlay,
-  Box, // Used for the custom file input button
+  Anchor, // Added for the download link
 } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import Papa from 'papaparse';
 import { getAuth } from 'firebase/auth';
 import axios from 'axios';
-import { IconUpload, IconAlertTriangle, IconCheck } from '@tabler/icons-react';
+import { IconUpload, IconAlertTriangle, IconCheck, IconDownload } from '@tabler/icons-react'; // Added IconDownload
 
 // --- CAPACITOR IMPORTS ---
 import { Capacitor } from '@capacitor/core';
-import { Filesystem, Encoding } from '@capacitor/filesystem';
-import { FilePicker } from '@capawesome/capacitor-file-picker';
-
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 
 // Minimum columns we expect – everything else is optional
 const REQUIRED_HEADERS = ['full_name', 'email', 'phone_number', 'lead_status'];
 
+// Sample headers for the downloadable template, including optional fields
+const SAMPLE_SHEET_HEADERS = [
+  'full_name',
+  'email',
+  'phone_number',
+  'lead_status',
+  'address',
+  'notes',
+];
+
 const CsvBulkUploadUser = ({ opened, onClose, onSuccess }) => {
-  // `file` state can hold a web File object or a native file descriptor { name: string }
   const [file, setFile] = useState(null);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const isNative = Capacitor.isNativePlatform();
-
-  /* ---------- CSV Parsing (now accepts raw string data) ---------- */
-  const processCsvData = useCallback((csvString) => {
-    Papa.parse(csvString, {
+  /* ---------- parse ---------- */
+  const parseCsv = useCallback((f) => {
+    Papa.parse(f, {
       header: true,
       skipEmptyLines: true,
       complete: ({ data, errors, meta }) => {
@@ -68,45 +73,49 @@ const CsvBulkUploadUser = ({ opened, onClose, onSuccess }) => {
     });
   }, []);
 
-  /* ------ File Handling for Web (`<FileInput>`) ------ */
-  const handleWebFile = (selectedFile) => {
-    setFile(selectedFile);
+  const handleFile = (f) => {
+    setFile(f);
     setRows([]);
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onload = (e) => processCsvData(e.target.result);
-      reader.readAsText(selectedFile);
-    }
+    if (f) parseCsv(f);
   };
 
-  /* ------ File Handling for Native (Capacitor FilePicker) ------ */
-  const handleNativeFilePick = async () => {
-    try {
-      const result = await FilePicker.pickFiles({
-        types: ['text/csv', 'text/comma-separated-values', 'application/csv'],
-      });
+  /* ---------- download sample CSV (with Capacitor support) ---------- */
+  const generateSampleCsvContent = () => {
+    const exampleRows = [
+      { full_name: "Alex Ray", email: "alex.ray@example.com", phone_number: "9876543211", lead_status: "New", address: "789 Pine Rd, Metroville", notes: "Interested in service B." },
+      { full_name: "Bethany Shaw", email: "beth.shaw@example.com", phone_number: "9123456780", lead_status: "Contacted", address: "101 Maple Ln, Suburbia", notes: "Wants a callback on Friday." },
+    ];
+    return Papa.unparse(exampleRows, { columns: SAMPLE_SHEET_HEADERS });
+  };
 
-      const pickedFile = result.files[0];
-      if (!pickedFile) return; // User cancelled the picker
+  const handleDownloadSample = async () => {
+    const csvContent = generateSampleCsvContent();
+    const fileName = 'sample_user_leads_import.csv';
 
-      setFile({ name: pickedFile.name }); // Store file name for display
-      setRows([]);
-
-      const contents = await Filesystem.readFile({
-        path: pickedFile.path,
-        encoding: Encoding.UTF8,
-      });
-
-      processCsvData(contents.data);
-
-    } catch (err) {
-      console.error("Native file pick/read error:", err);
-      showNotification({
-        title: 'File Error',
-        message: err.message || 'Could not open or read the selected file.',
-        color: 'red',
-        icon: <IconAlertTriangle size={16} />,
-      });
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Filesystem.writeFile({
+          path: fileName,
+          data: csvContent,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+        });
+        showNotification({ title: 'File saved', message: `Sample CSV saved to Documents.`, color: 'green', icon: <IconCheck size={16} /> });
+      } catch (err) {
+        console.error("Capacitor Filesystem error:", err);
+        showNotification({ title: 'Save failed', message: 'Could not save the sample CSV.', color: 'red', icon: <IconAlertTriangle size={16} /> });
+      }
+    } else {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -156,31 +165,28 @@ const CsvBulkUploadUser = ({ opened, onClose, onSuccess }) => {
     <Modal opened={opened} onClose={onClose} title="Bulk CSV Upload" size="lg" centered>
       <LoadingOverlay visible={loading} overlayBlur={2} />
 
-      <Text size="sm" weight={500}>Required columns:</Text>
-      <Text size="xs" color="dimmed" mb="md">{REQUIRED_HEADERS.join(', ')}</Text>
+      <Group position="apart" mb="sm" align="flex-start">
+        <div>
+          <Text size="sm" weight={500}>Required columns:</Text>
+          <Text size="xs" color="dimmed" mb="xs">{REQUIRED_HEADERS.join(', ')}</Text>
+        </div>
+        <Anchor component="button" type="button" onClick={handleDownloadSample} size="sm" mt="xs">
+          <Group spacing="xs" noWrap>
+            <IconDownload size={14} />
+            Download Sample
+          </Group>
+        </Anchor>
+      </Group>
 
-      {/* --- CONDITIONAL FILE INPUT UI --- */}
-      <Box mb="md">
-        {isNative ? (
-           <Button
-            fullWidth
-            variant="default"
-            onClick={handleNativeFilePick}
-            leftIcon={<IconUpload size={16} />}
-          >
-            {file?.name || 'Select CSV file'}
-          </Button>
-        ) : (
-          <FileInput
-            label="Select CSV file"
-            placeholder="Choose .csv"
-            accept=".csv,text/csv,application/vnd.ms-excel"
-            icon={<IconUpload size={16} />}
-            value={file}
-            onChange={handleWebFile}
-          />
-        )}
-      </Box>
+      <FileInput
+        label="Select CSV file"
+        placeholder="Choose .csv"
+        accept=".csv,text/csv,application/vnd.ms-excel"
+        icon={<IconUpload size={16} />}
+        value={file}
+        onChange={handleFile}
+        mb="md"
+      />
 
       {rows.length > 0 && (
         <>
@@ -213,7 +219,7 @@ const CsvBulkUploadUser = ({ opened, onClose, onSuccess }) => {
         </>
       )}
 
-      <Group position="right">
+      <Group position="right" mt="md">
         <Button variant="default" onClick={onClose} disabled={loading}>
           Cancel
         </Button>
