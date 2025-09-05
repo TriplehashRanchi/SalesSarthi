@@ -34,7 +34,7 @@ import { IconUpload, IconAlertTriangle, IconCheck } from '@tabler/icons-react';
 // --- CAPACITOR IMPORTS ---
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Encoding } from '@capacitor/filesystem';
-import { FilePicker } from '@capacitor/file-picker';
+import { FilePicker } from '@capawesome/capacitor-file-picker';
 
 
 // Minimum columns we expect – everything else is optional
