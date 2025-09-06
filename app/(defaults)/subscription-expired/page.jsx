@@ -95,7 +95,7 @@ export default function SubscriptionExpired() {
                 </p>
                 <p className="mt-2 pt-2 border-t">
                   For assistance, call us at:{' '}
-                  <a href="tel:+919266683105" className="underline">9266683105</a>
+                  <a href="tel:+917011979448" className="underline">7011979448 </a>
                 </p>
               </div>
             </div>
