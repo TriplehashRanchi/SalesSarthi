@@ -237,6 +237,32 @@ export default function FollowupsCalendar() {
                                         }
                                     }
                                 }}
+                                                                viewDidMount={() => {
+                                    // This function runs every time the view changes (e.g., month, week, list)
+                                    // We'll use it to adjust the font size based on the window width
+                                    const adjustTitleFontSize = () => {
+                                        const titleEl = document.querySelector('.fc-toolbar-title');
+                                        if (titleEl) {
+                                            if (window.innerWidth < 640) { // Same breakpoint as your toolbar buttons
+                                                titleEl.style.fontSize = '0.8rem'; // Smaller font size for mobile
+                                            } else {
+                                                titleEl.style.fontSize = '1.75rem'; // Default font size for larger screens
+                                            }
+                                        }
+                                    };
+
+                                    // Adjust on initial mount
+                                    adjustTitleFontSize();
+
+                                    // Also adjust if the window is resized
+                                    window.addEventListener('resize', adjustTitleFontSize);
+
+                                    // Cleanup the event listener when the component unmounts
+                                    return () => {
+                                        window.removeEventListener('resize', adjustTitleFontSize);
+                                    };
+                                }}
+                        
                             />
                         )}
                     </Paper>
