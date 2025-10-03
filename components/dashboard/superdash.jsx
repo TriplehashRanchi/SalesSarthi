@@ -40,6 +40,8 @@ const Superdash = () => {
     { title: 'Total Follow-ups', count: stats.totals.followups, bg: 'from-red-500 to-red-400' },
     { title: 'Total Renewal Reminders', count: stats.totals.renewals, bg: 'from-orange-500 to-orange-400' },
     { title: 'Total health Checkups', count: stats.totals.logs, bg: 'from-amber-500 to-amber-400' },
+    { title: 'Daily Active Users (DAU)', count: stats.dau, bg: 'from-indigo-500 to-indigo-400' },
+    { title: 'Monthly Active Users (MAU)', count: stats.mau, bg: 'from-pink-500 to-pink-400' },
   ];
 
   const weeklyLeadChart = {
@@ -61,6 +63,30 @@ const Superdash = () => {
       title: { text: 'Leads per Admin', align: 'center' },
       plotOptions: { bar: { distributed: true } },
       dataLabels: { enabled: true },
+    },
+  };
+
+  // 📊 DAU Trend (line chart, last 30 days)
+  const dauTrendChart = {
+    series: [{ name: 'DAU', data: stats.dauTrend.map((d) => d.dau) }],
+    options: {
+      chart: { type: 'line', height: 300 },
+      xaxis: { categories: stats.dauTrend.map((d) => d.date) },
+      title: { text: 'Daily Active Users (last 30 days)', align: 'center' },
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth' },
+    },
+  };
+
+  // 📊 MAU Trend (line chart, last 6 months)
+  const mauTrendChart = {
+    series: [{ name: 'MAU', data: stats.mauTrend.map((m) => m.mau) }],
+    options: {
+      chart: { type: 'line', height: 300 },
+      xaxis: { categories: stats.mauTrend.map((m) => m.month) },
+      title: { text: 'Monthly Active Users (last 6 months)', align: 'center' },
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth' },
     },
   };
 
@@ -108,6 +134,16 @@ const Superdash = () => {
           </div>
           <div className="panel p-4 bg-white dark:bg-gray-800">
             <ReactApexChart options={adminLeadChart.options} series={adminLeadChart.series} type="bar" height={300} />
+          </div>
+
+          {/* DAU Trend */}
+          <div className="panel p-4 bg-white dark:bg-gray-800">
+            <ReactApexChart options={dauTrendChart.options} series={dauTrendChart.series} type="line" height={300} />
+          </div>
+
+          {/* MAU Trend */}
+          <div className="panel p-4 bg-white dark:bg-gray-800">
+            <ReactApexChart options={mauTrendChart.options} series={mauTrendChart.series} type="line" height={300} />
           </div>
         </div>
       </div>
