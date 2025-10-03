@@ -46,13 +46,13 @@ const TransactionsPage = () => {
             txns.forEach((txn) => {
                 if (txn.status === 'Success') {
                     success++;
-                    total += txn.amount / 100;
+                    total += txn.amount;
                 }
             });
             txns.forEach((txn) => {
               if(txn.status === 'Failed') {
                 fail++;
-                total += txn.amount / 100;
+                total += txn.amount;
               }
             });
 
