@@ -39,21 +39,19 @@ const TransactionsPage = () => {
             setTransactions(txns);
             setPage(1); // ✅ Reset to first page on filter
 
-            // 🔢 Calculate totals
+          // inside fetchTransactions
             let total = 0;
             let success = 0;
             let fail = 0;
+
             txns.forEach((txn) => {
-                if (txn.status === 'Success') {
-                    success++;
-                    total += txn.amount;
-                }
-            });
-            txns.forEach((txn) => {
-              if(txn.status === 'Failed') {
+            const amt = parseFloat(txn.amount) || 0;
+            if (txn.status === 'Success') {
+                success++;
+                total += amt;
+            } else if (txn.status === 'Failed') {
                 fail++;
-                total += txn.amount;
-              }
+            }
             });
 
             setTotalEarnings(total);
@@ -75,7 +73,7 @@ const TransactionsPage = () => {
             <div className="flex flex-wrap gap-4">
                 <div className="w-[300px] bg-white dark:bg-gray-800 rounded shadow-md p-6">
                     <h4 className="text-sm text-gray-500 dark:text-gray-400 mb-2">Total Earnings</h4>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">₹{totalEarnings.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">₹{totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div className="w-[300px] bg-white dark:bg-gray-800 rounded shadow-md p-6">
                     <h4 className="text-sm text-gray-500 dark:text-gray-400 mb-2">No. of Successful Orders</h4>
@@ -131,10 +129,11 @@ const TransactionsPage = () => {
                     { accessor: 'gateway_txn_id', title: 'Gateway Txn' },
                     { accessor: 'admin_name', title: 'Admin' },
                     { accessor: 'email', title: 'Email' },
-                    {
-                        accessor: 'amount',
-                        title: 'Amount (₹)',
-                        render: ({ amount }) => `₹${(amount / 100).toFixed(2)}`,
+                   {
+                      accessor: 'amount',
+                      title: 'Amount (₹)',
+                      render: ({ amount }) =>
+                        `₹${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
                     },
                     { accessor: 'currency', title: 'Currency' },
                     {
