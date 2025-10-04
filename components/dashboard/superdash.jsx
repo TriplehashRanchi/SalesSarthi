@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Dropdown from '@/components/dropdown';
 import IconHorizontalDots from '@/components/icon/icon-horizontal-dots';
 import IconEye from '@/components/icon/icon-eye';
+import dayjs from "dayjs"; // install if not already
 
 const Superdash = () => {
   const [stats, setStats] = useState(null);
@@ -44,16 +45,32 @@ const Superdash = () => {
     { title: 'Monthly Active Users (MAU)', count: stats.mau, bg: 'from-pink-500 to-pink-400' },
   ];
 
-  const weeklyLeadChart = {
-    series: [{ name: 'Leads', data: stats.weeklyLeads.map((item) => item.count) }],
-    options: {
-      chart: { type: 'line', height: 300 },
-      xaxis: { categories: stats.weeklyLeads.map((item) => item.date) },
-      title: { text: 'Weekly Leads', align: 'center' },
-      dataLabels: { enabled: false },
-      stroke: { curve: 'smooth' },
+const weeklyLeadChart = {
+  series: [
+    { name: "Leads", data: stats.weeklyLeads.map((item) => item.count) },
+  ],
+  options: {
+    chart: { type: "line", height: 300 },
+    xaxis: {
+      categories: stats.weeklyLeads.map((item) =>
+        dayjs(item.date).format("DD MMM") // 👈 clean date labels
+      ),
+      labels: {
+        rotate: -45, // prevent overlap
+        style: { fontSize: "12px" },
+      },
     },
-  };
+    title: { text: "Weekly Leads", align: "center" },
+    dataLabels: { enabled: false },
+    stroke: { curve: "smooth" },
+    tooltip: {
+      x: {
+        format: "dd MMM yyyy", // 👈 full date on hover
+      },
+    },
+  },
+};
+
 
 const adminLeadsSorted = [...stats.adminLeads].sort((a, b) => b.total - a.total);
 
