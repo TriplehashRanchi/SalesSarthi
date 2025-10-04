@@ -22,7 +22,7 @@ const DailyEarningsChart = () => {
       // Filter for successful transactions and date range
       const filteredTxns = transactions.filter(txn => {
         if (txn.status !== 'Success') return false;
-        const txnDate = new Date(txn.txn_date);
+        const txnDate = new Date(txn.txn_date.replace(" ", "T")); // normalize
         if (fromDate && txnDate < fromDate) return false;
         if (toDate && txnDate > toDate) return false;
         return true;
@@ -33,14 +33,17 @@ const DailyEarningsChart = () => {
       let total = 0;
 
       filteredTxns.forEach(txn => {
-        const date = new Date(txn.txn_date);
+        const date = new Date(txn.txn_date.replace(" ", "T"));
         const day = date.toISOString().split('T')[0]; // 'YYYY-MM-DD'
         if (!dailyTotals[day]) dailyTotals[day] = 0;
-        const amount = txn.amount / 100;
+
+        // Ensure numeric value
+        const amount = parseFloat(txn.amount) || 0;
         dailyTotals[day] += amount;
         total += amount;
       });
 
+      // Convert to chart data
       const chartData = Object.entries(dailyTotals).map(([date, earnings]) => ({
         date,
         earnings: parseFloat(earnings.toFixed(2)),

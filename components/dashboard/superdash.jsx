@@ -55,16 +55,37 @@ const Superdash = () => {
     },
   };
 
-  const adminLeadChart = {
-    series: [{ name: 'Leads', data: stats.adminLeads.map((item) => item.total) }],
-    options: {
-      chart: { type: 'bar', height: 300 },
-      xaxis: { categories: stats.adminLeads.map((item) => item.admin) },
-      title: { text: 'Leads per Admin', align: 'center' },
-      plotOptions: { bar: { distributed: true } },
-      dataLabels: { enabled: true },
-    },
-  };
+const adminLeadsSorted = [...stats.adminLeads].sort((a, b) => b.total - a.total);
+
+// Top 10 + Others bucket
+const topAdmins = adminLeadsSorted.slice(0, 10);
+if (adminLeadsSorted.length > 10) {
+  const othersTotal = adminLeadsSorted.slice(10).reduce((sum, a) => sum + a.total, 0);
+  topAdmins.push({ admin: "Others", total: othersTotal });
+}
+
+// 📊 Top 10 Leaderboard (Bar chart)
+const adminLeadChart = {
+  series: [{ name: 'Leads', data: topAdmins.map((item) => item.total) }],
+  options: {
+    chart: { type: 'bar', height: 350 },
+    xaxis: { categories: topAdmins.map((item) => item.admin) },
+    title: { text: 'Top 10 Admins by Leads', align: 'center' },
+    plotOptions: { bar: { distributed: true, horizontal: false } },
+    dataLabels: { enabled: true },
+  },
+};
+
+// 📊 Optional: Pie Chart (Share of leads)
+const adminLeadPieChart = {
+  series: topAdmins.map((item) => item.total),
+  options: {
+    chart: { type: 'pie', height: 350 },
+    labels: topAdmins.map((item) => item.admin),
+    title: { text: 'Lead Share by Admin', align: 'center' },
+    legend: { position: 'bottom' },
+  },
+};
 
   // 📊 DAU Trend (line chart, last 30 days)
   const dauTrendChart = {
@@ -133,9 +154,8 @@ const Superdash = () => {
             <ReactApexChart options={weeklyLeadChart.options} series={weeklyLeadChart.series} type="line" height={300} />
           </div>
           <div className="panel p-4 bg-white dark:bg-gray-800">
-            <ReactApexChart options={adminLeadChart.options} series={adminLeadChart.series} type="bar" height={300} />
+            <ReactApexChart options={adminLeadChart.options} series={adminLeadChart.series} type="bar" height={350} />
           </div>
-
           {/* DAU Trend */}
           <div className="panel p-4 bg-white dark:bg-gray-800">
             <ReactApexChart options={dauTrendChart.options} series={dauTrendChart.series} type="line" height={300} />
