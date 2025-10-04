@@ -449,110 +449,115 @@ const ReportingDashboard = () => {
                 </Alert>
             )}
 
-            {/* --- KPI Cards --- */}
-            <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
-                {/* Leads */}
-                <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 p-4 rounded-lg shadow-md text-white">
-                    <div className="flex p-5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-primary dark:text-white-light">
-                            <IconUsersGroup className="h-5 w-5" />
-                        </div>
-                        <div className="font-semibold ltr:ml-3 rtl:mr-3">
-                            <p className="text-2xl text-blue-100 dark:text-white-light">{dashboardData.totalLeads}</p>
-                            <h5 className="text-xs  text-white">Total Leads</h5>
-                        </div>
-                    </div>
-                </div>
-                {/* Conversions */}
-                <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 p-4 rounded-lg shadow-md text-white">
-                    <div className="flex p-5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30  text-white dark:bg-success dark:text-white-light">
-                            <IconSquareCheck className="h-5 w-5" />
-                        </div>
-                        <div className="font-semibold ltr:ml-3 rtl:mr-3">
-                            <p className="text-2xl text-green-100 dark:text-white-light">{dashboardData.customerConversions}</p>
-                            <h5 className="text-xs text-white">Conversions</h5>
-                        </div>
-                    </div>
-                </div>
-                {/* Conversion Rate */}
-                <div className="panel bg-gradient-to-r from-teal-500 to-teal-400 dark:from-teal-700 dark:to-teal-600 p-4 rounded-lg shadow-md text-white">
-                    <div className="flex p-5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-warning dark:text-white-light">
-                            <IconTrendingUp className="h-5 w-5" />
-                        </div>
-                        <div className="font-semibold ltr:ml-3 rtl:mr-3">
-                            <p className="text-2xl text-teal-100 dark:text-white-light">{dashboardData.leadConversionRate}%</p>
-                            <h5 className="text-xs text-white">Conversion Rate</h5>
-                        </div>
-                    </div>
-                </div>
-                {/* NEW: Total Sales Value */}
-                <div className="bg-gradient-to-r from-indigo-500 to-indigo-400 dark:from-indigo-700 dark:to-indigo-600 p-4 rounded-lg shadow-md text-white">
-                    <div className="flex p-5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-warning dark:text-white-light">
-                            <IconCoinRupee className="h-5 w-5" />
-                        </div>
-                        <div className="font-semibold ltr:ml-3 rtl:mr-3">
-                            <p className="text-2xl text-indigo-100 dark:text-white-light">{formatCurrency(dashboardData.totalSalesValue)}</p>
-                            <h5 className="text-xs text-white">Total Sales Value</h5>
-                        </div>
-                    </div>
-                </div>
-                {/* Appointment Success Rate */}
-                <div className="bg-gradient-to-r from-cyan-500 to-cyan-400 p-4 rounded-lg shadow-md text-white">
-                    <h3 className="text-md font-semibold opacity-90">Appt. Success Rate</h3>
-                    <p className="text-3xl font-bold">{dashboardData.appointmentSuccessRate}%</p>
-                    <p className="text-xs opacity-80">(Completed / (Comp+Missed))</p>
-                </div>
-            </div>
+           {/* --- KPI Cards (Desktop) --- */}
+<div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
+  {/* Total Leads */}
+  <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+        <IconUsersGroup className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-blue-100">{dashboardData.totalLeads}</p>
+        <p className="text-xs opacity-90">Total Leads</p>
+      </div>
+    </div>
+  </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6 md:hidden">
-                {/* Leads */}
-                <div className="bg-gradient-to-r px-2 from-blue-500 to-blue-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
-                        <IconUsersGroup className="h-4 w-4" />
-                    </div>
-                    <div className="text-sm">
-                        <p className="font-bold">
-                            {dashboardData.totalLeads} <span className="text-[11px] opacity-90">Leads</span>
-                        </p>
-                    </div>
-                </div>
-                <div className="bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
-                        <IconChecks className="h-4 w-4" />
-                    </div>
-                    <div className="text-sm">
-                        <p className="font-bold">
-                            {dashboardData.customerConversions} <span className="text-[11px] opacity-90">Conversions</span>
-                        </p>
-                    </div>
-                </div>
-                <div className="bg-gradient-to-r px-2 from-lime-500 to-lime-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
-                        <IconCoinRupee className="h-4 w-4" />
-                    </div>
-                    <div className="text-sm">
-                        <p className="font-bold">
-                            {formatCurrency(dashboardData.totalSalesValue)} <span className="text-[11px] opacity-90">Sales </span>
-                        </p>
-                    </div>
-                </div>
-                <div className="bg-gradient-to-r px-2 from-fuchsia-500 to-fuchsia-400 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md">
-                        <IconUsersGroup className="h-4 w-4" />
-                    </div>
-                    <div className="text-sm">
-                        <p className="font-bold">
-                            {dashboardData.leadConversionRate}% <span className="text-[11px] opacity-90">ROC</span>
-                        </p>
-                    </div>
-                </div>
+  {/* Conversions */}
+  <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+        <IconSquareCheck className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-violet-100">{dashboardData.customerConversions}</p>
+        <p className="text-xs opacity-90">Conversions</p>
+      </div>
+    </div>
+  </div>
 
-                {/* Repeat for other KPIs with same pattern */}
-                {/* Conversions, Conversion Rate, Total Sales Value, Appointment Success Rate */}
-            </div>
+  {/* Conversion Rate */}
+  <div className="panel bg-gradient-to-r from-teal-500 to-teal-400 dark:from-teal-700 dark:to-teal-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+        <IconTrendingUp className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-teal-100">{dashboardData.leadConversionRate}%</p>
+        <p className="text-xs opacity-90">Conversion Rate</p>
+      </div>
+    </div>
+  </div>
+
+  {/* Total Sales Value */}
+  <div className="panel bg-gradient-to-r from-indigo-500 to-indigo-400 dark:from-indigo-700 dark:to-indigo-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+        <IconCoinRupee className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-xl md:text-2xl font-bold text-indigo-100 truncate">
+          {formatCurrency(dashboardData.totalSalesValue)}
+        </p>
+        <p className="text-xs opacity-90">Total Sales Value</p>
+      </div>
+    </div>
+  </div>
+
+  {/* Appointment Success Rate */}
+  <div className="panel bg-gradient-to-r from-cyan-500 to-cyan-400 p-4 rounded-lg shadow-md text-white flex flex-col justify-center items-start h-[120px]">
+    <h3 className="text-sm font-semibold opacity-90 break-words leading-snug">
+      Appt. Success Rate
+    </h3>
+    <p className="text-2xl md:text-3xl font-bold">{dashboardData.appointmentSuccessRate}%</p>
+    <p className="text-[10px] sm:text-xs opacity-80 leading-tight">(Completed / (Comp+Missed))</p>
+  </div>
+</div>
+
+{/* --- KPI Cards (Mobile) --- */}
+<div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6 md:hidden">
+  {/* Leads */}
+  <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+    <IconUsersGroup className="h-4 w-4 shrink-0" />
+    <p className="text-sm font-bold">
+      {dashboardData.totalLeads} <span className="text-[11px] opacity-90">Leads</span>
+    </p>
+  </div>
+
+  {/* Conversions */}
+  <div className="bg-gradient-to-r from-violet-500 to-violet-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+    <IconChecks className="h-4 w-4 shrink-0" />
+    <p className="text-sm font-bold">
+      {dashboardData.customerConversions} <span className="text-[11px] opacity-90">Conv.</span>
+    </p>
+  </div>
+
+  {/* Sales */}
+  <div className="bg-gradient-to-r from-lime-500 to-lime-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+    <IconCoinRupee className="h-4 w-4 shrink-0" />
+    <p className="text-sm font-bold truncate">
+      {formatCurrency(dashboardData.totalSalesValue)} <span className="text-[11px] opacity-90">Sales</span>
+    </p>
+  </div>
+
+  {/* Conversion Rate */}
+  <div className="bg-gradient-to-r from-fuchsia-500 to-fuchsia-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+    <IconTrendingUp className="h-4 w-4 shrink-0" />
+    <p className="text-sm font-bold">
+      {dashboardData.leadConversionRate}% <span className="text-[11px] opacity-90">Rate</span>
+    </p>
+  </div>
+
+  {/* Appt. Success */}
+  <div className="bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2 col-span-2 sm:col-span-1">
+    <IconSquareCheck className="h-4 w-4 shrink-0" />
+    <p className="text-sm font-bold truncate">
+      {dashboardData.appointmentSuccessRate}% <span className="text-[11px] opacity-90">Appt.</span>
+    </p>
+  </div>
+</div>
+
 
 
               {subscription && <SubscriptionBanner subscription={subscription} />}
