@@ -446,8 +446,8 @@ const AccountSettingsTabs = () => {
                     <div className="sm:hidden my-3 rounded-md bg-gray-100 dark:bg-gray-800 p-3 text-xs leading-relaxed text-gray-700 dark:text-gray-300">
                         <p>
                             Visit{' '}
-                            <a href="https://app.digitalgyanisaarthi.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">
-                                app.digitalgyanisaarthi.com
+                            <a href="https://app.digitalgyanisaarthi.com/payment" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                                app.digitalgyanisaarthi.com/payment
                             </a>{' '}
                             to manage your subscription.
                         </p>
