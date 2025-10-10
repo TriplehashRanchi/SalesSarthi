@@ -89,8 +89,8 @@ export default function SubscriptionExpired() {
               <div className="mt-4 rounded-md bg-white p-3 text-xs leading-relaxed text-gray-600 border">
                 <p>
                   To manage your subscription and payment details, please visit our web portal at{' '}
-                  <a href="https://app.digitalgyanisaarthi.com" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-blue-600">
-                    app.digitalgyanisaarthi.com
+                  <a href="https://app.digitalgyanisaarthi.com/payment" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-blue-600">
+                    app.digitalgyanisaarthi.com/payment
                   </a>.
                 </p>
                 <p className="mt-2 pt-2 border-t">
