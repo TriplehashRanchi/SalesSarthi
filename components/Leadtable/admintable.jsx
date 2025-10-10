@@ -1,19 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, Card, Grid, Text, Title, Badge, Menu, TextInput, Select } from '@mantine/core';
+import { Button, Card, Grid, Text, Title, Badge, Menu, TextInput, Select, Modal, Group } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { DataTable } from 'mantine-datatable';
 import superAdminAxios from '@/utils/superAdminAxios';
 import sortBy from 'lodash/sortBy';
-
-import IconPencil from '../icon/icon-pencil';
-import IconLock from '../icon/icon-lock';
-import IconUsers from '../icon/icon-users';
-import IconUserPlus from '../icon/icon-user-plus';
-import IconChartSquare from '../icon/icon-chart-square';
-import IconUsersGroup from '../icon/icon-users-group';
 import CreateAdminModal from '@/components/forms/CreateAdminForm';
+import { IconEdit } from '@tabler/icons-react';
+import Swal from 'sweetalert2';
+
 
 const AdminTable = () => {
   const [admins, setAdmins] = useState([]);
@@ -31,6 +27,17 @@ const AdminTable = () => {
   const [recordsData, setRecordsData] = useState([]);
   const [sortStatus, setSortStatus] = useState({ columnAccessor: 'name', direction: 'asc' });
   const [openModal, setOpenModal] = useState(false);
+
+   // ✏️ Edit Modal States
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    subscription_plan: '',
+    amount: '',
+    currency: 'INR',
+  });
 
   const fetchAdmins = async () => {
     try {
@@ -92,6 +99,35 @@ const AdminTable = () => {
       hour: '2-digit', minute: '2-digit'
     });
 
+    // 🧾 Handle Edit
+  const handleEditClick = (admin) => {
+    setSelectedAdmin(admin);
+    setEditForm({
+      name: admin.name || '',
+      email: admin.email || '',
+      subscription_plan: admin.subscription_plan || 'Basic',
+      amount: '',
+      currency: 'INR',
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    try {
+      const res = await superAdminAxios.put(
+        `/api/superadmin/admins/${selectedAdmin.admin_id}/plan`,
+        editForm
+      );
+      Swal.fire('✅ Updated!', res.data.message, 'success');
+      setEditModalOpen(false);
+      fetchAdmins();
+    } catch (err) {
+      console.error('Failed to update admin:', err);
+      Swal.fire('❌ Error', err.response?.data?.message || 'Update failed', 'error');
+    }
+  };
+
+
   const columns = [
     { accessor: 'name', title: 'Name', sortable: true },
     { accessor: 'email', title: 'Email', sortable: true },
@@ -130,6 +166,21 @@ const AdminTable = () => {
           <div><strong>Expires:</strong> {formatDate(expires_at)}</div>
         </div>
       )
+    },
+    {
+      accessor: 'action',
+      title: 'Action',
+      render: (admin) => (
+        <Button
+          variant="light"
+          color="blue"
+          size="xs"
+          leftSection={<IconEdit size={16} />}
+          onClick={() => handleEditClick(admin)}
+        >
+          Edit
+        </Button>
+      ),
     },
   ];
 
@@ -225,6 +276,43 @@ const AdminTable = () => {
         closeModal={() => setOpenModal(false)}
         onSuccess={fetchAdmins}
       />
+
+       <Modal
+        opened={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Admin Details"
+        centered
+      >
+        <div className="space-y-4">
+          <TextInput
+            label="Name"
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.currentTarget.value })}
+          />
+          <TextInput
+            label="Email"
+            value={editForm.email}
+            onChange={(e) => setEditForm({ ...editForm, email: e.currentTarget.value })}
+          />
+          <Select
+            label="Subscription Plan"
+            data={['Basic', 'Monthly', 'Quarterly', 'Half-Yearly', 'Yearly', 'Premium']}
+            value={editForm.subscription_plan}
+            onChange={(value) => setEditForm({ ...editForm, subscription_plan: value })}
+          />
+          <TextInput
+            label="Amount (₹)"
+            type="number"
+            value={editForm.amount}
+            onChange={(e) => setEditForm({ ...editForm, amount: e.currentTarget.value })}
+          />
+          <Group justify="flex-end">
+            <Button color="blue" onClick={handleEditSave}>
+              Save Changes
+            </Button>
+          </Group>
+        </div>
+      </Modal>
     </div>
   );
 };
