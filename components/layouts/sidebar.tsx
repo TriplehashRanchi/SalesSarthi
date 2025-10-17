@@ -211,6 +211,16 @@ const Sidebar = () => {
                                 </Link>
                             </li>
 
+                            <li className="menu nav-item">
+                                <Link href="/fhclog">
+                                    <div className="flex items-center">
+                                        <IconHistory className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Health Check Logs')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
+
                            
                             <li className="menu nav-item">
                                 <Link href="/fincalc">

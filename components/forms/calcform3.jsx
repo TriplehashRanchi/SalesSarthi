@@ -1,5 +1,7 @@
 'use client';
-
+// 👇 1. ADD THESE TWO IMPORTS
+import axios from 'axios';
+import { getAuth } from 'firebase/auth';
 import { useState, useEffect, useCallback } from 'react';
 import FinancialHealthReportModal from '@/components/modals/finhealth2'; // Assuming this path is correct
 import { Button, Checkbox, NumberInput, Popover, Progress, ScrollArea, Text } from '@mantine/core';
@@ -648,6 +650,28 @@ const FinancialHealthCalculator = () => {
     // --- Submission ---
     const handleSubmit = async () => {
         // Prepare data for the report modal
+
+          // --- 1. NEW LOGIC: Save the full checkup to the database ---
+    // This try/catch block ensures that even if this API call fails,
+    // the rest of your code will still run and the app will not crash.
+    try {
+        const auth = getAuth();
+        if (auth.currentUser) {
+            const token = await auth.currentUser.getIdToken();
+
+            // The formData state already contains everything we need,
+            // including clientId and clientType (which can be null).
+            await axios.post(`${API_URL}/api/checkups`, formData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        } else {
+            // Silently skip if user is not logged in
+            console.log("User not logged in, skipping save to history.");
+        }
+    } catch (err) {
+        console.error('Error saving the full financial checkup:', err);
+        // This is a non-blocking error, so we just log it and continue.
+    }
         const reportData = {
             // Updated/Added Fields
             clientName: formData.clientName,
