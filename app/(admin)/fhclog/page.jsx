@@ -130,26 +130,53 @@ const CheckupHistory = () => {
     }
   };
 
+  // const prepareReportData = (formDataString) => {
+  //   if (!formDataString) return null;
+  //   try {
+  //     const data = JSON.parse(formDataString);
+  //     return {
+  //       ...data,
+  //       checklist: data.checklist?.map((i) => ({
+  //         ...i,
+  //         gap:
+  //           typeof i.target === 'number' && typeof i.currentStatus === 'number'
+  //             ? (i.target - i.currentStatus).toFixed(2)
+  //             : 'N/A',
+  //       })),
+  //     };
+  //   } catch (e) {
+  //     console.error('Failed to parse formData:', e);
+  //     alert('The data for this report seems corrupted.');
+  //     return null;
+  //   }
+  // };
+
   const prepareReportData = (formDataString) => {
-    if (!formDataString) return null;
-    try {
-      const data = JSON.parse(formDataString);
-      return {
-        ...data,
-        checklist: data.checklist?.map((i) => ({
-          ...i,
-          gap:
-            typeof i.target === 'number' && typeof i.currentStatus === 'number'
-              ? (i.target - i.currentStatus).toFixed(2)
-              : 'N/A',
-        })),
-      };
-    } catch (e) {
-      console.error('Failed to parse formData:', e);
-      alert('The data for this report seems corrupted.');
-      return null;
-    }
-  };
+  if (!formDataString) return null;
+
+  try {
+    // Check if data is already an object
+    const data = typeof formDataString === "object"
+      ? formDataString
+      : JSON.parse(formDataString);
+
+    return {
+      ...data,
+      checklist: data.checklist?.map((i) => ({
+        ...i,
+        gap:
+          typeof i.target === "number" && typeof i.currentStatus === "number"
+            ? (i.target - i.currentStatus).toFixed(2)
+            : "N/A",
+      })),
+    };
+  } catch (e) {
+    console.error("Failed to parse formData:", e);
+    alert("The data for this report seems corrupted.");
+    return null;
+  }
+};
+
 
   const handleViewReport = (checkup) => {
     const report = prepareReportData(checkup.formData);
