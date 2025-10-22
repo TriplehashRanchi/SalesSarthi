@@ -848,12 +848,26 @@ function formatDateWithOrdinal(dateString) {
         <Menu.Item
             icon={<IconCalculator size={14} />}
             onClick={() => {
-                const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email, doctor : profile.name  }).toString();
+                const qs = new URLSearchParams({ id: record.id, type: 'lead', name: record.full_name, phone: record.phone_number, email: record.email, doctor : profile.name  }).toString();
                 router.push(`/fincalc?${qs}`);
             }}
         >
             <Text size="xs">Health Check-up</Text>
         </Menu.Item>
+          <Menu.Item
+        icon={<IconListCheck size={14} color={theme.colors.blue[6]} />}
+        onClick={() => {
+            // This navigates to the HISTORY page, pre-filtered for this lead
+            const qs = new URLSearchParams({
+                clientId: record.id,
+                clientType: 'lead',
+                clientName: record.full_name
+            }).toString();
+            router.push(`/fhclog?${qs}`); // Assuming '/fhclog' is your history page route
+        }}
+    >
+        <Text size="xs">View Checkup History</Text>
+    </Menu.Item>
         
         {/* To create a subtle visual break without a hard line, we can add a divider with very low opacity or just rely on spacing */}
         {/* For true minimalism, we omit the divider entirely */}

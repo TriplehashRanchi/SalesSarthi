@@ -24,6 +24,7 @@ import {
 import { getAuth } from 'firebase/auth';
 import { parseISO, format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import FinancialHealthReportModal from '@/components/modals/finhealth2';
+import { useSearchParams } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -44,6 +45,13 @@ const CheckupHistory = () => {
 
   const [selectedReportData, setSelectedReportData] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  
+     // 👈 2. READ PARAMETERS FROM THE URL
+    const searchParams = useSearchParams();
+    const clientIdFromUrl = searchParams.get('clientId');
+    const clientTypeFromUrl = searchParams.get('clientType');
+    const clientNameFromUrl = searchParams.get('clientName');
+
 
   // --- Fetch checkup history ---
   useEffect(() => {
@@ -72,6 +80,25 @@ const CheckupHistory = () => {
   // --- Filtering & Sorting ---
   const filteredRecords = useMemo(() => {
     let filtered = [...allCheckups];
+
+     // 👇 --- START OF ADDED LOGIC --- 👇
+    // 1. Apply primary filter from URL parameters first
+    if (clientIdFromUrl && clientTypeFromUrl) {
+        // Primary method: Filter by ID and Type (most reliable)
+        filtered = filtered.filter(checkup => {
+            try {
+                const formData = JSON.parse(checkup.formData);
+                // Ensure clientId is treated as a number for a safe comparison
+                return formData.clientId === parseInt(clientIdFromUrl, 10) && formData.clientType === clientTypeFromUrl;
+            } catch {
+                return false; // Ignore records with malformed JSON
+            }
+        });
+    } else if (clientNameFromUrl) {
+        // Fallback method: Filter by Name if ID/Type are missing
+        filtered = filtered.filter(checkup => checkup.clientName === clientNameFromUrl);
+    }
+    // 👆 --- END OF ADDED LOGIC --- 👆
 
     // Date filter
     if (dateRange.from && dateRange.to) {
@@ -104,7 +131,7 @@ const CheckupHistory = () => {
       sortStatus.direction === 'desc' ? sorted.reverse() : sorted;
 
     return sortedRecords;
-  }, [allCheckups, dateRange, searchQuery, sortStatus]);
+  },  [allCheckups, dateRange, searchQuery, sortStatus, clientIdFromUrl, clientTypeFromUrl, clientNameFromUrl]);
 
   // --- Pagination logic ---
   const totalRecords = filteredRecords.length;

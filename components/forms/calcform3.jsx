@@ -659,9 +659,19 @@ const FinancialHealthCalculator = () => {
         if (auth.currentUser) {
             const token = await auth.currentUser.getIdToken();
 
+             // --- 👇 THIS IS THE CRITICAL FIX 👇 ---
+            // We read the client ID and type directly from the URL here to guarantee they are included.
+            const clientIdFromUrl = searchParams.get('id');
+            const clientTypeFromUrl = searchParams.get('type');
             // The formData state already contains everything we need,
             // including clientId and clientType (which can be null).
-            await axios.post(`${API_URL}/api/checkups`, formData, {
+              // We build the final payload object to ensure all data is correct.
+                const payload = {
+                    ...formData, // Start with the data from the form
+                    clientId: clientIdFromUrl ? parseInt(clientIdFromUrl, 10) : null, // Add/overwrite clientId
+                    clientType: clientTypeFromUrl || null, // Add/overwrite clientType
+                };
+            await axios.post(`${API_URL}/api/checkups`, payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
         } else {
@@ -757,7 +767,7 @@ const FinancialHealthCalculator = () => {
 
                     <div>
                         <label htmlFor="clientName" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
-                            Client Name
+                            Client Name 
                         </label>
                         <input
                             id="clientName"
