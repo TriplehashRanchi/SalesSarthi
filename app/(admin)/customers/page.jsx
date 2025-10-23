@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const MultiColumn = () => {
 
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     return (
         <div>
             <div className="panel flex items-center justify-between overflow-x-auto whitespace-nowrap p-3 text-primary bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700 rounded-md mb-4 shadow-md">
@@ -33,7 +33,7 @@ const MultiColumn = () => {
                     <button className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">CSV Bulk Upload</button>
                 </div>
             </div> */}
-            <Customertable />
+            <Customertable profile={profile || null}/>
         </div>
     );
 };
