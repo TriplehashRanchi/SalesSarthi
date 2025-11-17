@@ -10,6 +10,8 @@ import CreateAdminModal from '@/components/forms/CreateAdminForm';
 import { IconEdit } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import ExportCsvModal from '@/components/common/ExportCsvButton';
+import { Switch } from "@mantine/core";
+
 
 const AdminTable = () => {
     const [admins, setAdmins] = useState([]);
@@ -125,6 +127,25 @@ const AdminTable = () => {
             Swal.fire('❌ Error', err.response?.data?.message || 'Update failed', 'error');
         }
     };
+    const handleToggleAccess = async (admin) => {
+        const newStatus = admin.subscription_status === 'Active' ? 'Cancelled' : 'Active';
+
+        try {
+            const res = await superAdminAxios.put(`/api/superadmin/access/${admin.admin_id}`, { status: newStatus });
+
+            Swal.fire({
+                icon: 'success',
+                title: `Access updated to ${newStatus}`,
+                timer: 1200,
+                showConfirmButton: false,
+            });
+
+            fetchAdmins();
+        } catch (err) {
+            console.error('Error updating access:', err);
+            Swal.fire('❌ Error', 'Could not update access', 'error');
+        }
+    };
 
     const columns = [
         { accessor: 'name', title: 'Name', sortable: true },
@@ -172,6 +193,14 @@ const AdminTable = () => {
             ),
         },
         {
+            accessor: 'access_toggle',
+            title: 'Access',
+            render: (admin) => (
+                <Switch checked={admin.subscription_status === 'Active'} onChange={() => handleToggleAccess(admin)} size="md" color={admin.subscription_status === 'Active' ? 'green' : 'red'} />
+            ),
+        },
+
+        {
             accessor: 'action',
             title: 'Action',
             render: (admin) => (
@@ -195,7 +224,7 @@ const AdminTable = () => {
 
                 <div className="flex gap-3">
                     {/* 📤 Export Filtered Data */}
-                   <ExportCsvModal allAdmins={admins} />
+                    <ExportCsvModal allAdmins={admins} />
 
                     <Button onClick={() => setOpenModal(true)} className="bg-cyan-600 hover:bg-cyan-700">
                         + Create Admin
