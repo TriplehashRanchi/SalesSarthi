@@ -4,7 +4,7 @@ import IconHome from '@/components/icon/icon-home';
 import IconDollarSignCircle from '@/components/icon/icon-dollar-sign-circle';
 import IconUser from '@/components/icon/icon-user';
 import axios from 'axios';
-import { getAuth } from 'firebase/auth';
+import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { useCloudinaryUpload } from '@/utils/useCloudinaryUpload';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -62,6 +62,11 @@ const AccountSettingsTabs = () => {
     const [loading, setLoading] = useState(false);
     const [savingProfile, setSavingProfile] = useState(false);
     const [savingCompany, setSavingCompany] = useState(false);
+    // change password popup state
+    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [savingPassword, setSavingPassword] = useState(false);
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -268,6 +273,42 @@ const AccountSettingsTabs = () => {
         }
     };
 
+    const changePassword = async () => {
+        if (!oldPassword || !newPassword) {
+            alert('Enter both passwords');
+            return;
+        }
+
+        try {
+            setSavingPassword(true);
+            const auth = getAuth();
+            const user = auth.currentUser;
+
+            // STEP-1: Re-authenticate first
+            const credential = EmailAuthProvider.credential(user.email, oldPassword);
+            await reauthenticateWithCredential(user, credential);
+
+            // STEP-2: Update password
+            await updatePassword(user, newPassword);
+
+            alert('Password updated successfully');
+            setShowPasswordForm(false);
+            setOldPassword('');
+            setNewPassword('');
+        } catch (error) {
+            console.error('Password update error:', error);
+
+            if (error.code === 'auth/wrong-password') {
+                alert('Old password is incorrect');
+            } else if (error.code === 'auth/weak-password') {
+                alert('Password must be at least 6 characters');
+            } else {
+                alert('Error updating password. Try logging in again.');
+            }
+        } finally {
+            setSavingPassword(false);
+        }
+    };
     // computed disabled flags
     const profileDisabled = useMemo(() => {
         return savingProfile || !!profileErrors.phone || (profile.phone && !isValidE164(profile.phone)) || cloudUploading;
@@ -390,6 +431,44 @@ const AccountSettingsTabs = () => {
                                         inputClass={`form-input w-full ${profileErrors.phone ? '!border-red-500' : ''}`}
                                     />
                                     {profileErrors.phone && <p className="mt-1 text-xs text-red-500">{profileErrors.phone}</p>}
+                                </div>
+                                {/* CHANGE PASSWORD SECTION */}
+                                <div className="mt-8 border-t pt-5">
+                                    {!showPasswordForm ? (
+                                        <button type="button" className="btn btn-dark" onClick={() => setShowPasswordForm(true)}>
+                                            Change Password
+                                        </button>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label>Old Password</label>
+                                                <input type="password" className="form-input" placeholder="Enter old password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+                                            </div>
+
+                                            <div>
+                                                <label>New Password</label>
+                                                <input type="password" className="form-input" placeholder="Enter new password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                                            </div>
+
+                                            <div className="flex gap-3">
+                                                <button type="button" className="btn btn-primary" onClick={changePassword} disabled={savingPassword}>
+                                                    {savingPassword ? 'Updating…' : 'Update Password'}
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary"
+                                                    onClick={() => {
+                                                        setShowPasswordForm(false);
+                                                        setOldPassword('');
+                                                        setNewPassword('');
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="mt-3 sm:col-span-2">
@@ -526,7 +605,7 @@ const AccountSettingsTabs = () => {
                         ))}
 
                         {/* phone1 */}
-                       <div>
+                        <div>
                             <label htmlFor="phone1">Primary Phone</label>
                             <PhoneInput
                                 id="phone1"
@@ -542,7 +621,7 @@ const AccountSettingsTabs = () => {
                         </div>
 
                         {/* phone2 */}
-                       <div>
+                        <div>
                             <label htmlFor="phone2">Secondary Phone</label>
                             <PhoneInput
                                 id="phone2"
