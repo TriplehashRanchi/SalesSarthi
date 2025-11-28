@@ -15,6 +15,8 @@ import IconSquareCheck from '@/components/icon/icon-square-check';
 import IconTrendingUp from '@/components/icon/icon-trending-up';
 import IconCalendar from '@/components/icon/icon-calendar'; // Example icon if needed
 import IconChecks from '@/components/icon/icon-checks';
+import OfferPopupBanner from '@/components/OfferPopupBanner';
+import OfferStickyWidget from '@/components/OfferStickyWidget';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -341,6 +343,8 @@ const UserDashboard = () => {
 
     return (
         <div className="p-4 panel md:p-6 bg-gray-50 min-h-screen relative">
+            <OfferPopupBanner /> {/* Shows only first time */}
+            <OfferStickyWidget />
             <LoadingOverlay visible={loading} overlayBlur={2} />
 
             <h2 className="text-2xl md:text-3xl font-semibold dark:text-gray-200 text-gray-800 mb-6 text-center">My Dashboard</h2>

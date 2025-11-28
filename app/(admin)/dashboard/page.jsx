@@ -15,7 +15,8 @@ import IconSquareCheck from '@/components/icon/icon-square-check';
 import IconTrendingUp from '@/components/icon/icon-trending-up';
 import IconChecks from '@/components/icon/icon-checks';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
-
+import OfferPopupBanner from '@/components/OfferPopupBanner';
+import OfferStickyWidget from '@/components/OfferStickyWidget';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -95,57 +96,57 @@ const ReportingDashboard = () => {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-      const [fetchError, setFetchError] = useState('');
-  const [admin, setAdmin] = useState(null);
-  const [subscription, setSubscription] = useState(null);
+    const [fetchError, setFetchError] = useState('');
+    const [admin, setAdmin] = useState(null);
+    const [subscription, setSubscription] = useState(null);
 
+    useEffect(() => {
+        let alive = true;
 
-   useEffect(() => {
-    let alive = true;
+        (async () => {
+            try {
+                setLoading(true);
+                setFetchError('');
 
-    (async () => {
-      try {
-        setLoading(true);
-        setFetchError('');
+                const currentUser = getAuth().currentUser;
+                if (!currentUser) {
+                    setFetchError('You are not signed in.');
+                    setLoading(false);
+                    return;
+                }
 
-        const currentUser = getAuth().currentUser;
-        if (!currentUser) {
-          setFetchError('You are not signed in.');
-          setLoading(false);
-          return;
-        }
+                const token = await currentUser.getIdToken();
 
-        const token = await currentUser.getIdToken();
+                // 1) Admin profile (includes subscription fields)
+                const { data: adminRes } = await axios.get(`${API_URL}/api/admin/me`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
 
-        // 1) Admin profile (includes subscription fields)
-        const { data: adminRes } = await axios.get(`${API_URL}/api/admin/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+                if (!alive) return;
 
-        if (!alive) return;
+                setAdmin(adminRes || null);
 
-        setAdmin(adminRes || null);
+                // Normalize subscription object for the banner
+                setSubscription({
+                    plan: adminRes?.subscription_plan || 'Basic',
+                    status: adminRes?.subscription_status || 'Active',
+                    expires_at: adminRes?.expires_at || '',
+                });
 
-        // Normalize subscription object for the banner
-        setSubscription({
-          plan: adminRes?.subscription_plan || 'Basic',
-          status: adminRes?.subscription_status || 'Active',
-          expires_at: adminRes?.expires_at || '',
-        });
+                // (Optional) Anything else you want to load for the dashboard:
+                // const { data: widgets } = await axios.get(`${API_URL}/api/admin/widgets`, { headers: { Authorization: `Bearer ${token}` }});
+            } catch (err) {
+                console.error(err);
+                if (alive) setFetchError('Failed to load your dashboard. Please try again.');
+            } finally {
+                if (alive) setLoading(false);
+            }
+        })();
 
-        // (Optional) Anything else you want to load for the dashboard:
-        // const { data: widgets } = await axios.get(`${API_URL}/api/admin/widgets`, { headers: { Authorization: `Bearer ${token}` }});
-
-      } catch (err) {
-        console.error(err);
-        if (alive) setFetchError('Failed to load your dashboard. Please try again.');
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-
-    return () => { alive = false; };
-  }, []);
+        return () => {
+            alive = false;
+        };
+    }, []);
 
     // --- Chart Configurations (Keep existing chart options) ---
     const sourceChartOptions = {
@@ -439,129 +440,119 @@ const ReportingDashboard = () => {
 
     return (
         <div className="p-2 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen relative">
+            <OfferPopupBanner /> {/* Shows only first time */}
+            <OfferStickyWidget />
             <LoadingOverlay visible={loading} overlayBlur={2} />
-
             {/* <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">Sales & Activity Dashboard</h2> */}
-
             {error && (
                 <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" withCloseButton onClose={() => setError(null)} mb="lg">
                     {error}
                 </Alert>
             )}
+            {/* --- KPI Cards (Desktop) --- */}
+            <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
+                {/* Total Leads */}
+                <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+                            <IconUsersGroup className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-blue-100">{dashboardData.totalLeads}</p>
+                            <p className="text-xs opacity-90">Total Leads</p>
+                        </div>
+                    </div>
+                </div>
 
-           {/* --- KPI Cards (Desktop) --- */}
-<div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
-  {/* Total Leads */}
-  <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
-    <div className="flex items-center gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
-        <IconUsersGroup className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-blue-100">{dashboardData.totalLeads}</p>
-        <p className="text-xs opacity-90">Total Leads</p>
-      </div>
-    </div>
-  </div>
+                {/* Conversions */}
+                <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+                            <IconSquareCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-violet-100">{dashboardData.customerConversions}</p>
+                            <p className="text-xs opacity-90">Conversions</p>
+                        </div>
+                    </div>
+                </div>
 
-  {/* Conversions */}
-  <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
-    <div className="flex items-center gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
-        <IconSquareCheck className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-violet-100">{dashboardData.customerConversions}</p>
-        <p className="text-xs opacity-90">Conversions</p>
-      </div>
-    </div>
-  </div>
+                {/* Conversion Rate */}
+                <div className="panel bg-gradient-to-r from-teal-500 to-teal-400 dark:from-teal-700 dark:to-teal-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+                            <IconTrendingUp className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-teal-100">{dashboardData.leadConversionRate}%</p>
+                            <p className="text-xs opacity-90">Conversion Rate</p>
+                        </div>
+                    </div>
+                </div>
 
-  {/* Conversion Rate */}
-  <div className="panel bg-gradient-to-r from-teal-500 to-teal-400 dark:from-teal-700 dark:to-teal-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
-    <div className="flex items-center gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
-        <IconTrendingUp className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-teal-100">{dashboardData.leadConversionRate}%</p>
-        <p className="text-xs opacity-90">Conversion Rate</p>
-      </div>
-    </div>
-  </div>
+                {/* Total Sales Value */}
+                <div className="panel bg-gradient-to-r from-indigo-500 to-indigo-400 dark:from-indigo-700 dark:to-indigo-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
+                            <IconCoinRupee className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xl md:text-2xl font-bold text-indigo-100 truncate">{formatCurrency(dashboardData.totalSalesValue)}</p>
+                            <p className="text-xs opacity-90">Total Sales Value</p>
+                        </div>
+                    </div>
+                </div>
 
-  {/* Total Sales Value */}
-  <div className="panel bg-gradient-to-r from-indigo-500 to-indigo-400 dark:from-indigo-700 dark:to-indigo-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
-    <div className="flex items-center gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
-        <IconCoinRupee className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-xl md:text-2xl font-bold text-indigo-100 truncate">
-          {formatCurrency(dashboardData.totalSalesValue)}
-        </p>
-        <p className="text-xs opacity-90">Total Sales Value</p>
-      </div>
-    </div>
-  </div>
+                {/* Appointment Success Rate */}
+                <div className="panel bg-gradient-to-r from-cyan-500 to-cyan-400 p-4 rounded-lg shadow-md text-white flex flex-col justify-center items-start h-[120px]">
+                    <h3 className="text-sm font-semibold opacity-90 break-words leading-snug">Appt. Success Rate</h3>
+                    <p className="text-2xl md:text-3xl font-bold">{dashboardData.appointmentSuccessRate}%</p>
+                    <p className="text-[10px] sm:text-xs opacity-80 leading-tight">(Completed / (Comp+Missed))</p>
+                </div>
+            </div>
+            {/* --- KPI Cards (Mobile) --- */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6 md:hidden">
+                {/* Leads */}
+                <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+                    <IconUsersGroup className="h-4 w-4 shrink-0" />
+                    <p className="text-sm font-bold">
+                        {dashboardData.totalLeads} <span className="text-[11px] opacity-90">Leads</span>
+                    </p>
+                </div>
 
-  {/* Appointment Success Rate */}
-  <div className="panel bg-gradient-to-r from-cyan-500 to-cyan-400 p-4 rounded-lg shadow-md text-white flex flex-col justify-center items-start h-[120px]">
-    <h3 className="text-sm font-semibold opacity-90 break-words leading-snug">
-      Appt. Success Rate
-    </h3>
-    <p className="text-2xl md:text-3xl font-bold">{dashboardData.appointmentSuccessRate}%</p>
-    <p className="text-[10px] sm:text-xs opacity-80 leading-tight">(Completed / (Comp+Missed))</p>
-  </div>
-</div>
+                {/* Conversions */}
+                <div className="bg-gradient-to-r from-violet-500 to-violet-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+                    <IconChecks className="h-4 w-4 shrink-0" />
+                    <p className="text-sm font-bold">
+                        {dashboardData.customerConversions} <span className="text-[11px] opacity-90">Conv.</span>
+                    </p>
+                </div>
 
-{/* --- KPI Cards (Mobile) --- */}
-<div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6 md:hidden">
-  {/* Leads */}
-  <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-    <IconUsersGroup className="h-4 w-4 shrink-0" />
-    <p className="text-sm font-bold">
-      {dashboardData.totalLeads} <span className="text-[11px] opacity-90">Leads</span>
-    </p>
-  </div>
+                {/* Sales */}
+                <div className="bg-gradient-to-r from-lime-500 to-lime-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+                    <IconCoinRupee className="h-4 w-4 shrink-0" />
+                    <p className="text-sm font-bold truncate">
+                        {formatCurrency(dashboardData.totalSalesValue)} <span className="text-[11px] opacity-90">Sales</span>
+                    </p>
+                </div>
 
-  {/* Conversions */}
-  <div className="bg-gradient-to-r from-violet-500 to-violet-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-    <IconChecks className="h-4 w-4 shrink-0" />
-    <p className="text-sm font-bold">
-      {dashboardData.customerConversions} <span className="text-[11px] opacity-90">Conv.</span>
-    </p>
-  </div>
+                {/* Conversion Rate */}
+                <div className="bg-gradient-to-r from-fuchsia-500 to-fuchsia-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
+                    <IconTrendingUp className="h-4 w-4 shrink-0" />
+                    <p className="text-sm font-bold">
+                        {dashboardData.leadConversionRate}% <span className="text-[11px] opacity-90">Rate</span>
+                    </p>
+                </div>
 
-  {/* Sales */}
-  <div className="bg-gradient-to-r from-lime-500 to-lime-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-    <IconCoinRupee className="h-4 w-4 shrink-0" />
-    <p className="text-sm font-bold truncate">
-      {formatCurrency(dashboardData.totalSalesValue)} <span className="text-[11px] opacity-90">Sales</span>
-    </p>
-  </div>
-
-  {/* Conversion Rate */}
-  <div className="bg-gradient-to-r from-fuchsia-500 to-fuchsia-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-    <IconTrendingUp className="h-4 w-4 shrink-0" />
-    <p className="text-sm font-bold">
-      {dashboardData.leadConversionRate}% <span className="text-[11px] opacity-90">Rate</span>
-    </p>
-  </div>
-
-  {/* Appt. Success */}
-  <div className="bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2 col-span-2 sm:col-span-1">
-    <IconSquareCheck className="h-4 w-4 shrink-0" />
-    <p className="text-sm font-bold truncate">
-      {dashboardData.appointmentSuccessRate}% <span className="text-[11px] opacity-90">Appt.</span>
-    </p>
-  </div>
-</div>
-
-
-
-              {subscription && <SubscriptionBanner subscription={subscription} />}
-
+                {/* Appt. Success */}
+                <div className="bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2 col-span-2 sm:col-span-1">
+                    <IconSquareCheck className="h-4 w-4 shrink-0" />
+                    <p className="text-sm font-bold truncate">
+                        {dashboardData.appointmentSuccessRate}% <span className="text-[11px] opacity-90">Appt.</span>
+                    </p>
+                </div>
+            </div>
+            {subscription && <SubscriptionBanner subscription={subscription} />}
             {/* **** RENDER CHILD ONLY WHEN DATA IS FETCHED **** */}
             {!loading && !error && fetchedRawData && (
                 <div className="hidden md:block mb-6">
@@ -574,7 +565,6 @@ const ReportingDashboard = () => {
                     />
                 </div>
             )}
-
             {/* --- Charts Row --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {/* Lead Status Pipeline */}
@@ -606,7 +596,6 @@ const ReportingDashboard = () => {
                     <p className="text-xs text-center text-gray-500 mt-2">Missed Rate: {dashboardData.missedAppointmentsRate}% (of total)</p>
                 </div>
             </div>
-
             {/* --- Actionable Task Lists --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {/* Upcoming Appointments */}
@@ -666,7 +655,6 @@ const ReportingDashboard = () => {
                     )}
                 </div>
             </div>
-
             {/* --- Data Export Section --- */}
             <div className="mt-6 bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 border-b pb-2">Data Export (CSV)</h3>
