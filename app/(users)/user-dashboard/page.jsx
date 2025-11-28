@@ -343,8 +343,8 @@ const UserDashboard = () => {
 
     return (
         <div className="p-4 panel md:p-6 bg-gray-50 min-h-screen relative">
-            <OfferPopupBanner /> {/* Shows only first time */}
-            <OfferStickyWidget />
+            {/* <OfferPopupBanner /> 
+            <OfferStickyWidget /> */}
             <LoadingOverlay visible={loading} overlayBlur={2} />
 
             <h2 className="text-2xl md:text-3xl font-semibold dark:text-gray-200 text-gray-800 mb-6 text-center">My Dashboard</h2>
