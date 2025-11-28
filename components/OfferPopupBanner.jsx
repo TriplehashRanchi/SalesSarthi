@@ -6,7 +6,7 @@ export default function OfferPopupBanner() {
   const router = useRouter();
   const [showPopup, setShowPopup] = useState(false);
 
-  const IMAGE_URL = "/offer.avif"; // 1080 x 1080 image
+  const IMAGE_URL = "/stickybanner.jpeg"; // 1080 x 1080 image
   const PAYMENT_URL = "https://pages.razorpay.com/Reborn2026"; // Razorpay link
 
   useEffect(() => {

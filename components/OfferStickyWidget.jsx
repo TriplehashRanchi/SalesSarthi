@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 
 export default function OfferStickyWidget() {
   const router = useRouter();
-  const IMAGE_URL = "/stickybanner.jpeg";   // your promo image  
+  const IMAGE_URL = "/banner.jpeg";   // your promo image  
 
   const handleRedirect = () => router.push("https://pages.razorpay.com/Reborn2026");
 
@@ -18,7 +18,7 @@ export default function OfferStickyWidget() {
           alt="Offer Banner"
           className="w-full"
           style={{
-            height: "200px",       // 🔥 compressed height
+            height: "250px",       // 🔥 compressed height
             width: "100%",
             objectFit: "cover",    // 🔥 auto crop to fit
             objectPosition: "center", // focus center of image
