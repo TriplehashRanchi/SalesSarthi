@@ -7,8 +7,6 @@ export default function OfferPopupBanner() {
   const [showPopup, setShowPopup] = useState(false);
 
   const IMAGE_URL = "/popup.jpeg"; // 1080 x 1080 image
-  const PAYMENT_URL = "https://pages.razorpay.com/Reborn2026"; // Razorpay link
-
   useEffect(() => {
     // Always show popup on dashboard mount
     setShowPopup(true);
@@ -19,7 +17,7 @@ export default function OfferPopupBanner() {
   };
 
   const handleRedirect = () => {
-    router.push(PAYMENT_URL);
+    router.push("https://reborn.digitalgyani.org/");
   };
 
   if (!showPopup) return null;

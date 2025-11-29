@@ -5,7 +5,7 @@ export default function OfferStickyWidget() {
   const router = useRouter();
   const IMAGE_URL = "/banner.jpeg";   // your promo image  
 
-  const handleRedirect = () => router.push("https://pages.razorpay.com/Reborn2026");
+  const handleRedirect = () => router.push("https://reborn.digitalgyani.org/");
 
   return (
     <div className="w-full mb-6 px-2">
