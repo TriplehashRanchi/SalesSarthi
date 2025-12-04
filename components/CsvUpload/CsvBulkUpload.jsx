@@ -56,7 +56,7 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 
 // Minimum columns we expect – everything else is optional
-const REQUIRED_HEADERS = ['full_name', 'email', 'phone_number', 'lead_status'];
+const REQUIRED_HEADERS = ['full_name', 'email', 'phone_number', 'lead_status', 'address', 'notes'];
 
 // Sample headers for the downloadable template, including optional fields
 const SAMPLE_SHEET_HEADERS = [
