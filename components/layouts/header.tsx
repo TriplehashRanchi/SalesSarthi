@@ -135,7 +135,8 @@ const Header = () => {
 
     return (
         <>
-        <header className={`z-40 hidden md:block ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
+            <header
+                className={`z-40 hidden md:block -mt-3 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
             <div className="shadow-sm">
                 <div className="relative flex w-full items-center bg-white px-5 py-2.5 dark:bg-black">
                     {/* Logo and Sidebar Toggle */}
