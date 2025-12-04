@@ -40,6 +40,7 @@ import IconUsersGroup from '../icon/icon-users-group';
 import { IconHistory } from '@tabler/icons-react';
 import { getAuth, signOut } from 'firebase/auth';
 import IconLogout from '../icon/icon-logout';
+import axios from 'axios';
 
 const UserSide = () => {
     const dispatch = useDispatch();
@@ -49,6 +50,30 @@ const UserSide = () => {
     const [errorSubMenu, setErrorSubMenu] = useState(false);
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const semidark = useSelector((state: IRootState) => state.themeConfig.semidark);
+     const [todayBannerCount, setTodayBannerCount] = useState(0);
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+    useEffect(() => {
+        const fetchTodayCount = async () => {
+            try {
+                const { data } = await axios.get(`${API_URL}/api/banners`);
+                const today = new Date().toISOString().split('T')[0];
+
+                const todays = data.filter((b) => {
+                    const created = new Date(b.created_at).toISOString().split('T')[0];
+                    return created === today;
+                });
+
+                setTodayBannerCount(todays.length); // store count
+            } catch (error) {
+                console.log('Banner count fetch error:', error);
+            }
+        };
+
+        fetchTodayCount();
+    }, []);
+
     const toggleMenu = (value: string) => {
         setCurrentMenu((oldValue) => {
             return oldValue === value ? '' : value;
@@ -181,13 +206,36 @@ const UserSide = () => {
                                 </Link>
                             </li>
                             <li className="menu nav-item">
-                                <Link href="/user-banner">
-                                    <div className="flex items-center">
+                                <Link href="/ad-banner">
+                                    <div className="flex items-center relative">
                                         <IconLaptop className="shrink-0 group-hover:!text-primary" />
+
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>
+
+                                        {/* ---- Today Banner Count Badge ---- */}
+                                        {todayBannerCount > 0 && (
+                                            <span
+                                                className="
+                        absolute
+                        right-[-25px]
+                        top-1/2
+                        -translate-y-1/2
+                        bg-blue-600
+                        text-white
+                        text-[10px]
+                        px-2 py-[1px]
+                        rounded-full
+                        shadow-md
+                        
+                    "
+                                            >
+                                                {todayBannerCount}
+                                            </span>
+                                        )}
                                     </div>
                                 </Link>
                             </li>
+
                             <li className="block md:hidden menu nav-item">
                                 <a onClick={handleSignOut}>
                                     <div className="flex items-center">

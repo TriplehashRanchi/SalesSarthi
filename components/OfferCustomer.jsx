@@ -205,7 +205,7 @@ export default function OfferPopupBanner() {
 
               {/* Link to specific page */}
               <button 
-                onClick={() => router.push('/ad-banner')}
+                onClick={() => router.push('/user-banner')}
                 className="w-full sm:w-auto px-5 py-2.5 bg-gray-900 hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-gray-200 dark:shadow-none flex items-center justify-center gap-2"
               >
                 See All Offers <IconArrowRight size={16} />
