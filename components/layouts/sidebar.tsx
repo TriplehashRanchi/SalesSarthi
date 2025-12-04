@@ -49,6 +49,10 @@ import IconLogout from '../icon/icon-logout';
 import { getAuth, signOut } from 'firebase/auth';
 import axios from 'axios';
 
+interface Banner {
+  created_at: string;
+  // add any additional fields if needed
+}
 const Sidebar = () => {
     const dispatch = useDispatch();
     const { t } = getTranslation();
@@ -57,30 +61,29 @@ const Sidebar = () => {
     const [errorSubMenu, setErrorSubMenu] = useState(false);
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const semidark = useSelector((state: IRootState) => state.themeConfig.semidark);
-    const [todayBannerCount, setTodayBannerCount] = useState(0);
+   const [todayBannerCount, setTodayBannerCount] = useState(0);
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-    useEffect(() => {
-        const fetchTodayCount = async () => {
-            try {
-                const { data } = await axios.get(`${API_URL}/api/banners`);
-                const today = new Date().toISOString().split('T')[0];
+useEffect(() => {
+  const fetchTodayCount = async () => {
+    try {
+      const { data } = await axios.get<Banner[]>(`${API_URL}/api/banners`);
+      const today = new Date().toISOString().split('T')[0];
 
-                const todays = data.filter((b) => {
-                    const created = new Date(b.created_at).toISOString().split('T')[0];
-                    return created === today;
-                });
+      const todays = data.filter((b: Banner) => {
+        const created = new Date(b.created_at).toISOString().split('T')[0];
+        return created === today;
+      });
 
-                setTodayBannerCount(todays.length); // store count
-            } catch (error) {
-                console.log('Banner count fetch error:', error);
-            }
-        };
+      setTodayBannerCount(todays.length);
+    } catch (error) {
+      console.log('Banner count fetch error:', error);
+    }
+  };
 
-        fetchTodayCount();
-    }, []);
-
+  fetchTodayCount();
+}, []);
     const toggleMenu = (value: string) => {
         setCurrentMenu((oldValue) => {
             return oldValue === value ? '' : value;

@@ -42,6 +42,11 @@ import { getAuth, signOut } from 'firebase/auth';
 import IconLogout from '../icon/icon-logout';
 import axios from 'axios';
 
+interface Banner {
+    created_at: string;
+    // add any additional fields if needed
+}
+
 const UserSide = () => {
     const dispatch = useDispatch();
     const { t } = getTranslation();
@@ -50,22 +55,22 @@ const UserSide = () => {
     const [errorSubMenu, setErrorSubMenu] = useState(false);
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const semidark = useSelector((state: IRootState) => state.themeConfig.semidark);
-     const [todayBannerCount, setTodayBannerCount] = useState(0);
+    const [todayBannerCount, setTodayBannerCount] = useState(0);
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     useEffect(() => {
         const fetchTodayCount = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/banners`);
+                const { data } = await axios.get<Banner[]>(`${API_URL}/api/banners`);
                 const today = new Date().toISOString().split('T')[0];
 
-                const todays = data.filter((b) => {
+                const todays = data.filter((b: Banner) => {
                     const created = new Date(b.created_at).toISOString().split('T')[0];
                     return created === today;
                 });
 
-                setTodayBannerCount(todays.length); // store count
+                setTodayBannerCount(todays.length);
             } catch (error) {
                 console.log('Banner count fetch error:', error);
             }
@@ -80,18 +85,18 @@ const UserSide = () => {
         });
     };
 
-        const router = useRouter()
+    const router = useRouter()
 
-     // --- Handle Sign Out ---
-     const handleSignOut = async () => {
-         const auth = getAuth();
-         try {
-             await signOut(auth);
-             router.push('/login'); // Adjust redirect path as needed
-         } catch (error) {
-             console.error("Error signing out: ", error);
-         }
-     };
+    // --- Handle Sign Out ---
+    const handleSignOut = async () => {
+        const auth = getAuth();
+        try {
+            await signOut(auth);
+            router.push('/login'); // Adjust redirect path as needed
+        } catch (error) {
+            console.error("Error signing out: ", error);
+        }
+    };
 
     useEffect(() => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
@@ -150,12 +155,12 @@ const UserSide = () => {
                     <PerfectScrollbar className="relative h-[calc(100vh-80px)]">
                         <ul className="relative space-y-0.5 p-4 py-0 font-semibold">
                             <li className="menu nav-item">
-                               <Link href="/user-dashboard">
+                                <Link href="/user-dashboard">
                                     <div className="flex items-center">
                                         <IconMenuDashboard className="shrink-0 group-hover:!text-primary" />
-                                        <span  className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('dashboard')}</span>
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('dashboard')}</span>
                                     </div>
-                               </Link>
+                                </Link>
                             </li>
                             <li className="menu nav-item">
                                 <Link href="/useraddlead">
