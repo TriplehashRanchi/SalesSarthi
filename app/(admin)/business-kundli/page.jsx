@@ -506,7 +506,7 @@ export default function BusinessKundliWizard() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-slate-50 pb-28 lg:pb-24">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-slate-50 pb-28 pt-[-40] lg:pb-24">
       <div className="pointer-events-none absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_20%_20%,rgba(129,140,248,0.25),transparent_25%),radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.25),transparent_20%),radial-gradient(circle_at_20%_80%,rgba(236,72,153,0.25),transparent_25%)]"></div>
       <div className="pointer-events-none absolute inset-0 opacity-35 mix-blend-screen bg-[linear-gradient(120deg,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(60deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:120px_120px]"></div>
 
@@ -533,9 +533,7 @@ export default function BusinessKundliWizard() {
           </div>
         </div>
 
-        {/* HERO + CONTENT */}
-        <div className="grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 mt-6">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 lg:p-8 backdrop-blur-2xl shadow-[0_22px_80px_rgba(0,0,0,0.45)]">
+          {/* <div className="bg-white/5 border border-white/10 rounded-3xl p-6 lg:p-8 backdrop-blur-2xl shadow-[0_22px_80px_rgba(0,0,0,0.45)]">
             <p className="text-sm font-semibold text-indigo-100 uppercase tracking-[0.25em]">Business Kundli</p>
             <h1 className="mt-3 text-3xl lg:text-4xl font-extrabold leading-tight text-white">Map your 7 Business Grahas</h1>
             <p className="mt-3 text-slate-200/80 leading-relaxed">
@@ -558,18 +556,18 @@ export default function BusinessKundliWizard() {
                 </span>
               ))}
             </div>
-          </div>
+          </div> */}
 
+
+        {/* HERO + CONTENT */}
+        <div className="grid gap-6 lg:gap-8 mt-6">
+        
           <div className="bg-white/10 border border-white/15 rounded-3xl p-5 sm:p-6 lg:p-8 backdrop-blur-2xl shadow-[0_22px_80px_rgba(0,0,0,0.55)] relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.04),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.05),transparent_25%)]"></div>
             <div className="relative">{renderScreen()}</div>
           </div>
-        </div>
-      </div>
-
-      {/* BOTTOM NAV */}
-      {step < 10 && (
-        <div className="fixed bottom-0 left-0 right-0 lg:left-64 lg:right-6 lg:bottom-4 lg:rounded-2xl p-4 bg-gradient-to-r from-slate-950/90 via-indigo-950/90 to-slate-950/90 border-t lg:border border-white/10 backdrop-blur-xl shadow-[0_-12px_40px_rgba(0,0,0,0.35)] lg:shadow-[0_18px_60px_rgba(0,0,0,0.4)] z-20 lg:w-auto">
+           {step < 10 && (
+        <div className=" bottom-0 left-0 right-0 lg:left-64 lg:right-6 lg:bottom-4 lg:rounded-2xl p-4  z-20 lg:w-auto">
           <div className="max-w-6xl mx-auto lg:max-w-none">
             <button
               onClick={() => (step < 9 ? setStep(s => s + 1) : handleSubmit())}
@@ -582,6 +580,24 @@ export default function BusinessKundliWizard() {
           </div>
         </div>
       )}
+        </div>
+      </div>
+
+      {/* BOTTOM NAV */}
+      {/* {step < 10 && (
+        <div className="fixed bottom-0 left-0 right-0 lg:left-64 lg:right-6 lg:bottom-4 lg:rounded-2xl p-4 bg-gradient-to-r from-slate-950/90 via-indigo-950/90 to-slate-950/90 border-t lg:border border-white/10 backdrop-blur-xl shadow-[0_-12px_40px_rgba(0,0,0,0.35)] lg:shadow-[0_18px_60px_rgba(0,0,0,0.4)] z-20 lg:w-auto">
+          <div className="max-w-6xl mx-auto lg:max-w-none">
+            <button
+              onClick={() => (step < 9 ? setStep(s => s + 1) : handleSubmit())}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400 hover:from-indigo-400 hover:via-fuchsia-400 hover:to-cyan-300 text-white font-bold py-4 rounded-2xl shadow-[0_18px_60px_rgba(99,102,241,0.45)] flex items-center justify-center gap-2 active:scale-[0.99] transition-transform disabled:opacity-70"
+            >
+              {step === 9 ? 'Reveal My Kundli' : 'Next Step'}
+              <IconArrowRight />
+            </button>
+          </div>
+        </div>
+      )} */}
 
       {/* GLOBAL STYLES FOR ANIMATION */}
       <style jsx global>{`
