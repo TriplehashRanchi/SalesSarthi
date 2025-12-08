@@ -120,7 +120,7 @@ export default function OfferPopupBanner() {
 
             <div>
               <h4 className="font-bold text-gray-800 dark:text-white text-sm">
-                {totalTodayCount} New Offer{totalTodayCount > 1 ? "s" : ""} Today!
+                {totalTodayCount} New Banner{totalTodayCount > 1 ? "s" : ""} Today!
               </h4>
               <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 group-hover:text-pink-500 transition-colors">
                 Tap to view details <IconArrowRight size={12} />

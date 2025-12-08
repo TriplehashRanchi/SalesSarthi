@@ -30,6 +30,7 @@
         "@fullcalendar/react": "^6.1.17",
         "@fullcalendar/timegrid": "^6.1.17",
         "@headlessui/react": "^2.1.2",
+        "@hello-pangea/dnd": "^18.0.1",
         "@mantine/core": "^5.10.5",
         "@mantine/dates": "^5.10.5",
         "@mantine/notifications": "^5.10.5",
