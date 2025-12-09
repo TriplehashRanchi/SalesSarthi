@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AddAgentModal({ isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -9,167 +9,190 @@ export default function AddAgentModal({ isOpen, onClose, onSave }) {
     phone: "",
     password: "",
     employment_type: "Full-time",
-    date_of_birth: ""
+    date_of_birth: "",
+    last_active_date: new Date().toISOString().split('T')[0], // Default to today
+    leads: 0,
+    meetings: 0,
+    sales: 0,
   });
-  const [loading, setLoading] = useState(false);
 
-  // Handle Input Changes
+  const [loading, setLoading] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Handle animation mounting
+  useEffect(() => {
+    if (isOpen) setIsVisible(true);
+    else setTimeout(() => setIsVisible(false), 200);
+  }, [isOpen]);
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let { name, value } = e.target;
+    if (["leads", "meetings", "sales"].includes(name)) value = Number(value);
+    setFormData({ ...formData, [name]: value });
   };
 
-  // Handle Form Submit
   const handleSubmit = async () => {
-    // Basic Validation
     if (!formData.first_name || !formData.email || !formData.password) {
       alert("Please fill in First Name, Email, and Password.");
       return;
     }
 
     setLoading(true);
-    await onSave(formData); // Call parent function
+    await onSave(formData);
     setLoading(false);
-    
-    // Reset Form
-    setFormData({
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      password: "",
-      employment_type: "Full-time",
-      date_of_birth: ""
-    });
+    onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isVisible && !isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div
+      className={`fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 transition-all duration-200 ${
+        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
+    >
+      {/* BACKDROP */}
+      <div 
+        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" 
+        onClick={onClose}
+      ></div>
+
+      {/* MODAL CONTAINER */}
+      <div 
+        className={`relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all duration-300 flex flex-col max-h-[90vh] ${
+          isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
+        }`}
+      >
         
-        {/* Header */}
-        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-          <h3 className="font-semibold text-lg text-gray-800">Add New Agent</h3>
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white rounded-t-2xl z-10">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">New Agent</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Enter details to onboard a new team member.</p>
+          </div>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-gray-700 text-2xl leading-none transition"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
           >
-            &times;
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-4">
+        {/* SCROLLABLE BODY */}
+        <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
           
-          {/* Name Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-              <input 
-                name="first_name" 
-                value={formData.first_name} 
-                onChange={handleChange} 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-                placeholder="John"
+          {/* Section 1: Personal Details */}
+          <div className="space-y-5">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Personal Information</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Input label="First Name" name="first_name" placeholder="John" value={formData.first_name} onChange={handleChange} />
+              <Input label="Last Name" name="last_name" placeholder="Doe" value={formData.last_name} onChange={handleChange} />
+            </div>
+
+            <Input label="Email Address" name="email" type="email" placeholder="john@example.com" value={formData.email} onChange={handleChange} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Input label="Phone Number" name="phone" placeholder="+1 (555) 000-0000" value={formData.phone} onChange={handleChange} />
+              <Select
+                label="Employment Type"
+                name="employment_type"
+                value={formData.employment_type}
+                onChange={handleChange}
+                options={["Full-time", "Part-time", "Contract", "Freelance"]}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input 
-                name="last_name" 
-                value={formData.last_name} 
-                onChange={handleChange} 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-                placeholder="Doe"
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Input label="Date of Birth" name="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleChange} />
+              <Input label="Password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} />
             </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <input 
-              name="email" 
-              type="email"
-              value={formData.email} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-              placeholder="john@example.com"
-            />
-          </div>
-
-          {/* Phone & Type */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input 
-                name="phone" 
-                value={formData.phone} 
-                onChange={handleChange} 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-                placeholder="+91 98765 43210"
-              />
+          {/* Section 2: Initial Metrics (Visual separation) */}
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              <h3 className="text-sm font-bold text-gray-800">Initial Performance Data</h3>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
-              <select 
-                name="employment_type" 
-                value={formData.employment_type} 
-                onChange={handleChange} 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              >
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-              </select>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Input label="Last Active Date" name="last_active_date" type="date" value={formData.last_active_date} onChange={handleChange} bg="bg-white" />
+              <div className="grid grid-cols-3 gap-2 sm:col-span-1">
+                <Input label="Leads" name="leads" type="number" value={formData.leads} onChange={handleChange} bg="bg-white" />
+                <Input label="Meetings" name="meetings" type="number" value={formData.meetings} onChange={handleChange} bg="bg-white" />
+                <Input label="Sales" name="sales" type="number" value={formData.sales} onChange={handleChange} bg="bg-white" />
+              </div>
             </div>
-          </div>
-
-          {/* DOB */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-            <input 
-              name="date_of_birth" 
-              type="date"
-              value={formData.date_of_birth} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input 
-              name="password" 
-              type="password"
-              value={formData.password} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
-              placeholder="Create a secure password"
-            />
           </div>
 
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+        {/* FOOTER */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
           <button 
             onClick={onClose} 
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition"
+            className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
           >
             Cancel
           </button>
-          <button 
-            onClick={handleSubmit} 
+          <button
+            onClick={handleSubmit}
             disabled={loading}
-            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition disabled:bg-gray-400"
+            className="px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {loading ? "Creating..." : "Add Agent"}
+            {loading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Creating...
+              </>
+            ) : "Create Agent"}
           </button>
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+/* REUSABLE UI COMPONENTS */
+
+function Input({ label, name, value, onChange, type = "text", placeholder, bg = "bg-gray-50" }) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-xs font-semibold text-gray-700 ml-1">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full px-4 py-2.5 ${bg} border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 outline-none transition-all duration-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 hover:border-gray-300`}
+      />
+    </div>
+  );
+}
+
+function Select({ label, name, value, onChange, options }) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-xs font-semibold text-gray-700 ml-1">{label}</label>
+      <div className="relative">
+        <select
+          name={name}
+          value={value}
+          onChange={onChange}
+          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 appearance-none outline-none transition-all duration-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 hover:border-gray-300 cursor-pointer"
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+        <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+        </div>
       </div>
     </div>
   );

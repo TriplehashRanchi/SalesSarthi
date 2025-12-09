@@ -137,12 +137,12 @@ export default function AgentDetails({ params }) {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-4 mt-6">
+                        {/* <div className="flex gap-4 mt-6">
                             <button className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex justify-center items-center gap-2">
                                 + Log Activity
                             </button>
                             <button className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Quick Nudge</button>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Income Graph */}
