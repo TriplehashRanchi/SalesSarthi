@@ -1,29 +1,53 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "lib": ["dom", "dom.iterable", "esnext"],
-        "allowJs": true,
-        "skipLibCheck": true,
-        "strict": true,
-        "forceConsistentCasingInFileNames": true,
-        "noEmit": true,
-        "esModuleInterop": true,
-        "module": "esnext",
-        "moduleResolution": "node",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "jsx": "preserve",
-        "incremental": true,
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["./*"]
-        },
-        "plugins": [
-            {
-                "name": "next"
-            }
-        ]
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
     },
-    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "ni18n.config.ts.js", "components/auth/login.jsx", "app/(admin)/layout.jsx", "components/dashboard/superdash.jsx", "components/Video/VideoExporter.jsx", "app/(admin)/reports/page.jsx", "app/(admin)/reports/test/page.jsx", "components/UserProfileForm.jsx", "app/(defaults)/page.jsx", "components/CsvUpload/CsvCustomerUpload.jsx"],
-    "exclude": ["node_modules"]
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "ni18n.config.ts.js",
+    "components/auth/login.jsx",
+    "app/(admin)/layout.jsx",
+    "components/dashboard/superdash.jsx",
+    "components/Video/VideoExporter.jsx",
+    "app/(admin)/reports/page.jsx",
+    "app/(admin)/reports/test/page.jsx",
+    "components/UserProfileForm.jsx",
+    "app/(defaults)/page.jsx",
+    "components/CsvUpload/CsvCustomerUpload.jsx",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
