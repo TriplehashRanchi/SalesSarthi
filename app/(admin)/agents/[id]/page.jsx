@@ -4,9 +4,11 @@ import { getAuth } from 'firebase/auth';
 import Link from 'next/link';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import AddIncomeModal from '@/components/admin/AddIncomeModal';
+import { useParams } from 'next/navigation';
 
-export default function AgentDetails({ params }) {
-    const { id } = params;
+export default function AgentDetails() {
+    const { id } = useParams();
+    console.log("Agent ID:", id);
     const [data, setData] = useState(null);
     const [activeTab, setActiveTab] = useState('Overview'); // Default Tab
     const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);

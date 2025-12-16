@@ -24,7 +24,7 @@ const DefaultLayout = ({ children }) => {
 
     if (!user) {
         router.push("/register"); // Not logged in
-    } else if (user.role !== "Salesperson" && user.role !== "Manager") {
+    } else if (user.role !== "Salesperson" && user.role !== "Manager" && user.role !== "agent") {
         router.push("/"); // Not a valid team role
     } else {
         if (user.status === "pending") {
