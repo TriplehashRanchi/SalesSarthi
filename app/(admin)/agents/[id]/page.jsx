@@ -168,7 +168,7 @@ export default function AgentDetails() {
                                 <div className="text-xs text-gray-500 font-medium">Highest</div>
                                 <div className="text-2xl font-bold mt-1 text-gray-900">₹{maxIncome.toLocaleString()}</div>
                             </div>
-                            <div>
+                            {/* <div>
                                 <div className="text-xs text-gray-500 font-medium">Trend</div>
                                 <div className="text-2xl font-bold mt-1 text-red-500 flex items-center gap-2">
                                     -87%{' '}
@@ -177,7 +177,7 @@ export default function AgentDetails() {
                                         <polyline points="17 18 23 18 23 12"></polyline>
                                     </svg>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
 
                         <div className="h-[300px] w-full">

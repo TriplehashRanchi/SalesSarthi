@@ -22,6 +22,7 @@ import IconMenuAuthentication from '@/components/icon/menu/icon-menu-authenticat
 import IconMenuDocumentation from '@/components/icon/menu/icon-menu-documentation';
 import {
     IconAi,
+    IconAngle,
     IconBrandFacebook,
     IconBrandWhatsappFilled,
     IconCubeSend,
@@ -394,6 +395,32 @@ useEffect(() => {
                                     </div>
                                 </a>
                             </li>
+
+                            {/* <li className="menu nav-item">
+                                <button type="button" className={`${currentMenu === 'agents' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('agents')}>
+                                    <div className="flex items-center">
+                                        <IconAngle className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Rag')}</span>
+                                    </div>
+
+                                    <div className={currentMenu !== 'agents' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                        <IconCaretDown />
+                                    </div>
+                                </button>
+
+                                <AnimateHeight duration={300} height={currentMenu === 'agents' ? 'auto' : 0}>
+                                    <ul className="sub-menu text-gray-500">
+                                        <li>
+                                            <Link href="/agentDashboard">{t('Agent Dashboard')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/assessment">{t('Assessment')}</Link>
+                                        </li>
+                                    </ul>
+                                </AnimateHeight>
+                            </li> */}
+
+
                         </ul>
                     </PerfectScrollbar>
                 </div>

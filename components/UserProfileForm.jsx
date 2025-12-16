@@ -94,6 +94,8 @@ const AccountSettingsTabs = () => {
                     address: admin.address || '',
                     avatar: admin.avatar_url || null,
                     website: admin.website || '',
+                    yearly_target: admin.yearly_target || '',
+                    yearly_goal: admin.yearly_goal || '',
                 });
                 if (admin.avatar_url) setAvatarPreview(admin.avatar_url);
 
@@ -165,6 +167,8 @@ const AccountSettingsTabs = () => {
         return !errs.phone;
     };
 
+
+   
     const saveProfileInfo = async () => {
         // normalize & validate phone before sending
         const normalizedPhone = toE164(profile.phone);
@@ -190,6 +194,8 @@ const AccountSettingsTabs = () => {
                     address: nextProfile.address,
                     avatar_url: nextProfile.avatar,
                     website: nextProfile.website,
+                    yearly_target: nextProfile.yearly_target,
+                    yearly_goal: nextProfile.yearly_goal
                 },
                 { headers: { Authorization: `Bearer ${token}` } },
             );
@@ -431,6 +437,30 @@ const AccountSettingsTabs = () => {
                                         inputClass={`form-input w-full ${profileErrors.phone ? '!border-red-500' : ''}`}
                                     />
                                     {profileErrors.phone && <p className="mt-1 text-xs text-red-500">{profileErrors.phone}</p>}
+                                </div>
+                                 <div>
+                                    <label htmlFor="yearly_target">Yearly Target</label>
+                                    <input
+                                        id="yearly_target"
+                                        name='yearly_target'
+                                        className="form-input"
+                                        placeholder="Enter Yearly Target"
+                                        value={profile.yearly_target}
+                                        onChange={(e)=> handleProfileChange('yearly_target',e.target.value)}
+                                        
+                                    />
+                                </div>
+                                 <div>
+                                    <label htmlFor="yearly_goal">Yearly Goal</label>
+                                    <input
+                                        id="yearly_goal"
+                                        className="form-input"
+                                        placeholder="Enter Yearly Goal"
+                                        value={profile.yearly_goal}
+                                        name='yearly_goal'
+                                        onChange={(e)=> handleProfileChange('yearly_goal',e.target.value)}
+                                       
+                                    />
                                 </div>
                                 {/* CHANGE PASSWORD SECTION */}
                                 <div className="mt-8 border-t pt-5">
