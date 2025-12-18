@@ -108,34 +108,67 @@ export default function AgentDashboard() {
         </div>
 
         {/* Milestone Tracker */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col h-full min-h-[180px]">
-          <h3 className="font-bold text-gray-900 text-lg mb-2 flex items-center gap-2">
-            🏆 Next Milestone Tracker
-          </h3>
-          <p className="text-sm text-gray-500 mb-6">Track agent progress towards income milestones</p>
-          
-          <div className="mt-auto">
-            <div className="flex justify-between items-center mb-4">
-               <span className="font-bold text-gray-900">₹25K Milestone</span>
-               <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded">1 agents</span>
-            </div>
+       {/* Milestone Tracker */}
+<div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col h-full min-h-[180px]">
+  <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
+    🏆 Next Milestone Tracker
+  </h3>
+  <p className="text-sm text-gray-500 mb-6">
+    Track agent progress towards income milestones
+  </p>
 
-            <div className="mb-2">
-               <div className="flex justify-between text-sm mb-1">
-                 <span className="font-semibold text-gray-900">{data?.milestone?.name || "No Data"}</span>
-                 <div className="text-right">
-                   <span className="text-gray-500 block text-xs">
-                     {data?.milestone?.progress < 100 ? "Keep pushing!" : "Goal Reached!"}
-                   </span>
-                 </div>
-               </div>
-               <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden flex items-center">
-                 <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${data?.milestone?.progress || 0}%` }}></div>
-               </div>
-               <div className="text-right text-xs text-gray-500 mt-1">{data?.milestone?.progress || 0}%</div>
-            </div>
+  <div className="flex justify-between items-center mb-6">
+    <span className="font-bold text-gray-900">₹25K Milestone</span>
+    <span className="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
+      {Math.min(data?.topAgent?.length || 0, 3)} agents
+    </span>
+  </div>
+
+  {/* Agents List */}
+  <div className="space-y-6">
+    {data?.topAgent?.slice(0, 3).map((agent, index) => {
+      const income = Number(agent.current_income || 0);
+      const target = 25000;
+      const progress = Math.min(Math.round((income / target) * 100), 100);
+      const remaining = Math.max(target - income, 0);
+
+      return (
+        <div key={index}>
+          {/* Name + Remaining */}
+          <div className="flex justify-between items-center text-sm mb-2">
+            <span className="font-semibold text-gray-900">
+              {agent.username}
+            </span>
+            <span className="text-gray-500">
+              ₹{remaining.toLocaleString()} to go
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-600 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Percentage */}
+          <div className="text-right text-xs text-gray-500 mt-1">
+            {progress}%
           </div>
         </div>
+      );
+    })}
+
+    {/* Empty State */}
+    {(!data?.topAgent || data.topAgent.length === 0) && (
+      <div className="text-sm text-gray-400 text-center">
+        No milestone data available
+      </div>
+    )}
+  </div>
+</div>
+
       </div>
 
       {/* --- ROW 3: QUICK ACTIONS --- */}
