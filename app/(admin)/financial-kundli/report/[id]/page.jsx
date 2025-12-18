@@ -195,7 +195,11 @@ export default function FinancialKundliReportPage() {
 
   const ui = useMemo(() => {
     if (!report?.output) return null;
-    const out = JSON.parse(report.output);
+    const out =
+  typeof report.output === 'string'
+    ? JSON.parse(report.output)
+    : report.output;
+
 
     // FIX: Calculate missing scores if Backend didn't provide them
     const scores = out.scores || {};
