@@ -1,14 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import LeadForm from '@/components/forms/leadform'; // Adjust the path based on your structure
 import { IconArrowBack, IconArrowLeft } from '@tabler/icons-react';
 
-const EditLeadPage = ({ params }) => {
-  const { id } = params; // Get the lead ID from the route params
+const EditLeadPage = ( ) => {
+  const { id } = useParams(); // Get the lead ID from the route params
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [leadData, setLeadData] = useState(null);
@@ -24,7 +24,7 @@ const EditLeadPage = ({ params }) => {
       } catch (error) {
         console.error('Error fetching lead:', error);
         Swal.fire('Error', 'Failed to fetch lead data', 'error');
-        router.push('/leads'); // Redirect if lead not found
+        // router.push('/leads'); // Redirect if lead not found
       } finally {
         setLoading(false);
       }
