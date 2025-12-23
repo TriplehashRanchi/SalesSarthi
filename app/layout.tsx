@@ -5,6 +5,8 @@ import { Metadata } from 'next';
 import { Nunito, Righteous } from 'next/font/google';
 import Head from 'next/head';
 import SafeArea from '@/components/SafeArea';
+import { Toaster } from "react-hot-toast";
+
 
 export const metadata: Metadata = {
     title: {
@@ -36,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 className={`${nunito.variable} ${righteous.variable}`}
             >
                   <SafeArea edges={['top','bottom']} className="min-h-screen flex flex-col">
+                    <Toaster position="top-right" />
                 <ProviderComponent>{children}</ProviderComponent>
                 </SafeArea>
             </body>

@@ -4,11 +4,13 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { getAuth } from 'firebase/auth';
 import Link from 'next/link';
 import AddAgentModal from '@/components/admin/AddAgentModal';
+import ImportAgentsModal from '../../../components/agents/ImportAgentsModal';
 
 export default function AgentRagBoard() {
     const [columns, setColumns] = useState({ Red: [], Amber: [], Green: [] });
     // ✅ Fix state naming
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportOpen, setIsImportOpen] = useState(false);
 
     useEffect(() => {
         fetchAgents();
@@ -18,7 +20,7 @@ export default function AgentRagBoard() {
         try {
             const auth = getAuth();
             const user = auth.currentUser;
-            if (!user) return; 
+            if (!user) return;
 
             const token = await user.getIdToken();
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents`, {
@@ -44,12 +46,12 @@ export default function AgentRagBoard() {
             const token = await auth.currentUser?.getIdToken();
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents`, {
-                method: "POST",
+                method: 'POST',
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(agentData)
+                body: JSON.stringify(agentData),
             });
 
             const data = await res.json();
@@ -59,12 +61,52 @@ export default function AgentRagBoard() {
                 setIsModalOpen(false);
                 fetchAgents();
             } else {
-                alert(data.message || "Failed to create agent");
+                alert(data.message || 'Failed to create agent');
             }
         } catch (error) {
-            console.error("Failed to create agent:", error);
-            alert("An error occurred while creating the agent.");
+            console.error('Failed to create agent:', error);
+            alert('An error occurred while creating the agent.');
         }
+    };
+
+    const exportAgents = () => {
+        // Flatten all columns into one list
+        const allAgents = [...columns.Red, ...columns.Amber, ...columns.Green];
+
+        if (allAgents.length === 0) {
+            alert('No agents to export');
+            return;
+        }
+
+        // Define CSV headers
+        const headers = ['Username', 'Email', 'Phone', 'Employment Type', 'RAG Status', 'Last Active Date', 'Total Leads', 'Total Meetings', 'Total Sales'];
+
+        // Map data to CSV rows
+        const rows = allAgents.map((agent) => [
+            agent.username || '',
+            agent.email || '',
+            agent.phone || '',
+            agent.employment_type || '',
+            agent.rag_status || 'Green',
+            agent.last_active_date || '',
+            agent.total_leads || 0,
+            agent.total_meetings || 0,
+            agent.total_sales || 0,
+        ]);
+
+        // Convert to CSV string
+        const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+        // Create downloadable file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'agents_export.csv';
+        link.click();
+
+        URL.revokeObjectURL(url);
     };
 
     const onDragEnd = async (result) => {
@@ -112,13 +154,13 @@ export default function AgentRagBoard() {
                 </div>
 
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                    <button onClick={exportAgents} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                         Export
                     </button>
-                    
+
                     {/* ✅ Updated Button to use correct State */}
                     <button
                         onClick={() => setIsModalOpen(true)}
@@ -128,12 +170,14 @@ export default function AgentRagBoard() {
                         New Agent
                     </button>
 
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
-                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
+                    <button
+                        onClick={() => setIsImportOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    >
                         Import
                     </button>
+
+                    <ImportAgentsModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
                 </div>
             </div>
 
@@ -145,13 +189,9 @@ export default function AgentRagBoard() {
                     <RagColumn title="GREEN" id="Green" color="green" agents={columns.Green} />
                 </div>
             </DragDropContext>
-            
+
             {/* ✅ Updated Modal Implementation */}
-            <AddAgentModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onSave={handleCreateAgent} 
-            />
+            <AddAgentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleCreateAgent} />
         </div>
     );
 }
@@ -254,16 +294,9 @@ const AgentCard = ({ agent, currentColumnId }) => {
             </div>
 
             <div className="flex gap-3">
-                <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Call
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Message
-                </button>
-                <Link 
-                    href={`/agents/${agent.id}`} 
-                    className="w-10 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition hover:text-blue-600"
-                >
+                <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Call</button>
+                <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Message</button>
+                <Link href={`/agents/${agent.id}`} className="w-10 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition hover:text-blue-600">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="9 18 15 12 9 6" />
                     </svg>

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export default function AddAgentModal({ isOpen, onClose, onSave }) {
     const [formData, setFormData] = useState({
@@ -20,7 +21,6 @@ export default function AddAgentModal({ isOpen, onClose, onSave }) {
     const [isVisible, setIsVisible] = useState(false);
     const [errors, setErrors] = useState({});
 
-
     // Handle animation mounting
     useEffect(() => {
         if (isOpen) setIsVisible(true);
@@ -34,28 +34,33 @@ export default function AddAgentModal({ isOpen, onClose, onSave }) {
     };
 
     const handleSubmit = async () => {
-  if (!formData.first_name || !formData.email || !formData.password) {
-    alert("Please fill in First Name, Email, and Password.");
-    return;
-  }
+        if (!formData.first_name || !formData.email || !formData.password) {
+            toast.error('Please fill in First Name, Email, and Password.');
+            return;
+        }
 
-  // ✅ Phone validation (10 digits only)
-  if (!formData.phone || formData.phone.length !== 10) {
-    alert("Phone number must be exactly 10 digits");
-    return;
-  }
+        if (!formData.phone || formData.phone.length !== 10) {
+            setErrors({ phone: 'Phone number must be exactly 10 digits' });
+            return;
+        }
 
-  setLoading(true);
+        setLoading(true);
 
-  await onSave({
-    ...formData,
-    phone: `+91${formData.phone}`, // ✅ auto add +91
-  });
+        try {
+            await onSave({
+                ...formData,
+                phone: `+91${formData.phone}`,
+            });
 
-  setLoading(false);
-  onClose();
-};
+            toast.success('Agent created successfully ✅');
 
+            onClose();
+        } catch (error) {
+            toast.error('Failed to create agent. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handlePhoneChange = (e) => {
         let value = e.target.value.replace(/\D/g, ''); // only digits
@@ -81,8 +86,6 @@ export default function AddAgentModal({ isOpen, onClose, onSave }) {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
-    
 
     if (!isVisible && !isOpen) return null;
 

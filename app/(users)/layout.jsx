@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import UserSide from '@/components/layouts/UserSide';
+import { Toaster } from "react-hot-toast";
 
 const DefaultLayout = ({ children }) => {
     const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ const DefaultLayout = ({ children }) => {
         <>
             {/* BEGIN MAIN CONTAINER */}
             <div className="relative">
+                <Toaster position="top-right" />
                 <Overlay />
                 <ScrollToTop />
 
