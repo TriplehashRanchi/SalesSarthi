@@ -281,14 +281,116 @@ export default function KundliReportPage() {
         {activeTab === 'dashboard' && (
           <div className="animate-fadeIn space-y-6">
 
+
+        {/* =======================
+            IDENTITY SNAPSHOT
+        ======================= */}
+        <div className="bg-[#0B0F19]/60 border border-white/5 rounded-[2rem] p-6 backdrop-blur-md shadow-2xl space-y-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">
+            Kundli Identity
+          </p>
+
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white leading-tight">
+                {report.identity.name}
+              </h2>
+              <p className="text-sm text-slate-400 mt-1">
+                {report.identity.type} Advisor · {report.identity.employment_type}
+              </p>
+            </div>
+
+            <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-center">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                Experience
+              </p>
+              <p className="text-lg font-black text-indigo-300">
+                {report.identity.experience} yrs
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/5">
+            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">
+                Age
+              </p>
+              <p className="text-base font-bold text-white">
+                {report.identity.age}
+              </p>
+            </div>
+
+            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">
+                City
+              </p>
+              <p className="text-base font-bold text-white">
+                {report.identity.city}
+              </p>
+            </div>
+
+            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+              <p className="text-[10px] uppercase tracking-widest text-slate-500">
+                Generated
+              </p>
+              <p className="text-xs font-semibold text-white">
+                {new Date(report.identity.date).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
             {/* RADAR CHART */}
-            <div className="bg-[#0B0F19]/60 border border-white/5 rounded-[2rem] p-4 h-80 relative backdrop-blur-md shadow-2xl">
+            <div className="bg-[#0B0F19]/60 border border-white/5 rounded-[2rem] p-4 relative backdrop-blur-md shadow-2xl">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.05)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
-                  <Radar name="Score" dataKey="A" stroke="#c084fc" strokeWidth={3} fill="#c084fc" fillOpacity={0.25} />
-                </RadarChart>
+                {/* GRAHA STRENGTH BARS */}
+                  <div className="bg-[#0B0F19]/60 border border-white/5 rounded-[2rem] p-6 space-y-5 backdrop-blur-md shadow-2xl">
+                    <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-2">
+                      Business Energy Levels
+                    </h3>
+
+                    {chartData.map((g) => {
+                      const isStrong = g.A >= 70;
+                      const isMedium = g.A >= 40 && g.A < 70;
+
+                      return (
+                        <div key={g.subject}>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-sm font-semibold text-slate-200">
+                              {g.subject}
+                            </span>
+                            <span
+                              className={`text-sm font-bold ${
+                                isStrong
+                                  ? 'text-green-400'
+                                  : isMedium
+                                  ? 'text-yellow-400'
+                                  : 'text-red-400'
+                              }`}
+                            >
+                              {g.A}/100
+                            </span>
+                          </div>
+
+                          <div className="w-full h-3 rounded-full bg-white/10 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                isStrong
+                                  ? 'bg-green-400'
+                                  : isMedium
+                                  ? 'bg-yellow-400'
+                                  : 'bg-red-400'
+                              }`}
+                              style={{ width: `${g.A}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <p className="text-[11px] text-slate-500 mt-3 italic">
+                      Green = Strong • Yellow = Needs Focus • Red = Blockage
+                    </p>
+                  </div>
               </ResponsiveContainer>
               <div className="absolute bottom-3 right-5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Graha Mandal</div>
             </div>

@@ -172,18 +172,28 @@ export default function BusinessKundliWizard() {
 
   // --- SUBMIT ---
   const handleSubmit = async () => {
-    setStep(10); // Show Processing Screen
+    if (![3, 4, 5, 6, 7, 8, 9].every(validateStep)) {
+      showNotification({
+        title: 'Form Incomplete',
+        message: 'Please complete all required steps before submitting.',
+        color: 'red',
+      });
+      return;
+    }
+
+    setStep(10);
     setLoading(true);
 
+
     try {
-       const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken();
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
       console.log('Submitting Business Kundli Data:', formData); // Debug log
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kundli/submit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' , Authorization: `Bearer ${token}`,},
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, },
         body: JSON.stringify(formData)
-      }); 
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -200,6 +210,41 @@ export default function BusinessKundliWizard() {
 
   // --- UI COMPONENTS ---
   // UI helpers are defined above the component to keep identity stable.
+
+  const validateStep = (currentStep) => {
+  switch (currentStep) {
+    case 3: {
+      const { name, age, city, experience_years } = formData.personal;
+      return name && age && city && experience_years;
+    }
+
+    case 4: {
+      const { income_last_30, income_last_90, avg_case_size, active_clients } = formData.business;
+      return income_last_30 && income_last_90 && avg_case_size && active_clients;
+    }
+
+    case 5:
+      return formData.success_formula.hours_per_week > 0;
+
+    case 6: {
+      const { leads_90_days, meetings_done, sales_completed } = formData.metrics;
+      return leads_90_days && meetings_done && sales_completed;
+    }
+
+    case 7:
+      return true; // optional tools screen
+
+    case 8:
+      return true; // mindset sliders always have defaults
+
+    case 9:
+      return !!formData.tripwire;
+
+    default:
+      return true;
+  }
+};
+
 
   // --- SCREEN RENDERER ---
   const renderScreen = () => {
@@ -570,7 +615,18 @@ export default function BusinessKundliWizard() {
         <div className=" bottom-0 left-0 right-0 lg:left-64 lg:right-6 lg:bottom-4 lg:rounded-2xl p-4  z-20 lg:w-auto">
           <div className="max-w-6xl mx-auto lg:max-w-none">
             <button
-              onClick={() => (step < 9 ? setStep(s => s + 1) : handleSubmit())}
+              onClick={() => {
+                if (!validateStep(step)) {
+                  showNotification({
+                    title: 'Incomplete Step',
+                    message: 'Please fill all required fields before proceeding.',
+                    color: 'red',
+                  });
+                  return;
+                }
+
+                step < 9 ? setStep(s => s + 1) : handleSubmit();
+              }}
               disabled={loading}
               className="w-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400 hover:from-indigo-400 hover:via-fuchsia-400 hover:to-cyan-300 text-white font-bold py-4 rounded-2xl shadow-[0_18px_60px_rgba(99,102,241,0.45)] flex items-center justify-center gap-2 active:scale-[0.99] transition-transform disabled:opacity-70"
             >
