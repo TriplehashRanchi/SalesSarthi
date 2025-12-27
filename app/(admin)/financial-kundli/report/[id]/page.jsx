@@ -411,6 +411,8 @@ const FinancialKundliSeal = ({ ui }) => {
     const [loading, setLoading] = useState(true);
     const [report, setReport] = useState(null);
 
+    
+
     useEffect(() => {
       const load = async () => {
         try {
@@ -444,6 +446,29 @@ const FinancialKundliSeal = ({ ui }) => {
         snapshot: out.financial_snapshot || {}
       };
     }, [report]);
+
+    const parseAiReport = (input) => {
+  if (!input) return null
+
+  if (typeof input === 'object') return input
+
+  if (typeof input === 'string') {
+    try {
+      return JSON.parse(input)
+    } catch (e) {
+      console.error('Invalid ai_report JSON', e)
+      return null
+    }
+  }
+
+  return null
+}
+
+const grahaData = useMemo(
+  () => parseAiReport(report?.ai_report),
+  [report]
+)
+
 
     if (loading || !ui) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center text-stone-400">Loading Analysis...</div>;
 
@@ -595,7 +620,8 @@ const FinancialKundliSeal = ({ ui }) => {
                 </section>
             </div>
           </div>
-          <GrahaReport data={JSON.parse(report.ai_report)} />
+         {grahaData && <GrahaReport data={grahaData} />}
+
         </main>
 
         <div className="hidden print:block text-center mt-12 pt-8 border-t border-stone-200 text-[10px] text-stone-300 uppercase tracking-widest">
