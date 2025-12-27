@@ -469,6 +469,23 @@ const grahaData = useMemo(
   [report]
 )
 
+const reportData = useMemo(() => {
+  if (!report) return null;
+
+  try {
+    return {
+      ...report,
+      // Check if it's a string, if so parse it. Otherwise use as is.
+      input: typeof report.input === 'string' ? JSON.parse(report.input) : report.input,
+      output: typeof report.output === 'string' ? JSON.parse(report.output) : report.output,
+      ai_report: typeof report.ai_report === 'string' ? JSON.parse(report.ai_report) : report.ai_report,
+    };
+  } catch (error) {
+    console.error("Failed to parse report JSON strings", error);
+    return report;
+  }
+}, [report]);
+
 
     if (loading || !ui) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center text-stone-400">Loading Analysis...</div>;
 
@@ -480,7 +497,7 @@ const grahaData = useMemo(
           <button onClick={() => router.back()} className="flex items-center space-x-2 text-stone-500 hover:text-stone-900 transition-colors">
             <Icons.ArrowLeft /> <span className="text-sm font-medium">Back</span>
           </button>
-          <button onClick={() => generateFinancialReport(ui)} className="flex items-center space-x-2 bg-stone-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 shadow-xl shadow-stone-200">
+          <button onClick={() => generateFinancialReport(reportData)} className="flex items-center space-x-2 bg-stone-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 shadow-xl shadow-stone-200">
             <Icons.Print /> <span>Download Report</span>
           </button>
         </nav>
