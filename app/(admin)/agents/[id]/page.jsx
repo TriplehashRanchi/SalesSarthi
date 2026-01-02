@@ -5,13 +5,16 @@ import { getAuth } from 'firebase/auth';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import AddIncomeModal from '@/components/admin/AddIncomeModal';
 import { useParams, useRouter } from 'next/navigation';
+import AddActivityModal from '@/components/admin/AddActivityModal';
+import { Plus } from 'lucide-react';
 
 export default function AgentDetails() {
     const { id } = useParams();
-    const router = useRouter(); 
+    const router = useRouter();
     const [data, setData] = useState(null);
     const [activeTab, setActiveTab] = useState('Overview');
     const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+    const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
 
     // 1. Fetch Agent Data
     const fetchAgentData = async () => {
@@ -20,7 +23,7 @@ export default function AgentDetails() {
             const user = auth.currentUser;
             // Note: In a real app, ensure user is loaded before fetching
             // For now, we assume the token logic handles itself or use a hardcoded fetch for testing
-            if (!user) return; 
+            if (!user) return;
 
             const token = await user.getIdToken();
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents/${id}`, {
@@ -37,10 +40,10 @@ export default function AgentDetails() {
     };
 
     useEffect(() => {
-        // If you are testing with the static JSON provided in the prompt, 
+        // If you are testing with the static JSON provided in the prompt,
         // you can uncomment the line below to set data directly for testing:
-        // setData(YOUR_JSON_OBJECT_HERE); 
-        
+        // setData(YOUR_JSON_OBJECT_HERE);
+
         const timer = setTimeout(fetchAgentData, 500);
         return () => clearTimeout(timer);
     }, [id]);
@@ -62,14 +65,40 @@ export default function AgentDetails() {
         }
     };
 
-    if (!data) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-            <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-slate-500 font-medium animate-pulse">Loading Profile...</p>
+    const handleAddActivity = async (payload) => {
+        try {
+            const auth = getAuth();
+            const token = await auth.currentUser.getIdToken();
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    agent_id: id,
+                    ...payload,
+                    days_since_last_activity: agent.last_active_date ? Math.floor((new Date(payload.activity_date) - new Date(agent.last_active_date)) / (1000 * 60 * 60 * 24)) : 0,
+                }),
+            });
+
+            setIsActivityModalOpen(false);
+            fetchAgentData();
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    if (!data)
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 font-medium animate-pulse">Loading Profile...</p>
+                </div>
             </div>
-        </div>
-    );
+        );
 
     // Destructure with safe defaults
     const { agent = {}, income = [], activity = [] } = data;
@@ -83,27 +112,22 @@ export default function AgentDetails() {
     const calculatedSales = activity.reduce((acc, curr) => acc + (Number(curr.sales) || 0), 0);
 
     // 2. Prepare Chart Data
-    const chartData = income?.length > 0
+    const chartData =
+        income?.length > 0
             ? [...income].reverse().map((i) => ({
                   name: new Date(i.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
                   income: Number(i.income),
-                  fullDate: i.month
+                  fullDate: i.month,
               }))
             : []; // Handle empty income array safely
 
     // 3. Calculate Income Stats safely
-    const avgIncome = income?.length 
-        ? Math.round(income.reduce((a, b) => a + Number(b.income), 0) / income.length) 
-        : 0;
-    
-    const maxIncome = income?.length 
-        ? Math.max(...income.map((i) => Number(i.income))) 
-        : 0;
+    const avgIncome = income?.length ? Math.round(income.reduce((a, b) => a + Number(b.income), 0) / income.length) : 0;
+
+    const maxIncome = income?.length ? Math.max(...income.map((i) => Number(i.income))) : 0;
 
     // 4. Calculate Inactive Days
-    const daysInactive = agent.last_active_date 
-        ? Math.floor((new Date() - new Date(agent.last_active_date)) / (1000 * 60 * 60 * 24)) 
-        : 0;
+    const daysInactive = agent.last_active_date ? Math.floor((new Date() - new Date(agent.last_active_date)) / (1000 * 60 * 60 * 24)) : 0;
 
     const getBadgeColor = (status) => {
         if (status === 'Red') return 'bg-red-50 text-red-700 border-red-200';
@@ -114,7 +138,6 @@ export default function AgentDetails() {
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
-                
                 {/* --- HEADER --- */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-start gap-4">
@@ -124,17 +147,17 @@ export default function AgentDetails() {
                         <div>
                             <div className="flex items-center gap-3">
                                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{agent.username || 'Unknown Agent'}</h1>
-                                <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase border ${getBadgeColor(agent.rag_status)}`}>
-                                    {agent.rag_status || 'Green'}
-                                </span>
+                                <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase border ${getBadgeColor(agent.rag_status)}`}>{agent.rag_status || 'Green'}</span>
                             </div>
                             <div className="flex items-center gap-4 mt-1 text-slate-500 text-sm">
                                 <span className="flex items-center gap-1">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                    </svg>
                                     {agent.phone || 'No Phone'}
                                 </span>
                                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span>ID: #{id ? id.toString().slice(0,6) : '---'}</span>
+                                <span>ID: #{id ? id.toString().slice(0, 6) : '---'}</span>
                             </div>
                         </div>
                     </div>
@@ -159,30 +182,51 @@ export default function AgentDetails() {
                 {/* ======================= TAB 1: OVERVIEW ======================= */}
                 {activeTab === 'Overview' && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-                        
                         {/* Quick Stats Row */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <StatCard 
-                                label="Inactive" 
-                                value={daysInactive} 
-                                sub="days" 
-                                icon={<svg width="20" height="20" className="text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>}
+                            <StatCard
+                                label="Inactive"
+                                value={daysInactive}
+                                sub="days"
+                                icon={
+                                    <svg width="20" height="20" className="text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                }
                             />
                             {/* Uses Calculated Values now */}
-                            <StatCard 
-                                label="Meetings (Total)" 
-                                value={calculatedMeetings} 
-                                icon={<svg width="20" height="20" className="text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>}
+                            <StatCard
+                                label="Meetings (Total)"
+                                value={calculatedMeetings}
+                                icon={
+                                    <svg width="20" height="20" className="text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                }
                             />
-                            <StatCard 
-                                label="Leads (Total)" 
-                                value={calculatedLeads} 
-                                icon={<svg width="20" height="20" className="text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>}
+                            <StatCard
+                                label="Leads (Total)"
+                                value={calculatedLeads}
+                                icon={
+                                    <svg width="20" height="20" className="text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                }
                             />
-                            <StatCard 
-                                label="Sales (Total)" 
-                                value={calculatedSales} 
-                                icon={<svg width="20" height="20" className="text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>}
+                            <StatCard
+                                label="Sales (Total)"
+                                value={calculatedSales}
+                                icon={
+                                    <svg width="20" height="20" className="text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                }
                             />
                         </div>
 
@@ -191,7 +235,10 @@ export default function AgentDetails() {
                             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-full">
                                 <h3 className="font-bold text-lg text-slate-900 mb-6 flex items-center gap-2">
                                     <span className="bg-blue-100 text-blue-600 p-1 rounded">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
                                     </span>
                                     Details
                                 </h3>
@@ -217,11 +264,14 @@ export default function AgentDetails() {
                                         <h3 className="font-bold text-lg text-slate-900">Income Progression</h3>
                                         <p className="text-sm text-slate-500">Monthly earnings overview</p>
                                     </div>
-                                    <button 
-                                        onClick={() => setIsIncomeModalOpen(true)} 
+                                    <button
+                                        onClick={() => setIsIncomeModalOpen(true)}
                                         className="bg-white border border-slate-200 text-slate-700 hover:border-blue-300 hover:text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm flex items-center gap-2"
                                     >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
                                         Add Record
                                     </button>
                                 </div>
@@ -251,19 +301,19 @@ export default function AgentDetails() {
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }} dy={10} />
                                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }} tickFormatter={(val) => `₹${val / 1000}k`} />
-                                                <Tooltip 
+                                                <Tooltip
                                                     contentStyle={{ backgroundColor: '#1E293B', borderRadius: '8px', border: 'none', color: '#fff' }}
                                                     itemStyle={{ color: '#fff' }}
                                                     formatter={(value) => [`₹${value.toLocaleString()}`, 'Income']}
                                                     cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
                                                 />
-                                                <Area 
-                                                    type="monotone" 
-                                                    dataKey="income" 
-                                                    stroke="#2563EB" 
-                                                    strokeWidth={3} 
-                                                    fillOpacity={1} 
-                                                    fill="url(#colorIncome)" 
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="income"
+                                                    stroke="#2563EB"
+                                                    strokeWidth={3}
+                                                    fillOpacity={1}
+                                                    fill="url(#colorIncome)"
                                                     activeDot={{ r: 6, strokeWidth: 0, fill: '#2563EB' }}
                                                 />
                                             </AreaChart>
@@ -284,15 +334,17 @@ export default function AgentDetails() {
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-4xl mx-auto space-y-6">
                         {/* Plan Summary Banner */}
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-6 rounded-2xl flex gap-4 items-start">
-                             <div className="bg-white p-2 rounded-lg shadow-sm text-blue-600">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                             </div>
-                             <div>
+                            <div className="bg-white p-2 rounded-lg shadow-sm text-blue-600">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                            </div>
+                            <div>
                                 <h3 className="font-bold text-lg text-blue-900">Recommended Strategy</h3>
-                                <p className="text-blue-800/80 mt-1 leading-relaxed">
-                                    {agent.notes || "Establish a micro-plan and conduct joint field visits to rebuild momentum."}
-                                </p>
-                             </div>
+                                <p className="text-blue-800/80 mt-1 leading-relaxed">{agent.notes || 'Establish a micro-plan and conduct joint field visits to rebuild momentum.'}</p>
+                            </div>
                         </div>
 
                         {/* 30-Day Goals Card */}
@@ -323,15 +375,23 @@ export default function AgentDetails() {
                                 <h3 className="font-bold text-xl text-slate-900">Activity Timeline</h3>
                                 <p className="text-slate-500 text-sm">Chronological history of interactions and stats</p>
                             </div>
-                            <button className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center gap-2">
-                                Log Activity
+                            <button
+                                onClick={() => setIsActivityModalOpen(true)}
+                                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center gap-2"
+                            >
+                                <Plus className='w-4 h-4' /> Log Activity
                             </button>
                         </div>
 
                         {!activity || activity.length === 0 ? (
                             <div className="flex flex-col items-center justify-center text-center py-20 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3">
-                                    <svg width="20" height="20" className="text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <svg width="20" height="20" className="text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
                                 </div>
                                 <div className="text-slate-900 font-medium">No activity logged yet</div>
                                 <div className="text-slate-500 text-sm">Start by logging today's outreach</div>
@@ -340,24 +400,26 @@ export default function AgentDetails() {
                             <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
                                 {activity.map((act, index) => (
                                     <div key={act.id || index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active pb-8 last:pb-0">
-                                        
                                         {/* Icon/Dot */}
                                         <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-50 group-[.is-active]:bg-blue-600 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                                             <svg className="fill-current" xmlns="http://www.w3.org/2000/svg" width="12" height="10">
-                                                <path fillRule="nonzero" d="M10.422 1.257 4.655 7.025 2.553 4.923A.916.916 0 0 0 1.257 6.22l2.75 2.75a.916.916 0 0 0 1.296 0l6.415-6.416a.916.916 0 0 0-1.296-1.296Z" />
+                                                <path
+                                                    fillRule="nonzero"
+                                                    d="M10.422 1.257 4.655 7.025 2.553 4.923A.916.916 0 0 0 1.257 6.22l2.75 2.75a.916.916 0 0 0 1.296 0l6.415-6.416a.916.916 0 0 0-1.296-1.296Z"
+                                                />
                                             </svg>
                                         </div>
-                                        
+
                                         {/* Content Card */}
                                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                             <div className="flex items-center justify-between space-x-2 mb-2">
                                                 <div className="font-bold text-slate-900">Activity Report</div>
-                                                <time className="font-mono text-xs text-slate-500">
-                                                    {act.activity_date ? new Date(act.activity_date).toLocaleDateString() : 'Unknown Date'}
-                                                </time>
+                                                <time className="font-mono text-xs text-slate-500">{act.activity_date ? new Date(act.activity_date).toLocaleDateString() : 'Unknown Date'}</time>
                                             </div>
                                             <div className="text-slate-600 text-sm">
-                                                Logged stats: <span className="font-semibold text-slate-800">{act.meetings || 0} Meetings</span>, <span className="font-semibold text-slate-800">{act.leads || 0} Leads</span>, <span className="font-semibold text-slate-800">{act.sales || 0} Sales</span>.
+                                                Logged stats: <span className="font-semibold text-slate-800">{act.meetings || 0} Meetings</span>,{' '}
+                                                <span className="font-semibold text-slate-800">{act.leads || 0} Leads</span>,{' '}
+                                                <span className="font-semibold text-slate-800">{act.sales || 0} Sales</span>.
                                             </div>
                                         </div>
                                     </div>
@@ -368,6 +430,8 @@ export default function AgentDetails() {
                 )}
 
                 {/* --- MODAL --- */}
+                <AddActivityModal isOpen={isActivityModalOpen} onClose={() => setIsActivityModalOpen(false)} onSave={handleAddActivity} />
+
                 <AddIncomeModal isOpen={isIncomeModalOpen} onClose={() => setIsIncomeModalOpen(false)} onSave={handleAddIncome} />
             </div>
         </div>
@@ -381,9 +445,11 @@ function ActionButton({ icon, isDelete, label }) {
         <button
             title={label}
             className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm
-            ${isDelete 
-                ? 'border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-200' 
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200'}`}
+            ${
+                isDelete
+                    ? 'border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-200'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200'
+            }`}
         >
             {icon}
         </button>
@@ -392,18 +458,9 @@ function ActionButton({ icon, isDelete, label }) {
 
 function TabButton({ label, active, onClick }) {
     return (
-        <button
-            onClick={onClick}
-            className={`pb-4 text-sm font-medium transition-all relative ${
-                active 
-                ? 'text-blue-600 font-bold' 
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-        >
+        <button onClick={onClick} className={`pb-4 text-sm font-medium transition-all relative ${active ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}>
             {label}
-            {active && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full shadow-[0_-2px_6px_rgba(37,99,235,0.3)]"></span>
-            )}
+            {active && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full shadow-[0_-2px_6px_rgba(37,99,235,0.3)]"></span>}
         </button>
     );
 }
@@ -446,11 +503,18 @@ function CheckItem({ text, isLast }) {
 
 // --- ICONS (SVG) ---
 const PhoneIcon = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+    </svg>
 );
 const MessageIcon = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+    </svg>
 );
 const DeleteIcon = () => (
-    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    </svg>
 );
