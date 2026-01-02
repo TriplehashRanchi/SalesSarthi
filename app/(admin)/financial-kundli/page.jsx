@@ -335,7 +335,7 @@ useEffect(() => {
                     <InputGroup label="Phone" value={data.client.phone} onChange={e => update('client','phone',e.target.value)} />
                     <InputGroup label="DOB" type="date" value={data.client.dob} onChange={e => update('client','dob',e.target.value)} />
                     <InputGroup label="Current Age" type="number" value={data.client.age} onChange={e => update('client','age',e.target.value)} />
-                    <InputGroup label="City" value={data.client.city} onChange={e => update('client','city',e.target.value)} />
+                    <InputGroup label="Place/City of Birth" value={data.client.city} onChange={e => update('client','city',e.target.value)} />
                     <InputGroup label="retirement Age" type="number" value={data.client.wanted_retirement_age} onChange={e => update('client','wanted_retirement_age',e.target.value)} />
                     <InputGroup label="Family Members" type="number" value={data.client.family_members} onChange={e => update('client','family_members',e.target.value)} />
                   </div>
