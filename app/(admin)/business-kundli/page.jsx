@@ -231,21 +231,21 @@ export default function BusinessKundliWizard() {
     });
   };
 
-  // const validateStep = () => {
-  //   if (step === 1) {
-  //     if (!formData.identity.name || !formData.identity.age || !formData.identity.city) {
-  //       showNotification({ message: 'Please fill all required fields (*)', color: 'red' });
-  //       return false;
-  //     }
-  //   }
-  //   if (step === 2) {
-  //     if (!formData.birthday.dob || !formData.birthday.tob || !formData.birthday.pob) {
-  //       showNotification({ message: 'Please fill all birth details', color: 'red' });
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // };
+  const validateStep = () => {
+    if (step === 1) {
+      if (!formData.identity.name || !formData.identity.age || !formData.identity.city) {
+        showNotification({ message: 'Please fill all required fields (*)', color: 'red' });
+        return false;
+      }
+    }
+    if (step === 2) {
+      if (!formData.birthday.dob || !formData.birthday.tob || !formData.birthday.pob) {
+        showNotification({ message: 'Please fill all birth details', color: 'red' });
+        return false;
+      }
+    }
+    return true;
+  };
 
   const handleNext = () => {
     if (validateStep()) {
@@ -287,20 +287,20 @@ export default function BusinessKundliWizard() {
       
 
       console.log('Submitting Business Kundli Data:', formData); // Debug log
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kundli/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, },
-        body: JSON.stringify(formData)
-      });
-      const result = await response.json();
+      // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kundli/submit`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, },
+      //   body: JSON.stringify(formData)
+      // });
+      // const result = await response.json();
 
-      if (result.success) {
-        setTimeout(() => {
-          router.push(`/business-kundli/report?id=${result.reportId}`);
-        }, 2000);
-      } else {
-        throw new Error(result.message || 'Failed');
-      }
+      // if (result.success) {
+      //   setTimeout(() => {
+      //     router.push(`/business-kundli/report?id=${result.reportId}`);
+      //   }, 2000);
+      // } else {
+      //   throw new Error(result.message || 'Failed');
+      // }
     } catch (e) {
       setStep(11); 
       setLoading(false);
@@ -312,39 +312,39 @@ export default function BusinessKundliWizard() {
   // --- UI COMPONENTS ---
   // UI helpers are defined above the component to keep identity stable.
 
-  const validateStep = (currentStep) => {
-  switch (currentStep) {
-    case 3: {
-      const { name, age, city, experience_years } = formData.personal;
-      return name && age && city && experience_years;
-    }
+//   const validateStep = (currentStep) => {
+//   switch (currentStep) {
+//     case 3: {
+//       const { name, age, city, experience_years } = formData.personal;
+//       return name && age && city && experience_years;
+//     }
 
-    case 4: {
-      const { income_last_30, income_last_90, avg_case_size, active_clients } = formData.business;
-      return income_last_30 && income_last_90 && avg_case_size && active_clients;
-    }
+//     case 4: {
+//       const { income_last_30, income_last_90, avg_case_size, active_clients } = formData.business;
+//       return income_last_30 && income_last_90 && avg_case_size && active_clients;
+//     }
 
-    case 5:
-      return formData.success_formula.hours_per_week > 0;
+//     case 5:
+//       return formData.success_formula.hours_per_week > 0;
 
-    case 6: {
-      const { leads_90_days, meetings_done, sales_completed } = formData.metrics;
-      return leads_90_days && meetings_done && sales_completed;
-    }
+//     case 6: {
+//       const { leads_90_days, meetings_done, sales_completed } = formData.metrics;
+//       return leads_90_days && meetings_done && sales_completed;
+//     }
 
-    case 7:
-      return true; // optional tools screen
+//     case 7:
+//       return true; // optional tools screen
 
-    case 8:
-      return true; // mindset sliders always have defaults
+//     case 8:
+//       return true; // mindset sliders always have defaults
 
-    case 9:
-      return !!formData.tripwire;
+//     case 9:
+//       return !!formData.tripwire;
 
-    default:
-      return true;
-  }
-};
+//     default:
+//       return true;
+//   }
+// };
 
 
   const renderScreen = () => {
@@ -662,7 +662,7 @@ export default function BusinessKundliWizard() {
           </div>
 
         )}
-           {step < 10 && (
+           {/* {step < 10 && (
         <div className=" bottom-0 left-0 right-0 lg:left-64 lg:right-6 lg:bottom-4 lg:rounded-2xl p-4  z-20 lg:w-auto">
           <div className="max-w-6xl mx-auto lg:max-w-none">
             <button
@@ -686,7 +686,7 @@ export default function BusinessKundliWizard() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
         </div>
 
       <style jsx global>{`
