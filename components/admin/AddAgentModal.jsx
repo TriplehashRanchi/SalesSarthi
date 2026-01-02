@@ -9,9 +9,18 @@ export default function AddAgentModal({ isOpen, onClose, onSave }) {
         email: '',
         phone: '',
         password: '',
+        gender: '',
         employment_type: 'Full-time',
+        occupation: '',
+        license_date: '',
+        anniversary_date: '',
         date_of_birth: '',
-        last_active_date: new Date().toISOString().split('T')[0], // Default to today
+        income_target: '',
+        income_target_type: 'MONTHLY',
+        notes: '',
+        consent_given: false,
+
+        last_active_date: new Date().toISOString().split('T')[0],
         leads: 0,
         meetings: 0,
         sales: 0,
@@ -142,6 +151,50 @@ export default function AddAgentModal({ isOpen, onClose, onSave }) {
                             <Input label="Date of Birth" name="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleChange} />
                             <Input label="Password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} />
                         </div>
+                    </div>
+                    <div className="space-y-5">
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Professional Details</h3>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <Select label="Gender" name="gender" value={formData.gender} onChange={handleChange} options={['', 'Male', 'Female', 'Other']} />
+
+                            <Input label="Occupation" name="occupation" placeholder="Sales Executive" value={formData.occupation} onChange={handleChange} />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <Input label="License / Associate Date" name="license_date" type="date" value={formData.license_date} onChange={handleChange} />
+
+                            <Input label="Anniversary Date" name="anniversary_date" type="date" value={formData.anniversary_date} onChange={handleChange} />
+                        </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 space-y-4">
+                        <h3 className="text-sm font-bold text-gray-800">Income Target</h3>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <Input label="Target Amount" name="income_target" type="number" placeholder="50000" value={formData.income_target} onChange={handleChange} bg="bg-white" />
+
+                            <Select label="Target Type" name="income_target_type" value={formData.income_target_type} onChange={handleChange} options={['MONTHLY', 'YEARLY']} />
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Notes & Consent</h3>
+
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-semibold text-gray-700 ml-1">Internal Notes</label>
+                            <textarea
+                                name="notes"
+                                value={formData.notes}
+                                onChange={handleChange}
+                                rows={3}
+                                placeholder="Any important remarks about this agent"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none transition-all focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                            />
+                        </div>
+
+                        <label className="flex items-start gap-3 text-sm text-gray-700">
+                            <input type="checkbox" checked={formData.consent_given} onChange={(e) => setFormData({ ...formData, consent_given: e.target.checked })} className="mt-1 accent-blue-600" />
+                            <span>I confirm that the agent has given consent to store and process their data.</span>
+                        </label>
                     </div>
 
                     {/* Section 2: Initial Metrics (Visual separation) */}

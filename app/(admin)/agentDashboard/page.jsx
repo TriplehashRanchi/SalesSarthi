@@ -9,6 +9,9 @@ export default function AgentDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // State to toggle between Dashboard and All Agents view
+    const [view, setView] = useState('dashboard'); // 'dashboard' | 'allAgents'
 
     const fetchData = async () => {
         try {
@@ -33,9 +36,12 @@ export default function AgentDashboard() {
     };
 
     useEffect(() => {
-        const timer = setTimeout(fetchData, 800);
-        return () => clearTimeout(timer);
-    }, []);
+        // Only fetch dashboard data if we are in dashboard view
+        if (view === 'dashboard') {
+            const timer = setTimeout(fetchData, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [view]);
 
     const handleAgentCreated = async (formData) => {
         const auth = getAuth();
@@ -54,10 +60,19 @@ export default function AgentDashboard() {
         fetchData();
     };
 
+    // --- CONDITIONAL RENDER: ALL AGENTS VIEW ---
+    if (view === 'allAgents') {
+        return (
+            <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+                    <AllAgentsView onBack={() => setView('dashboard')} />
+                </div>
+            </div>
+        );
+    }
 
-
-
-    if (loading)
+    // --- LOADING STATE ---
+    if (loading && !data)
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="flex flex-col items-center gap-3">
@@ -69,29 +84,46 @@ export default function AgentDashboard() {
 
     if (!data) return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">No data available.</div>;
 
+    // --- MAIN DASHBOARD RENDER ---
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            
                 {/* --- HEADER --- */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Manager Dashboard</h1>
                         <p className="text-slate-500 mt-1">Overview of your team's performance and immediate tasks.</p>
                     </div>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Add New Agent
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            New Agent
+                        </button>
+
+                        <button
+                            onClick={() => setView('allAgents')}
+                            className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-xl font-semibold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            Total Agents
+                        </button>
+                    </div>
                 </div>
 
                 {/* --- ROW 1: RAG STATUS CARDS --- */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <Link href="/agents" className="block h-full">
                         <RagCard label="Red Agents" count={data?.rag?.red || 0} type="red" sub="Inactive > 60 days" />
                     </Link>
@@ -104,8 +136,8 @@ export default function AgentDashboard() {
                 </div>
 
                 {/* --- ROW 2: MILESTONES & BIRTHDAYS --- */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Milestone Tracker (Takes up 2 cols on large screens) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    {/* Milestone Tracker */}
                     <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-6">
                             <div>
@@ -182,7 +214,7 @@ export default function AgentDashboard() {
                 </div>
 
                 {/* --- ROW 3: PRIORITY QUEUE --- */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm mb-8">
                     <div className="lg:col-span-2 flex items-center gap-3 border-b border-slate-100 pb-4 mb-2">
                         <div className="p-2 bg-red-100 rounded-lg text-red-600">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -207,7 +239,7 @@ export default function AgentDashboard() {
                         ) : (
                             <div className="space-y-3">
                                 {data.priorityAgents.map((agent) => (
-                                    <Link href={`/agents`} key={agent.id} className="block group">
+                                    <Link href={`/agents/${agent.id}`} key={agent.id} className="block group">
                                         <div className="relative overflow-hidden border border-slate-200 bg-white rounded-xl p-4 hover:border-red-300 hover:shadow-md transition-all duration-300">
                                             <div className={`absolute left-0 top-0 bottom-0 w-1 ${agent.rag_status === 'Red' ? 'bg-red-500' : 'bg-amber-400'}`}></div>
                                             <div className="flex justify-between items-center pl-2">
@@ -285,13 +317,13 @@ export default function AgentDashboard() {
                             }
                             color="blue"
                         />
-                        {/* <ActionButton onClick={exportAgents} label="Import Data" desc="CSV / Excel Upload" icon={<UploadIcon />} color="indigo" /> */}
                         <Link href="/tasks" className="block">
-                            <ActionButton label="Go to Tasks" desc="create for today" icon={<LightningIcon />} color="amber" isLink />
+                            <ActionButton label="Go to Tasks" desc="Create for today" icon={<LightningIcon />} color="amber" isLink />
                         </Link>
-                        <Link href="/agents" className='block'>
-                        <ActionButton label="Go to Agent" desc="Create agent meet" icon={<UsersIcon />} color="emerald" />
-                        </Link>
+                        {/* Modified Link to use onClick handler for SPA feel */}
+                        <div onClick={() => setView('allAgents')} className="block h-full cursor-pointer">
+                             <ActionButton label="Go to Agents" desc="View full list" icon={<UsersIcon />} color="emerald" isLink />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -302,7 +334,155 @@ export default function AgentDashboard() {
     );
 }
 
-// --- SUB COMPONENTS ---
+// =========================================================================
+// SUB-COMPONENT: ALL AGENTS LIST VIEW
+// =========================================================================
+
+function AllAgentsView({ onBack }) {
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAgents = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const token = await user.getIdToken();
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/agents`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setAgents(data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch agents', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+      
+      {/* Header with Back Button */}
+      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-slate-50/50">
+        <div className="flex items-center gap-4">
+             <button onClick={onBack} className="p-2 -ml-2 hover:bg-white rounded-full transition-colors text-slate-500 hover:text-blue-600 border border-transparent hover:border-slate-200 hover:shadow-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+             </button>
+             <div>
+                <h2 className="text-xl font-bold text-gray-900">All Agents</h2>
+                <span className="text-sm text-gray-500">Manage your team members</span>
+             </div>
+        </div>
+        <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-bold text-gray-600 shadow-sm">
+          Total: {agents.length}
+        </span>
+      </div>
+
+      {loading ? (
+          <div className="min-h-[400px] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <p className="text-gray-500 text-sm">Loading agents...</p>
+            </div>
+          </div>
+      ) : agents.length === 0 ? (
+          <div className="min-h-[400px] flex items-center justify-center text-gray-400">
+            No agents found
+          </div>
+      ) : (
+        <>
+            {/* Table Header */}
+            <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <div className="col-span-4">Agent Name</div>
+                <div className="col-span-2">Contact</div>
+                <div className="col-span-3 text-center">Performance (M / L / S)</div>
+                <div className="col-span-2">Last Active</div>
+                <div className="col-span-1 text-right">Action</div>
+            </div>
+
+            {/* Agent Rows */}
+            <div className="divide-y divide-gray-100">
+                {agents.map((agent) => (
+                <Link
+                    key={agent.id}
+                    href={`/agents/${agent.id}`}
+                    className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 hover:bg-blue-50/50 transition cursor-pointer items-center group"
+                >
+                    {/* Agent Info */}
+                    <div className="col-span-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shadow-sm border border-blue-200">
+                        {agent.username?.charAt(0)?.toUpperCase()}
+                    </div>
+                    <div>
+                        <div className="font-semibold text-gray-900 group-hover:text-blue-700 transition">
+                        {agent.username}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                        {agent.employment_type || 'Full-time'}
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* Contact */}
+                    <div className="col-span-2 text-sm">
+                    <div className="text-gray-700 font-medium">{agent.phone || '-'}</div>
+                    <div className="text-xs text-gray-400 truncate max-w-[120px]" title={agent.email}>
+                        {agent.email}
+                    </div>
+                    </div>
+
+                    {/* Performance */}
+                    <div className="col-span-3 flex justify-start md:justify-center gap-6 text-sm">
+                    <Metric label="Meetings" value={agent.total_meetings || 0} />
+                    <Metric label="Leads" value={agent.total_leads || 0} />
+                    <Metric label="Sales" value={agent.total_sales || 0} />
+                    </div>
+
+                    {/* Last Active */}
+                    <div className="col-span-2 text-sm text-gray-500">
+                    {agent.last_active_date
+                        ? new Date(agent.last_active_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '-'}
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="col-span-1 flex justify-end text-gray-300 group-hover:text-blue-500 transition">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                    </div>
+                </Link>
+                ))}
+            </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// --------------------------------
+// Small Components
+// --------------------------------
+
+function Metric({ label, value }) {
+  return (
+    <div className="text-center">
+      <div className="font-bold text-gray-900 text-base">{value}</div>
+      <div className="text-[10px] text-gray-400 uppercase tracking-wide">{label.charAt(0)}</div>
+    </div>
+  );
+}
 
 function RagCard({ label, count, type, sub }) {
     const config = {
@@ -312,8 +492,8 @@ function RagCard({ label, count, type, sub }) {
     }[type];
 
     return (
-        <div className={`relative overflow-hidden h-full rounded-2xl border ${config.border} bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-pointer`}>
-            {/* Background Blob for aesthetics */}
+        <div className={`relative overflow-hidden h-full rounded-2xl border ${config.border} bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300 group`}>
+            {/* Background Blob */}
             <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full ${config.bg} opacity-50 blur-xl group-hover:scale-150 transition-transform duration-500`}></div>
 
             <div className="relative z-10 flex flex-col h-full justify-between">
@@ -371,15 +551,6 @@ function EmptyState({ label }) {
 }
 
 // --- ICONS (Styled) ---
-
-const UploadIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="17 8 12 3 7 8"></polyline>
-        <line x1="12" y1="3" x2="12" y2="15"></line>
-    </svg>
-);
-
 const LightningIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>

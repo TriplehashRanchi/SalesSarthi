@@ -2,24 +2,25 @@
 
 import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
-import Link from 'next/link';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import AddIncomeModal from '@/components/admin/AddIncomeModal';
 import { useParams, useRouter } from 'next/navigation';
 
 export default function AgentDetails() {
     const { id } = useParams();
-    const router = useRouter(); // Added for back button logic (optional)
+    const router = useRouter(); 
     const [data, setData] = useState(null);
     const [activeTab, setActiveTab] = useState('Overview');
     const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
 
-    // 1. Fetch Agent Data (Logic Unchanged)
+    // 1. Fetch Agent Data
     const fetchAgentData = async () => {
         try {
             const auth = getAuth();
             const user = auth.currentUser;
-            if (!user) return;
+            // Note: In a real app, ensure user is loaded before fetching
+            // For now, we assume the token logic handles itself or use a hardcoded fetch for testing
+            if (!user) return; 
 
             const token = await user.getIdToken();
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents/${id}`, {
@@ -36,11 +37,15 @@ export default function AgentDetails() {
     };
 
     useEffect(() => {
+        // If you are testing with the static JSON provided in the prompt, 
+        // you can uncomment the line below to set data directly for testing:
+        // setData(YOUR_JSON_OBJECT_HERE); 
+        
         const timer = setTimeout(fetchAgentData, 500);
         return () => clearTimeout(timer);
     }, [id]);
 
-    // 2. Handle Add Income Save (Logic Unchanged)
+    // 2. Handle Add Income Save
     const handleAddIncome = async (formData) => {
         try {
             const auth = getAuth();
@@ -66,20 +71,39 @@ export default function AgentDetails() {
         </div>
     );
 
-    const { agent, income, activity } = data;
+    // Destructure with safe defaults
+    const { agent = {}, income = [], activity = [] } = data;
 
-    // --- DATA PREPARATION ---
+    // --- DATA PREPARATION & FIXES ---
+
+    // 1. Calculate Stats from Activity Log (Since they are missing in agent object)
+    // We sum up all numbers in the activity array
+    const calculatedMeetings = activity.reduce((acc, curr) => acc + (Number(curr.meetings) || 0), 0);
+    const calculatedLeads = activity.reduce((acc, curr) => acc + (Number(curr.leads) || 0), 0);
+    const calculatedSales = activity.reduce((acc, curr) => acc + (Number(curr.sales) || 0), 0);
+
+    // 2. Prepare Chart Data
     const chartData = income?.length > 0
             ? [...income].reverse().map((i) => ({
                   name: new Date(i.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
                   income: Number(i.income),
                   fullDate: i.month
               }))
-            : [];
+            : []; // Handle empty income array safely
 
-    const avgIncome = income?.length ? Math.round(income.reduce((a, b) => a + Number(b.income), 0) / income.length) : 0;
-    const maxIncome = income?.length ? Math.max(...income.map((i) => Number(i.income))) : 0;
-    const daysInactive = agent.last_active_date ? Math.floor((new Date() - new Date(agent.last_active_date)) / (1000 * 60 * 60 * 24)) : 0;
+    // 3. Calculate Income Stats safely
+    const avgIncome = income?.length 
+        ? Math.round(income.reduce((a, b) => a + Number(b.income), 0) / income.length) 
+        : 0;
+    
+    const maxIncome = income?.length 
+        ? Math.max(...income.map((i) => Number(i.income))) 
+        : 0;
+
+    // 4. Calculate Inactive Days
+    const daysInactive = agent.last_active_date 
+        ? Math.floor((new Date() - new Date(agent.last_active_date)) / (1000 * 60 * 60 * 24)) 
+        : 0;
 
     const getBadgeColor = (status) => {
         if (status === 'Red') return 'bg-red-50 text-red-700 border-red-200';
@@ -95,11 +119,11 @@ export default function AgentDetails() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-start gap-4">
                         <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-200">
-                            {agent.username?.charAt(0).toUpperCase()}
+                            {agent.username ? agent.username.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{agent.username}</h1>
+                                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{agent.username || 'Unknown Agent'}</h1>
                                 <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase border ${getBadgeColor(agent.rag_status)}`}>
                                     {agent.rag_status || 'Green'}
                                 </span>
@@ -110,7 +134,7 @@ export default function AgentDetails() {
                                     {agent.phone || 'No Phone'}
                                 </span>
                                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span>ID: #{id.slice(0,6)}</span>
+                                <span>ID: #{id ? id.toString().slice(0,6) : '---'}</span>
                             </div>
                         </div>
                     </div>
@@ -144,19 +168,20 @@ export default function AgentDetails() {
                                 sub="days" 
                                 icon={<svg width="20" height="20" className="text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>}
                             />
+                            {/* Uses Calculated Values now */}
                             <StatCard 
-                                label="Meetings (30d)" 
-                                value={agent.total_meetings || 0} 
+                                label="Meetings (Total)" 
+                                value={calculatedMeetings} 
                                 icon={<svg width="20" height="20" className="text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>}
                             />
                             <StatCard 
-                                label="Leads (30d)" 
-                                value={agent.total_leads || 0} 
+                                label="Leads (Total)" 
+                                value={calculatedLeads} 
                                 icon={<svg width="20" height="20" className="text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>}
                             />
                             <StatCard 
-                                label="Sales (90d)" 
-                                value={agent.total_sales || 0} 
+                                label="Sales (Total)" 
+                                value={calculatedSales} 
                                 icon={<svg width="20" height="20" className="text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>}
                             />
                         </div>
@@ -172,7 +197,7 @@ export default function AgentDetails() {
                                 </h3>
                                 <div className="space-y-4">
                                     <DetailRow label="Employment" value={agent.employment_type || 'Full-time'} />
-                                    <DetailRow label="Joined On" value={new Date(agent.created_at).toLocaleDateString('en-GB')} />
+                                    <DetailRow label="Joined On" value={agent.created_at ? new Date(agent.created_at).toLocaleDateString('en-GB') : 'N/A'} />
                                     <DetailRow label="Birthday" value={agent.date_of_birth ? new Date(agent.date_of_birth).toLocaleDateString('en-GB') : 'N/A'} />
                                     {/* <DetailRow label="Location" value={agent.city || 'Not set'} /> */}
                                     <div className="pt-4 mt-4 border-t border-slate-100">
@@ -214,34 +239,40 @@ export default function AgentDetails() {
                                 </div>
 
                                 <div className="h-[300px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }} tickFormatter={(val) => `₹${val / 1000}k`} />
-                                            <Tooltip 
-                                                contentStyle={{ backgroundColor: '#1E293B', borderRadius: '8px', border: 'none', color: '#fff' }}
-                                                itemStyle={{ color: '#fff' }}
-                                                formatter={(value) => [`₹${value.toLocaleString()}`, 'Income']}
-                                                cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
-                                            />
-                                            <Area 
-                                                type="monotone" 
-                                                dataKey="income" 
-                                                stroke="#2563EB" 
-                                                strokeWidth={3} 
-                                                fillOpacity={1} 
-                                                fill="url(#colorIncome)" 
-                                                activeDot={{ r: 6, strokeWidth: 0, fill: '#2563EB' }}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
+                                    {chartData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
+                                                        <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }} dy={10} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 500 }} tickFormatter={(val) => `₹${val / 1000}k`} />
+                                                <Tooltip 
+                                                    contentStyle={{ backgroundColor: '#1E293B', borderRadius: '8px', border: 'none', color: '#fff' }}
+                                                    itemStyle={{ color: '#fff' }}
+                                                    formatter={(value) => [`₹${value.toLocaleString()}`, 'Income']}
+                                                    cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                                />
+                                                <Area 
+                                                    type="monotone" 
+                                                    dataKey="income" 
+                                                    stroke="#2563EB" 
+                                                    strokeWidth={3} 
+                                                    fillOpacity={1} 
+                                                    fill="url(#colorIncome)" 
+                                                    activeDot={{ r: 6, strokeWidth: 0, fill: '#2563EB' }}
+                                                />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full w-full flex items-center justify-center text-slate-400 bg-slate-50 rounded-lg border border-dashed">
+                                            <p>No income data recorded yet.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -258,7 +289,9 @@ export default function AgentDetails() {
                              </div>
                              <div>
                                 <h3 className="font-bold text-lg text-blue-900">Recommended Strategy</h3>
-                                <p className="text-blue-800/80 mt-1 leading-relaxed">Lost rhythm for 60+ days. The immediate focus should be restarting with a H2H meeting, establishing a micro-plan, and conducting two joint field visits to rebuild momentum.</p>
+                                <p className="text-blue-800/80 mt-1 leading-relaxed">
+                                    {agent.notes || "Establish a micro-plan and conduct joint field visits to rebuild momentum."}
+                                </p>
                              </div>
                         </div>
 
@@ -267,18 +300,15 @@ export default function AgentDetails() {
                             <div className="flex justify-between items-center mb-8">
                                 <div>
                                     <h3 className="font-bold text-xl text-slate-900">30-Day Recovery Plan</h3>
-                                    <p className="text-slate-500 text-sm">Actionable steps to return to Green status</p>
+                                    <p className="text-slate-500 text-sm">Actionable steps to maintain {agent.rag_status || 'Status'}</p>
                                 </div>
-                                {/* <button className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-slate-200 flex items-center gap-2">
-                                    <span>+</span> Add Task
-                                </button> */}
                             </div>
 
                             <div className="space-y-4">
                                 <CheckItem text="Complete heart-to-heart meeting within 24 hours" />
                                 <CheckItem text="Set 30-day micro-plan with achievable targets" />
                                 <CheckItem text="Conduct 2 joint field visits" />
-                                <CheckItem text="Generate 5 new leads per week" />
+                                <CheckItem text={`Achieve income target: ₹${Number(agent.income_target || 0).toLocaleString()}`} />
                                 <CheckItem text="Complete skill refresher training" isLast />
                             </div>
                         </div>
@@ -294,7 +324,6 @@ export default function AgentDetails() {
                                 <p className="text-slate-500 text-sm">Chronological history of interactions and stats</p>
                             </div>
                             <button className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center gap-2">
-                                {/* <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> */}
                                 Log Activity
                             </button>
                         </div>
@@ -310,7 +339,7 @@ export default function AgentDetails() {
                         ) : (
                             <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
                                 {activity.map((act, index) => (
-                                    <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active pb-8 last:pb-0">
+                                    <div key={act.id || index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active pb-8 last:pb-0">
                                         
                                         {/* Icon/Dot */}
                                         <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-50 group-[.is-active]:bg-blue-600 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
@@ -322,11 +351,13 @@ export default function AgentDetails() {
                                         {/* Content Card */}
                                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                             <div className="flex items-center justify-between space-x-2 mb-2">
-                                                <div className="font-bold text-slate-900">Metrics Update</div>
-                                                <time className="font-mono text-xs text-slate-500">{new Date(act.activity_date).toLocaleDateString()}</time>
+                                                <div className="font-bold text-slate-900">Activity Report</div>
+                                                <time className="font-mono text-xs text-slate-500">
+                                                    {act.activity_date ? new Date(act.activity_date).toLocaleDateString() : 'Unknown Date'}
+                                                </time>
                                             </div>
                                             <div className="text-slate-600 text-sm">
-                                                Logged stats: <span className="font-semibold text-slate-800">{act.meetings} Meetings</span>, <span className="font-semibold text-slate-800">{act.leads} Leads</span>, <span className="font-semibold text-slate-800">{act.sales} Sales</span>.
+                                                Logged stats: <span className="font-semibold text-slate-800">{act.meetings || 0} Meetings</span>, <span className="font-semibold text-slate-800">{act.leads || 0} Leads</span>, <span className="font-semibold text-slate-800">{act.sales || 0} Sales</span>.
                                             </div>
                                         </div>
                                     </div>

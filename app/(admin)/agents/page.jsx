@@ -8,9 +8,11 @@ import ImportAgentsModal from '../../../components/agents/ImportAgentsModal';
 
 export default function AgentRagBoard() {
     const [columns, setColumns] = useState({ Red: [], Amber: [], Green: [] });
-    // ✅ Fix state naming
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
+    
+    // ✅ New State: Toggle between 'board' and 'list'
+    const [viewMode, setViewMode] = useState('board'); 
 
     useEffect(() => {
         fetchAgents();
@@ -39,7 +41,6 @@ export default function AgentRagBoard() {
         }
     };
 
-    // ✅ New Function to Handle Agent Creation
     const handleCreateAgent = async (agentData) => {
         try {
             const auth = getAuth();
@@ -57,7 +58,6 @@ export default function AgentRagBoard() {
             const data = await res.json();
 
             if (res.ok) {
-                // Success: Close modal and refresh list
                 setIsModalOpen(false);
                 fetchAgents();
             } else {
@@ -70,7 +70,6 @@ export default function AgentRagBoard() {
     };
 
     const exportAgents = () => {
-        // Flatten all columns into one list
         const allAgents = [...columns.Red, ...columns.Amber, ...columns.Green];
 
         if (allAgents.length === 0) {
@@ -78,10 +77,7 @@ export default function AgentRagBoard() {
             return;
         }
 
-        // Define CSV headers
         const headers = ['Username', 'Email', 'Phone', 'Employment Type', 'RAG Status', 'Last Active Date', 'Total Leads', 'Total Meetings', 'Total Sales'];
-
-        // Map data to CSV rows
         const rows = allAgents.map((agent) => [
             agent.username || '',
             agent.email || '',
@@ -94,18 +90,14 @@ export default function AgentRagBoard() {
             agent.total_sales || 0,
         ]);
 
-        // Convert to CSV string
         const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
-        // Create downloadable file
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-
         const link = document.createElement('a');
         link.href = url;
         link.download = 'agents_export.csv';
         link.click();
-
         URL.revokeObjectURL(url);
     };
 
@@ -147,13 +139,34 @@ export default function AgentRagBoard() {
     return (
         <div className="p-8 bg-white min-h-screen font-sans text-gray-800">
             {/* HEADER SECTION */}
-            <div className="flex justify-between items-start mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Agents</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Drag agents between columns to update their status</p>
+                    <p className="text-gray-500 mt-1 text-sm">
+                        {viewMode === 'board' ? 'Drag agents between columns' : 'Drag rows to update status'}
+                    </p>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    
+                    {/* View Switcher */}
+                    <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200 mr-2">
+                        <button 
+                            onClick={() => setViewMode('board')}
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition ${viewMode === 'board' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            Board
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                            List
+                        </button>
+                    </div>
+
                     <button onClick={exportAgents} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -161,7 +174,6 @@ export default function AgentRagBoard() {
                         Export
                     </button>
 
-                    {/* ✅ Updated Button to use correct State */}
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm transition"
@@ -181,22 +193,37 @@ export default function AgentRagBoard() {
                 </div>
             </div>
 
-            {/* DRAG AND DROP BOARD */}
+            {/* SHARED DRAG CONTEXT */}
             <DragDropContext onDragEnd={onDragEnd}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <RagColumn title="RED" id="Red" color="red" agents={columns.Red} />
-                    <RagColumn title="AMBER" id="Amber" color="amber" agents={columns.Amber} />
-                    <RagColumn title="GREEN" id="Green" color="green" agents={columns.Green} />
-                </div>
+                
+                {/* VIEW 1: BOARD (Your Original UI) */}
+                {viewMode === 'board' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <RagColumn title="RED" id="Red" color="red" agents={columns.Red} />
+                        <RagColumn title="AMBER" id="Amber" color="amber" agents={columns.Amber} />
+                        <RagColumn title="GREEN" id="Green" color="green" agents={columns.Green} />
+                    </div>
+                )}
+
+                {/* VIEW 2: LIST (The New UI you liked) */}
+                {viewMode === 'list' && (
+                    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
+                        <RagListGroup title="Red Status Agents" id="Red" color="red" agents={columns.Red} />
+                        <RagListGroup title="Amber Status Agents" id="Amber" color="amber" agents={columns.Amber} />
+                        <RagListGroup title="Green Status Agents" id="Green" color="green" agents={columns.Green} />
+                    </div>
+                )}
+
             </DragDropContext>
 
-            {/* ✅ Updated Modal Implementation */}
             <AddAgentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleCreateAgent} />
         </div>
     );
 }
 
-// ... (Keep your RagColumn and AgentCard components below as they were) ...
+// ------------------------------------------------------------------
+// BOARD VIEW COMPONENTS (EXACTLY YOUR ORIGINAL UI)
+// ------------------------------------------------------------------
 
 const RagColumn = ({ title, id, color, agents }) => {
     const styles = {
@@ -303,5 +330,114 @@ const AgentCard = ({ agent, currentColumnId }) => {
                 </Link>
             </div>
         </div>
+    );
+};
+
+// ------------------------------------------------------------------
+// LIST VIEW COMPONENTS (THE NEW UI YOU LIKED)
+// ------------------------------------------------------------------
+
+const RagListGroup = ({ title, id, color, agents }) => {
+    const headerColors = {
+        red: 'border-l-4 border-l-red-500 bg-red-50',
+        amber: 'border-l-4 border-l-amber-500 bg-amber-50',
+        green: 'border-l-4 border-l-emerald-500 bg-emerald-50',
+    };
+
+    return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className={`p-4 flex justify-between items-center ${headerColors[color]}`}>
+                <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                    {title}
+                    <span className="bg-white px-2 py-0.5 rounded-full text-xs border border-gray-200 shadow-sm">{agents.length}</span>
+                </h3>
+            </div>
+            
+            {/* Table Header Row */}
+            {agents.length > 0 && (
+                <div className="grid grid-cols-12 gap-4 px-6 py-2 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:grid">
+                    <div className="col-span-4">Agent Name</div>
+                    <div className="col-span-2">Contact</div>
+                    <div className="col-span-3 text-center">Performance (M/L/S)</div>
+                    <div className="col-span-2">Last Active</div>
+                    <div className="col-span-1 text-right">Action</div>
+                </div>
+            )}
+
+            <Droppable droppableId={id}>
+                {(provided) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="min-h-[50px] p-2">
+                        {agents.length === 0 ? (
+                             <div className="p-8 text-center text-gray-400 italic text-sm">No agents in this status. Drag items here to update.</div>
+                        ) : (
+                            agents.map((agent, index) => (
+                                <Draggable key={agent.id} draggableId={agent.id.toString()} index={index}>
+                                    {(provided, snapshot) => (
+                                        <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className={`
+                                                relative grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 items-center rounded-md border mb-2
+                                                ${snapshot.isDragging 
+                                                    ? 'bg-blue-50 border-blue-400 shadow-xl z-50' 
+                                                    : 'bg-white border-transparent hover:border-gray-200 hover:bg-gray-50'}
+                                            `}
+                                        >
+                                           <AgentListItem agent={agent} />
+                                        </div>
+                                    )}
+                                </Draggable>
+                            ))
+                        )}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+        </div>
+    );
+};
+
+const AgentListItem = ({ agent }) => {
+    return (
+        <>
+            <div className="col-span-1 md:col-span-4 flex items-center gap-3">
+                <div className="p-1 text-gray-400 cursor-grab hidden md:block">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                    {agent.username?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                    <div className="font-semibold text-gray-900 text-sm">{agent.username}</div>
+                    <div className="text-xs text-gray-500">{agent.employment_type}</div>
+                </div>
+            </div>
+            
+            <div className="col-span-1 md:col-span-2 flex flex-col justify-center text-sm">
+                <span className="text-gray-600 text-xs">{agent.phone || 'N/A'}</span>
+                <span className="text-gray-400 text-[10px] truncate">{agent.email}</span>
+            </div>
+
+            <div className="col-span-1 md:col-span-3 flex items-center justify-start md:justify-center gap-4 text-sm text-gray-600">
+                <div className="text-center"><span className="block font-bold text-gray-900">{agent.total_meetings || 0}</span><span className="text-[10px]">Mtgs</span></div>
+                <div className="w-px h-6 bg-gray-200"></div>
+                <div className="text-center"><span className="block font-bold text-gray-900">{agent.total_leads || 0}</span><span className="text-[10px]">Leads</span></div>
+                <div className="w-px h-6 bg-gray-200"></div>
+                <div className="text-center"><span className="block font-bold text-gray-900">{agent.total_sales || 0}</span><span className="text-[10px]">Sales</span></div>
+            </div>
+
+            <div className="col-span-1 md:col-span-2 text-sm text-gray-500">
+                 {agent.last_active_date 
+                    ? new Date(agent.last_active_date).toLocaleDateString() 
+                    : '-'}
+            </div>
+
+            <div className="col-span-1 md:col-span-1 flex justify-end">
+                <Link href={`/agents/${agent.id}`} className="p-2 text-gray-400 hover:text-blue-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+                </Link>
+            </div>
+        </>
     );
 };
