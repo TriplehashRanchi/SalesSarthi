@@ -33,10 +33,17 @@ const STATUS_STYLES = {
 };
 
 export default function TaskBoard() {
+    // Stores the organized columns for UI
     const [tasks, setTasks] = useState({ Pending: [], InProgress: [], Done: [], Skipped: [] });
+    // Stores the raw list from API to allow client-side filtering
+    const [allFetchedTasks, setAllFetchedTasks] = useState([]);
+
     const [agents, setAgents] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [viewMode, setViewMode] = useState('board'); // 'board' | 'list'
+
+    // NEW: Filter State ('AGENT' or 'ADMIN')
+    const [filterType, setFilterType] = useState('AGENT');
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -45,6 +52,13 @@ export default function TaskBoard() {
         }, 500);
         return () => clearTimeout(timer);
     }, []);
+
+    // Re-group tasks whenever the raw data or the filter type changes
+    useEffect(() => {
+        if (allFetchedTasks.length > 0) {
+            processAndGroupTasks(allFetchedTasks, filterType);
+        }
+    }, [allFetchedTasks, filterType]);
 
     const fetchTasks = async () => {
         try {
@@ -61,26 +75,47 @@ export default function TaskBoard() {
 
             const data = await res.json();
 
-            const grouped = { Pending: [], InProgress: [], Done: [], Skipped: [] };
+            // Store raw data
+            setAllFetchedTasks(data);
 
-            data.forEach((t) => {
-                let status = t.status;
-                // Normalize status strings from DB to UI
-                if (status === 'Planned') status = 'Pending';
-                if (status === 'In Progress' || status === 'in_progress') status = 'InProgress';
-                if (status === 'Completed') status = 'Done';
-                if (status === 'done') status = 'Done';
-
-                if (grouped[status]) {
-                    grouped[status].push(t);
-                } else {
-                    grouped.Pending.push(t);
-                }
-            });
-            setTasks(grouped);
+            // Initial processing
+            processAndGroupTasks(data, filterType);
         } catch (error) {
             console.error('Error loading tasks:', error);
         }
+    };
+
+    // Helper to filter and group raw data into columns
+    const processAndGroupTasks = (data, activeFilter) => {
+        const grouped = { Pending: [], InProgress: [], Done: [], Skipped: [] };
+
+        // 1. Filter by subject_type (AGENT vs ADMIN)
+        const filteredData = data.filter((t) => {
+            if (activeFilter === 'AGENT') return t.subject_type === 'AGENT';
+            if (activeFilter === 'ADMIN') return t.subject_type === 'ADMIN';
+            return true;
+        });
+
+        // 2. Group by Status
+        filteredData.forEach((t) => {
+            let status = t.status;
+            // Normalize status strings from DB to UI
+            if (status === 'Planned') status = 'Pending';
+            if (status === 'Pending') status = 'Pending'; // Handle existing Pending
+            if (status === 'In Progress' || status === 'in_progress') status = 'InProgress';
+            if (status === 'Completed') status = 'Done';
+            if (status === 'done') status = 'Done';
+
+            // Fallback for unknown statuses or empty strings (like in your JSON example id:5)
+            if (!status || status === '') status = 'Pending';
+
+            if (grouped[status]) {
+                grouped[status].push(t);
+            } else {
+                grouped.Pending.push(t);
+            }
+        });
+        setTasks(grouped);
     };
 
     const fetchAgents = async () => {
@@ -102,13 +137,20 @@ export default function TaskBoard() {
             const auth = getAuth();
             const token = await auth.currentUser?.getIdToken();
 
+            // Automatically assign subject_type based on the current view/creation logic
+            // Or ensure the modal passes it. For now, we assume the API handles it or modal sends it.
+            const payload = {
+                ...newTaskData,
+                subject_type: filterType, // Optional: create task in current view category
+            };
+
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasks`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(newTaskData),
+                body: JSON.stringify(payload),
             });
 
             if (res.ok) {
@@ -127,7 +169,7 @@ export default function TaskBoard() {
         if (!destination) return;
         if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-        // UI Update
+        // UI Update (Immediate feedback)
         const sourceList = [...tasks[source.droppableId]];
         const destList = [...tasks[destination.droppableId]];
         const [movedItem] = sourceList.splice(source.index, 1);
@@ -137,6 +179,7 @@ export default function TaskBoard() {
         if (newStatus === 'Pending') newStatus = 'Planned';
         if (newStatus === 'Done') newStatus = 'Completed';
 
+        // Update item status locally
         movedItem.status = newStatus;
 
         destList.splice(destination.index, 0, movedItem);
@@ -146,6 +189,10 @@ export default function TaskBoard() {
             [source.droppableId]: sourceList,
             [destination.droppableId]: destList,
         });
+
+        // CRITICAL: Update the raw data list too, so filtering doesn't revert the move
+        const updatedRawTasks = allFetchedTasks.map((t) => (t.id === movedItem.id ? { ...t, status: newStatus } : t));
+        setAllFetchedTasks(updatedRawTasks);
 
         // API Update
         const auth = getAuth();
@@ -164,27 +211,54 @@ export default function TaskBoard() {
             </Link>
 
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Task management Board For All Agents</h1>
-                <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
-                    + Add Task
-                </button>
-                <div className="flex gap-2">
-                    <button onClick={() => setViewMode('board')} className={`px-3 py-1 text-sm rounded-md ${viewMode === 'board' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600'}`}>
-                        Board
-                    </button>
+                {/* LEFT SIDE TITLE */}
+                <h1 className="text-2xl font-bold">Task Management Board For All Agents</h1>
 
-                    <button onClick={() => setViewMode('list')} className={`px-3 py-1 text-sm rounded-md ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600'}`}>
-                        List
+                {/* RIGHT SIDE CONTROLS */}
+                <div className="flex items-center gap-3">
+                    {/* View Toggle */}
+                    <div className="flex rounded-lg border overflow-hidden">
+                        <button
+                            onClick={() => setViewMode('board')}
+                            className={`px-4 py-2 text-sm transition ${viewMode === 'board' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            Board
+                        </button>
+
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`px-4 py-2 text-sm transition ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                        >
+                            List
+                        </button>
+                    </div>
+
+                    {/* Add Task Button */}
+                    <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
+                        + Add Task
                     </button>
                 </div>
             </div>
 
+            {/* --- FILTER BUTTONS --- */}
             <div className="flex gap-4 mb-6">
-                {['Create Daily Huddles', 'Create Weekly Review', 'Create Monthly R&R'].map((txt) => (
-                    <button key={txt} className="bg-white border px-4 py-2 rounded-lg text-sm hover:bg-gray-50 font-medium text-gray-700">
-                        {txt}
-                    </button>
-                ))}
+                <button
+                    onClick={() => setFilterType('AGENT')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        filterType === 'AGENT' ? 'bg-blue-600 text-white border border-blue-600' : 'bg-white border text-gray-700 hover:bg-gray-50'
+                    }`}
+                >
+                    Agent Task
+                </button>
+
+                <button
+                    onClick={() => setFilterType('ADMIN')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        filterType === 'ADMIN' ? 'bg-blue-600 text-white border border-blue-600' : 'bg-white border text-gray-700 hover:bg-gray-50'
+                    }`}
+                >
+                    Your Task
+                </button>
             </div>
 
             {viewMode === 'board' ? (
@@ -205,6 +279,7 @@ export default function TaskBoard() {
     );
 }
 
+// ... (Rest of your components: TaskListView, TaskColumn, TaskCard remain unchanged)
 const TaskListView = ({ tasks }) => {
     const allTasks = Object.entries(tasks).flatMap(([status, items]) => items.map((t) => ({ ...t, _uiStatus: status })));
 
@@ -332,39 +407,7 @@ const TaskCard = ({ task, status, isDragging }) => {
                 <span className={`inline-block mb-3 text-[10px] font-semibold px-2 py-0.5 rounded-full ${styles.badge}`}>{status}</span>
 
                 {/* Action Icons (Show on Hover) */}
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {/* <button className="text-gray-400 hover:text-blue-600">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                        </svg>
-                    </button>
-                    <button className="text-gray-400 hover:text-red-600">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                    </button> */}
-                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
 
             {/* Sub-header: Agent & Category */}

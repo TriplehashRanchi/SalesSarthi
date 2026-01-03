@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
 import Link from 'next/link';
 import AddAgentModal from '@/components/admin/AddAgentModal';
+import { BrainCog } from 'lucide-react';
 
 export default function AgentDashboard() {
     const [data, setData] = useState(null);
@@ -302,7 +303,7 @@ export default function AgentDashboard() {
                 {/* --- ROW 4: QUICK ACTIONS --- */}
                 <div>
                     <h3 className="font-bold text-slate-900 text-lg mb-4">Quick Actions</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <ActionButton
                             onClick={() => setIsModalOpen(true)}
                             label="New Agent"
@@ -319,6 +320,9 @@ export default function AgentDashboard() {
                         />
                         <Link href="/tasks" className="block">
                             <ActionButton label="Go to Tasks" desc="Create for today" icon={<LightningIcon />} color="amber" isLink />
+                        </Link>
+                        <Link href="/tasks" className="block">
+                            <ActionButton label="Generate Task" desc="Your task will generate automatically" icon={<BrainCog /> } color="pink" isLink />
                         </Link>
                         {/* Modified Link to use onClick handler for SPA feel */}
                         <div onClick={() => setView('allAgents')} className="block h-full cursor-pointer">
