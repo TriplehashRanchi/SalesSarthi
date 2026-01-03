@@ -37,7 +37,7 @@ export default function AdvisorIntelligenceView({ report }) {
     >
 
       {/* -------------------- SNAPSHOT -------------------- */}
-      <section className="bg-gradient-to-br from-indigo-900/40 to-slate-950 border border-indigo-500/20 rounded-[3rem] p-10">
+      <section className="bg-gradient-to-br from-indigo-900/40 to-slate-950 border border-indigo-500/20 rounded-[1rem] p-10">
         <p className="text-[10px] tracking-[0.4em] text-indigo-400 font-black uppercase mb-3">
           {report.ai_report.advisor_snapshot.stage} Stage Advisor
         </p>
@@ -64,7 +64,7 @@ export default function AdvisorIntelligenceView({ report }) {
         {metrics.map((m, i) => (
           <div
             key={i}
-            className="bg-white/5 border border-white/10 rounded-[2rem] p-6 hover:bg-white/10 transition"
+            className="bg-white/5 border border-white/10 rounded-[1rem] p-6 hover:bg-white/10 transition"
           >
             <div className="mb-3">{m.icon}</div>
             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
@@ -96,7 +96,7 @@ export default function AdvisorIntelligenceView({ report }) {
       </section>
 
       {/* -------------------- PRIMARY BLOCKAGE -------------------- */}
-      <section className="bg-white/5 border border-white/10 rounded-[3rem] p-12 grid lg:grid-cols-3 gap-10">
+      <section className="bg-white/5 border border-white/10 rounded-[1rem] p-12 grid lg:grid-cols-3 gap-10">
         <div className="flex flex-col items-center text-center justify-center">
           <ShieldAlert size={72} className="text-red-500 mb-4" />
           <h2 className='text-3xl'> {primaryKey}</h2>
@@ -126,7 +126,7 @@ export default function AdvisorIntelligenceView({ report }) {
           {report.graha_scores.secondary_doshas.map(key => (
             <div
               key={key}
-              className="bg-slate-900/60 border border-white/5 rounded-[2rem] p-6 flex justify-between"
+              className="bg-slate-900/60 border border-white/5 rounded-[1rem] p-6 flex justify-between"
             >
               <div>
                 <p className="font-black uppercase tracking-widest">{key}</p>
@@ -143,7 +143,7 @@ export default function AdvisorIntelligenceView({ report }) {
       </section>
 
       {/* -------------------- EFFORT -------------------- */}
-      <section className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8">
+      <section className="bg-white/5 border border-white/10 rounded-[1rem] p-8">
         <SectionTitle title="Effort Reality Check" />
         <div className="space-y-4 mt-4">
           {effort.map(e => (
@@ -183,7 +183,7 @@ function InsightCard({ label, value, tone }) {
 
 function ProjectionCard({ title, value, note, icon, tone }) {
   return (
-    <div className={`relative bg-slate-950 border border-${tone === 'danger' ? 'red' : 'emerald'}-500/30 rounded-[2.5rem] p-8`}>
+    <div className={`relative bg-slate-950 border border-${tone === 'danger' ? 'red' : 'emerald'}-500/30 rounded-[1rem] p-8`}>
       <div className="absolute top-6 right-6 opacity-20">{icon}</div>
       <p className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2">
         {title}

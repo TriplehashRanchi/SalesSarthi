@@ -698,11 +698,11 @@ export default function ComprehensiveBusinessKundli() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 pt-8">
         
         {/* --- TOP IDENTITY BAR --- */}
-        <header className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 mb-8 shadow-2xl overflow-hidden relative">
+        <header className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[1rem] p-8 mb-8 shadow-2xl overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-3xl rounded-full" />
           <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
             <div className="flex gap-6 items-center">
-              <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-fuchsia-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl transform rotate-3">
+              <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-fuchsia-600 rounded-[1rem] flex items-center justify-center text-white shadow-2xl transform ">
                 <User size={48} />
               </div>
               <div>
@@ -723,7 +723,7 @@ export default function ComprehensiveBusinessKundli() {
                   </p>
                </div>
                <div className="h-16 w-px bg-white/10" />
-               <button onClick={() => generateFullAdvisorKundli(report)} className="p-4 bg-white hover:bg-slate-200 text-slate-900 rounded-3xl transition-all shadow-xl shadow-white/5 active:scale-95">
+               <button onClick={() => generateFullAdvisorKundli(report)} className="p-4 bg-white hover:bg-slate-200 text-slate-900 rounded-xl transition-all shadow-xl shadow-white/5 active:scale-95">
                   <Download size={24} />
                </button>
             </div>
@@ -731,7 +731,7 @@ export default function ComprehensiveBusinessKundli() {
         </header>
 
         {/* --- NAVIGATION --- */}
-        <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-slate-950/50 p-2 rounded-3xl border border-white/5 backdrop-blur-md">
+        <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-slate-950/50 p-2 rounded-xl border border-white/5 backdrop-blur-md">
           <NavBtn active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20}/>} label="Instant Remedies" />
           <NavBtn active={activeTab === 'grahas'} onClick={() => setActiveTab('grahas')} icon={<Zap size={20}/>} label="Planetary Map" />
           <NavBtn active={activeTab === 'strategy'} onClick={() => setActiveTab('strategy')} icon={<Workflow size={20}/>} label="Execution" />
@@ -777,15 +777,15 @@ function DashboardView({ report }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Snapshot & One Liner */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-indigo-600/20 to-transparent border border-indigo-500/20 rounded-[2.5rem] p-10 flex flex-col justify-center">
+        <div className="lg:col-span-2 bg-gradient-to-br from-indigo-600/20 to-transparent border border-indigo-500/20 rounded-[1rem] p-10 flex flex-col justify-center">
           <p className="text-indigo-400 text-xs font-black uppercase tracking-[0.4em] mb-4">{report.ai_report.advisor_snapshot.stage} Stage Advisor</p>
           <h2 className="text-4xl font-bold leading-tight mb-8">"{report.ai_report.advisor_snapshot.one_line_summary}"</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-2xl">
+             <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-xl">
                <p className="text-[10px] font-black uppercase text-emerald-500 mb-1 tracking-widest">Core Strength</p>
                <p className="text-sm font-bold">{report.ai_report.advisor_snapshot.core_strength}</p>
              </div>
-             <div className="bg-red-500/5 border border-red-500/10 p-4 rounded-2xl">
+             <div className="bg-red-500/5 border border-red-500/10 p-4 rounded-xl">
                <p className="text-[10px] font-black uppercase text-red-500 mb-1 tracking-widest">Core Risk</p>
                <p className="text-sm font-bold">{report.ai_report.advisor_snapshot.core_risk}</p>
              </div>
@@ -793,7 +793,7 @@ function DashboardView({ report }) {
         </div>
 
         {/* Effort Pulse */}
-        <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 flex flex-col justify-between">
+        <div className="bg-white/5 border border-white/10 rounded-[1rem] p-8 flex flex-col justify-between">
            <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest mb-6">Effort vs. Intensity</h3>
            <div className="space-y-6">
               {effortData.map(d => (
@@ -822,7 +822,7 @@ function DashboardView({ report }) {
       {/* Metrics Hexagon Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {mainMetrics.map((m, i) => (
-          <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-all">
+          <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-[1rem] hover:bg-white/10 transition-all">
             <div className="mb-4">{m.icon}</div>
             <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">{m.label}</p>
             <p className="text-xl font-black">{m.value}</p>
@@ -831,11 +831,11 @@ function DashboardView({ report }) {
       </div>
 
       {/* Mandatory KPIs Block */}
-      <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8">
+      <div className="bg-white/5 border border-white/10 rounded-[1rem] p-8">
         <h3 className="text-sm font-black uppercase tracking-[0.3em] mb-6 text-indigo-400">Mandatory Growth KPIs</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {report.ai_report.mandatory_kpis.map((kpi, idx) => (
-            <div key={idx} className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-white/5">
+            <div key={idx} className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-xl border border-white/5">
               <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs font-black">{idx+1}</div>
               <span className="text-xs font-bold text-slate-300 tracking-tight">{kpi}</span>
             </div>
@@ -857,7 +857,7 @@ function GrahasView({ report }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
       {/* Radar Chart Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center bg-white/5 border border-white/10 rounded-[3rem] p-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center bg-white/5 border border-white/10 rounded-[1rem] p-10">
         <div className="h-[300px] w-full col-span-1">
            <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
@@ -892,7 +892,7 @@ function GrahasView({ report }) {
           const theme = PLANET_THEMES[key];
           const isStrong = planet.status === 'STRONG';
           return (
-            <div key={key} className={`${theme.bg} ${theme.border} border p-8 rounded-[2.5rem] flex flex-col h-full group hover:bg-white/5 transition-all`}>
+            <div key={key} className={`${theme.bg} ${theme.border} border p-8 rounded-[1rem] flex flex-col h-full group hover:bg-white/5 transition-all`}>
               <div className="flex justify-between items-start mb-6">
                 <div className="text-5xl group-hover:scale-110 transition-transform">{theme.icon}</div>
                 <div className="text-right">
@@ -931,12 +931,12 @@ function StrategyView({ report }) {
       {/* 90 DAY REPAIR PLAN (With Proofs) */}
       <section>
         <div className="flex items-center gap-4 mb-8">
-           <div className="p-3 bg-indigo-500 rounded-2xl text-white shadow-lg"><Clock size={24}/></div>
+           <div className="p-3 bg-indigo-500 rounded-xl text-white shadow-lg"><Clock size={24}/></div>
            <h2 className="text-3xl font-black">90-Day Corrective Sprint</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {report.ai_report.ninety_day_repair_plan.map((phase, i) => (
-            <div key={i} className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
+            <div key={i} className="bg-white/5 border border-white/10 p-8 rounded-[1rem] relative overflow-hidden group">
                <div className="absolute -top-6 -right-6 text-9xl font-black text-white/5 group-hover:text-white/10 transition-all">0{i+1}</div>
                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">{phase.week_range}</p>
                <h4 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -971,7 +971,7 @@ function StrategyView({ report }) {
         <h2 className="text-3xl font-black mb-10 text-center">12 Month Execution Plan</h2>
         <div className="space-y-8">
            {Object.entries(report.ai_report.roadmap_12_months).map(([q, data]) => (
-             <div key={q} className="bg-slate-900/50 border border-white/5 rounded-[3.5rem] p-10 lg:p-14">
+             <div key={q} className="bg-slate-900/50 border border-white/5 rounded-[1rem] p-10 lg:p-14">
                <div className="flex flex-col lg:flex-row gap-12">
                  <div className="lg:w-1/4">
                     <div className="text-7xl font-black text-indigo-500 opacity-20 mb-2">{q}</div>
@@ -990,9 +990,9 @@ function StrategyView({ report }) {
                  </div>
                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8">
                     {data.systems.map((sys, si) => (
-                      <div key={si} className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:border-indigo-500/30 transition-all">
+                      <div key={si} className="bg-white/5 border border-white/5 p-8 rounded-[1rem] hover:border-indigo-500/30 transition-all">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400"><Workflow size={20}/></div>
+                          <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400"><Workflow size={20}/></div>
                           <h4 className="text-lg font-bold">{sys.name}</h4>
                         </div>
                         <p className="text-xs text-slate-500 italic mb-6 leading-relaxed">"Goal: {sys.purpose}"</p>
@@ -1004,7 +1004,7 @@ function StrategyView({ report }) {
                             </div>
                           ))}
                         </div>
-                        <div className="bg-indigo-500/5 p-4 rounded-2xl border border-indigo-500/10">
+                        <div className="bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/10">
                            <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Maturity Target</p>
                            <p className="text-xs font-bold text-white leading-relaxed">{sys.maturity_target}</p>
                         </div>
@@ -1026,7 +1026,7 @@ function LegacyView({ report }) {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
       {Object.entries(years).map(([yearKey, data], i) => (
         <div key={yearKey} className="relative">
-          <div className="bg-white/5 border border-white/10 rounded-[3.5rem] p-12 overflow-hidden group">
+          <div className="bg-white/5 border border-white/10 rounded-[1rem] p-12 overflow-hidden group">
             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
                <Trophy size={200} />
             </div>
@@ -1034,11 +1034,11 @@ function LegacyView({ report }) {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10">
               {/* Year Focus */}
               <div className="lg:col-span-4">
-                <div className="inline-block px-6 py-2 bg-indigo-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest mb-6 shadow-lg">
+                <div className="inline-block px-6 py-2 bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest mb-6 shadow-lg">
                   Year {i+1}
                 </div>
                 <h3 className="text-2xl font-black text-white leading-tight mb-8">{data.focus}</h3>
-                <div className="bg-indigo-500/10 p-6 rounded-[2rem] border border-indigo-500/20">
+                <div className="bg-indigo-500/10 p-6 rounded-[1rem] border border-indigo-500/20">
                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">Financial Structure</p>
                    <div className="space-y-4">
                       <div className="flex justify-between items-center">
@@ -1062,7 +1062,7 @@ function LegacyView({ report }) {
                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Strategic Milestones</p>
                  <div className="space-y-4">
                     {data.outcomes.map((o, oi) => (
-                      <div key={oi} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center">
+                      <div key={oi} className="p-4 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center">
                         <span className="text-xs text-slate-300 font-medium">{o.metric}</span>
                         <span className="text-xs font-black text-emerald-400">{o.target}</span>
                       </div>
@@ -1104,7 +1104,7 @@ function ProjectionsView({ report }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Unchanged Path */}
-        <div className="bg-red-500/5 border border-red-500/10 p-10 rounded-[3.5rem] relative overflow-hidden group">
+        <div className="bg-red-500/5 border border-red-500/10 p-10 rounded-[1rem] relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-5 text-red-500 transform group-hover:rotate-12 transition-transform">
              <ShieldAlert size={120} />
           </div>
@@ -1113,14 +1113,14 @@ function ProjectionsView({ report }) {
           <div className="flex items-center gap-2 text-red-400 font-black text-xs uppercase mb-8">
              <AlertCircle size={14} /> Risk Level: {proj.unchanged_90_days.risk_level}
           </div>
-          <div className="bg-black/20 p-6 rounded-2xl border border-red-500/10">
+          <div className="bg-black/20 p-6 rounded-xl border border-red-500/10">
              <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">Primary Bottleneck</p>
              <p className="text-sm font-medium text-slate-300 leading-relaxed italic">"{proj.unchanged_90_days.bottleneck}"</p>
           </div>
         </div>
 
         {/* Growth Path */}
-        <div className="bg-gradient-to-br from-emerald-500/20 to-transparent border border-emerald-500/20 p-10 rounded-[3.5rem] relative overflow-hidden group">
+        <div className="bg-gradient-to-br from-emerald-500/20 to-transparent border border-emerald-500/20 p-10 rounded-[1rem] relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-10 text-emerald-500 transform group-hover:scale-110 transition-transform">
              <Rocket size={120} />
           </div>
@@ -1129,14 +1129,14 @@ function ProjectionsView({ report }) {
           <div className="flex items-center gap-2 text-emerald-400 font-black text-xs uppercase mb-8 tracking-widest">
              <CheckCircle2 size={14} /> Systems Corrected
           </div>
-          <div className="bg-emerald-500/5 p-6 rounded-2xl border border-emerald-500/10">
+          <div className="bg-emerald-500/5 p-6 rounded-xl border border-emerald-500/10">
              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Strategy Unlock</p>
              <p className="text-sm font-bold text-white leading-relaxed italic">"{proj.with_remedies_90_days.bottleneck}"</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 p-10 rounded-[3rem] text-center">
+      <div className="bg-white/5 border border-white/10 p-10 rounded-[1rem] text-center">
          <p className="text-lg italic text-slate-400 max-w-2xl mx-auto">
            "{report.ai_report.closing_message}"
          </p>
@@ -1149,7 +1149,7 @@ function ProjectionsView({ report }) {
 
 function NavBtn({ active, onClick, icon, label }) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-3 px-8 py-4 rounded-2xl whitespace-nowrap transition-all duration-300 ${active ? 'bg-white text-slate-900 shadow-xl scale-105 font-black' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+    <button onClick={onClick} className={`flex items-center gap-3 px-8 py-4 rounded-xl whitespace-nowrap transition-all duration-300 ${active ? 'bg-white text-slate-900 shadow-xl scale-105 font-black' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
       {icon} <span className="text-xs uppercase tracking-[0.2em]">{label}</span>
     </button>
   );
@@ -1175,11 +1175,11 @@ function LoadingScreen() {
 function ErrorScreen() {
   return (
     <div className="min-h-screen bg-[#020617] flex items-center justify-center">
-       <div className="text-center bg-white/5 p-12 rounded-[3rem] border border-white/10">
+       <div className="text-center bg-white/5 p-12 rounded-[1rem] border border-white/10">
           <ShieldAlert size={64} className="text-red-500 mx-auto mb-6" />
           <h2 className="text-2xl font-black mb-4">Report Not Found</h2>
           <p className="text-slate-500 mb-8">The ID requested does not exist or access is restricted.</p>
-          <button onClick={() => window.history.back()} className="px-8 py-3 bg-white text-slate-900 font-black rounded-2xl">Return Home</button>
+          <button onClick={() => window.history.back()} className="px-8 py-3 bg-white text-slate-900 font-black rounded-xl">Return Home</button>
        </div>
     </div>
   );
