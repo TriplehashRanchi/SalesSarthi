@@ -256,17 +256,15 @@ export default function BusinessKundliWizard() {
   // --- SUBMIT ---
   const handleSubmit = async () => {
 
-    setStep(12); // Processing Screen
-    if (![3, 4, 5, 6, 7, 8, 9].every(validateStep)) {
-      showNotification({
-        title: 'Form Incomplete',
-        message: 'Please complete all required steps before submitting.',
-        color: 'red',
-      });
-      return;
+     for (let i = 1; i <= totalSteps; i++) {
+      if (!validateStep(i)) {
+        setStep(i); // Jump user back to the step they missed
+        return;
+      }
     }
 
-    setStep(10);
+    setLoading(true);
+    setStep(12); // Move to "Processing" Screen immediately
     setLoading(true);
 
 
@@ -276,14 +274,14 @@ export default function BusinessKundliWizard() {
 
       console.log('Submitting Data:', formData);
 
-      // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kundli/submit`, {
-      //   method: 'POST',
-      //   headers: { 
-      //     'Content-Type': 'application/json',
-      //     Authorization: `Bearer ${token}`, 
-      //   },
-      //   body: JSON.stringify(formData)
-      // }); 
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kundli/submit`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, 
+        },
+        body: JSON.stringify(formData)
+      }); 
       
 
       console.log('Submitting Business Kundli Data:', formData); // Debug log
@@ -294,13 +292,13 @@ export default function BusinessKundliWizard() {
       // });
       // const result = await response.json();
 
-      // if (result.success) {
-      //   setTimeout(() => {
-      //     router.push(`/business-kundli/report?id=${result.reportId}`);
-      //   }, 2000);
-      // } else {
-      //   throw new Error(result.message || 'Failed');
-      // }
+      if (result.success) {
+        setTimeout(() => {
+          router.push(`/business-kundli/report?id=${result.reportId}`);
+        }, 2000);
+      } else {
+        throw new Error(result.message || 'Failed');
+      }
     } catch (e) {
       setStep(11); 
       setLoading(false);
