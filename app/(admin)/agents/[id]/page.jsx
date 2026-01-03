@@ -8,6 +8,20 @@ import { useParams, useRouter } from 'next/navigation';
 import AddActivityModal from '@/components/admin/AddActivityModal';
 import { Plus } from 'lucide-react';
 
+const SummaryBadge = ({ color, label, value }) => {
+    const map = {
+        green: 'bg-emerald-100 text-emerald-700',
+        amber: 'bg-amber-100 text-amber-700',
+        red: 'bg-red-100 text-red-700',
+    };
+
+    return (
+        <div className={`px-4 py-2 rounded-xl text-sm font-bold ${map[color]}`}>
+            {label}: {value} days
+        </div>
+    );
+};
+
 export default function AgentDetails() {
     const { id } = useParams();
     const router = useRouter();
@@ -15,6 +29,8 @@ export default function AgentDetails() {
     const [activeTab, setActiveTab] = useState('Overview');
     const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+    const [isRagHistoryOpen, setIsRagHistoryOpen] = useState(false);
+    const [ragSnapshot, setRagSnapshot] = useState([]);
 
     // 1. Fetch Agent Data
     const fetchAgentData = async () => {
@@ -89,6 +105,26 @@ export default function AgentDetails() {
             console.error(err);
         }
     };
+
+    const fetchRagSnapshot = async () => {
+        const auth = getAuth();
+        const token = await auth.currentUser.getIdToken();
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities/rag-snapshot/${id}?days=30`, { headers: { Authorization: `Bearer ${token}` } });
+
+        const data = await res.json();
+        setRagSnapshot(data);
+    };
+
+    const ragChartData = ragSnapshot.map((row) => ({
+        date: new Date(row.date).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+        }),
+        Green: row.rag_status === 'Green' ? 1 : 0,
+        Amber: row.rag_status === 'Amber' ? 1 : 0,
+        Red: row.rag_status === 'Red' ? 1 : 0,
+    }));
 
     if (!data)
         return (
@@ -375,12 +411,25 @@ export default function AgentDetails() {
                                 <h3 className="font-bold text-xl text-slate-900">Activity Timeline</h3>
                                 <p className="text-slate-500 text-sm">Chronological history of interactions and stats</p>
                             </div>
-                            <button
-                                onClick={() => setIsActivityModalOpen(true)}
-                                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center gap-2"
-                            >
-                                <Plus className='w-4 h-4' /> Log Activity
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setIsRagHistoryOpen(true);
+                                        fetchRagSnapshot();
+                                    }}
+                                    className="px-4 py-2 bg-white border border-slate-200 rounded-xl
+             text-sm font-semibold hover:border-blue-300 hover:text-blue-600
+             transition shadow-sm"
+                                >
+                                    Agent History
+                                </button>
+                                <button
+                                    onClick={() => setIsActivityModalOpen(true)}
+                                    className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" /> Log Activity
+                                </button>
+                            </div>
                         </div>
 
                         {!activity || activity.length === 0 ? (
@@ -424,6 +473,41 @@ export default function AgentDetails() {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+                        {isRagHistoryOpen && (
+                            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+                                <div className="bg-white w-full max-w-4xl rounded-2xl p-6 shadow-2xl">
+                                    {/* Header */}
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-bold text-slate-900">Agent RAG History (Last 30 Days)</h3>
+                                        <button onClick={() => setIsRagHistoryOpen(false)} className="text-slate-400 hover:text-slate-700">
+                                            ✕
+                                        </button>
+                                    </div>
+
+                                    {/* Summary */}
+                                    <div className="flex gap-4 mb-6">
+                                        <SummaryBadge color="green" label="Green" value={ragSnapshot.filter((r) => r.rag_status === 'Green').length} />
+                                        <SummaryBadge color="amber" label="Amber" value={ragSnapshot.filter((r) => r.rag_status === 'Amber').length} />
+                                        <SummaryBadge color="red" label="Red" value={ragSnapshot.filter((r) => r.rag_status === 'Red').length} />
+                                    </div>
+
+                                    {/* Graph */}
+                                    <div className="h-[320px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={ragChartData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                <XAxis dataKey="date" />
+                                                <YAxis hide />
+                                                <Tooltip />
+                                                <Area type="monotone" dataKey="Green" stackId="1" stroke="#10B981" fill="#A7F3D0" />
+                                                <Area type="monotone" dataKey="Amber" stackId="1" stroke="#F59E0B" fill="#FDE68A" />
+                                                <Area type="monotone" dataKey="Red" stackId="1" stroke="#EF4444" fill="#FCA5A5" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
