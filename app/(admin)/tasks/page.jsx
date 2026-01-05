@@ -32,6 +32,13 @@ const STATUS_STYLES = {
     },
 };
 
+const PRIORITY_STYLES = {
+  high: 'bg-red-500 text-white',
+  medium: 'bg-orange-500 text-white',
+  low: 'bg-blue-500 text-white',
+};
+
+
 export default function TaskBoard() {
     // Stores the organized columns for UI
     const [tasks, setTasks] = useState({ Pending: [], InProgress: [], Done: [], Skipped: [] });
@@ -317,7 +324,14 @@ const TaskListView = ({ tasks }) => {
                                 </td>
 
                                 <td className="px-4 py-3">
-                                    {task.priority?.toLowerCase() === 'high' && <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">High</span>}
+                                    {task.priority && (
+                                        <span
+                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize
+        ${PRIORITY_STYLES[task.priority.toLowerCase()] || 'bg-gray-300 text-gray-700'}`}
+                                        >
+                                            {task.priority}
+                                        </span>
+                                    )}
                                 </td>
                             </tr>
                         );

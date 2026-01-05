@@ -576,6 +576,13 @@ const reportData = useMemo(() => {
                   </div>
                   <MiniStat label="Current Buffer" value={formatCurrency(ui.emergency.current)} />
                   <MiniStat label="Gap to Target" value={formatCurrency(ui.emergency.gap)} color="text-rose-500" />
+                  <MiniStat
+  label="Risk Profile"
+  value={reportData?.input?.tax_and_risk?.risk_profile || '—'}
+  color="text-amber-600"
+/>
+
+
                 </section>
 
                 {/* FIRE Visual */}
