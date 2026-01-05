@@ -51,8 +51,8 @@ import { getAuth, signOut } from 'firebase/auth';
 import axios from 'axios';
 
 interface Banner {
-  created_at: string;
-  // add any additional fields if needed
+    created_at: string;
+    // add any additional fields if needed
 }
 const Sidebar = () => {
     const dispatch = useDispatch();
@@ -62,29 +62,29 @@ const Sidebar = () => {
     const [errorSubMenu, setErrorSubMenu] = useState(false);
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const semidark = useSelector((state: IRootState) => state.themeConfig.semidark);
-   const [todayBannerCount, setTodayBannerCount] = useState(0);
+    const [todayBannerCount, setTodayBannerCount] = useState(0);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-useEffect(() => {
-  const fetchTodayCount = async () => {
-    try {
-      const { data } = await axios.get<Banner[]>(`${API_URL}/api/banners`);
-      const today = new Date().toISOString().split('T')[0];
+    useEffect(() => {
+        const fetchTodayCount = async () => {
+            try {
+                const { data } = await axios.get<Banner[]>(`${API_URL}/api/banners`);
+                const today = new Date().toISOString().split('T')[0];
 
-      const todays = data.filter((b: Banner) => {
-        const created = new Date(b.created_at).toISOString().split('T')[0];
-        return created === today;
-      });
+                const todays = data.filter((b: Banner) => {
+                    const created = new Date(b.created_at).toISOString().split('T')[0];
+                    return created === today;
+                });
 
-      setTodayBannerCount(todays.length);
-    } catch (error) {
-      console.log('Banner count fetch error:', error);
-    }
-  };
+                setTodayBannerCount(todays.length);
+            } catch (error) {
+                console.log('Banner count fetch error:', error);
+            }
+        };
 
-  fetchTodayCount();
-}, []);
+        fetchTodayCount();
+    }, []);
     const toggleMenu = (value: string) => {
         setCurrentMenu((oldValue) => {
             return oldValue === value ? '' : value;
@@ -348,8 +348,9 @@ useEffect(() => {
                                 </Link>
                             </li> */}
                             <li className="menu nav-item">
-                                <Link href="/ad-banner">
-                                    <div className="flex items-center relative">
+                                {/* DROPDOWN BUTTON */}
+                                <button type="button" className={`${currentMenu === 'banner' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('banner')}>
+                                    <div className="flex items-center relative w-full">
                                         <IconLaptop className="shrink-0 group-hover:!text-primary" />
 
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>
@@ -359,7 +360,7 @@ useEffect(() => {
                                             <span
                                                 className="
                         absolute
-                        right-[-25px]
+                        right-8
                         top-1/2
                         -translate-y-1/2
                         bg-blue-600
@@ -368,14 +369,30 @@ useEffect(() => {
                         px-2 py-[1px]
                         rounded-full
                         shadow-md
-                        
                     "
                                             >
                                                 {todayBannerCount}
                                             </span>
                                         )}
                                     </div>
-                                </Link>
+
+                                    {/* ARROW */}
+                                    <div className={currentMenu !== 'banner' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                        <IconCaretDown />
+                                    </div>
+                                </button>
+
+                                {/* DROPDOWN */}
+                                <AnimateHeight duration={300} height={currentMenu === 'banner' ? 'auto' : 0}>
+                                    <ul className="sub-menu text-gray-500">
+                                        <li>
+                                            <Link href="/ad-banner">{t('Image Banner')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/ad-banner/video">{t('Video Banner')}</Link>
+                                        </li>
+                                    </ul>
+                                </AnimateHeight>
                             </li>
 
                             <li className="menu nav-item">
@@ -419,8 +436,6 @@ useEffect(() => {
                                     </ul>
                                 </AnimateHeight>
                             </li> */}
-
-
                         </ul>
                     </PerfectScrollbar>
                 </div>
