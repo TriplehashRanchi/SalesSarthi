@@ -76,6 +76,25 @@ export default function FinancialKundliPage() {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
+      // --- NEW: For the Analysis UI cycling messages ---
+    const [tipIndex, setTipIndex] = useState(0);
+    const analysisSteps = [
+        'Evaluating asset allocation strategy...',
+        'Checking debt-to-income sustainability...',
+        'Simulating inflation-adjusted goal trajectories...',
+        'Optimizing tax efficiency parameters...',
+        'Synthesizing final Financial Kundli report...',
+    ];
+
+    useEffect(() => {
+        if (loading) {
+            const interval = setInterval(() => {
+                setTipIndex((prev) => (prev + 1) % analysisSteps.length);
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [loading]);
+
   const [data, setData] = useState({
     client: {
       financial_doctor_name: '',
@@ -321,6 +340,52 @@ useEffect(() => {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 pb-32 lg:p-10">
+          {loading ? (
+                        <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+                            {/* RADAR ANIMATION */}
+                            <div className="relative w-64 h-64 flex items-center justify-center mb-8">
+                                <div className="absolute inset-0 bg-indigo-600/5 rounded-full animate-ping opacity-20" />
+                                <div className="absolute inset-0 rounded-full border border-slate-200">
+                                    <div className="absolute top-1/2 left-1/2 w-1/2 h-[2px] bg-gradient-to-r from-indigo-500 to-transparent origin-left animate-[spin_3s_linear_infinite]" />
+                                </div>
+                                <div className="absolute inset-10 border border-dashed border-slate-200 rounded-full animate-[spin_15s_linear_infinite]" />
+
+                                <div className="relative z-10 w-20 h-20 bg-white rounded-2xl border border-slate-200 flex items-center justify-center shadow-xl">
+                                    <div className="flex gap-1 items-end h-6">
+                                        {[0, 1, 2, 3].map((i) => (
+                                            <div
+                                                key={i}
+                                                className="w-1.5 bg-indigo-600 rounded-full animate-[loading_1.2s_ease-in-out_infinite]"
+                                                style={{ animationDelay: `${i * 0.15}s`, height: '40%' }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="max-w-sm space-y-4">
+                                <h2 className="text-2xl font-black text-slate-900">
+                                    Deep <span className="text-indigo-600">Diagnosis</span> Active
+                                </h2>
+                                <div className="h-6">
+                                    <p className="text-slate-500 text-sm font-medium animate-pulse">{analysisSteps[tipIndex]}</p>
+                                </div>
+                                <div className="pt-4 px-6 py-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center gap-4 text-left">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                        <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <circle cx="12" cy="12" r="10" strokeWidth="2" className="opacity-20" />
+                                            <path d="M12 2a10 10 0 0110 10" strokeWidth="2" strokeLinecap="round" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-[11px] font-bold text-slate-600 leading-relaxed uppercase tracking-wider">
+                                        Please stay on this page.
+                                        <br />
+                                        We are calculating complex benchmarks.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+          ) :(
           <div className="max-w-4xl mx-auto">
             
             {/* STEP 0: CLIENT PROFILE */}
@@ -458,6 +523,7 @@ useEffect(() => {
             )}
 
           </div>
+          )}
         </main>
 
         {/* FOOTER NAVIGATION */}
@@ -491,6 +557,17 @@ useEffect(() => {
         </footer>
 
       </div>
-    </div>
+    <style jsx global>{`
+                @keyframes loading {
+                    0%,
+                    100% {
+                        height: 30%;
+                    }
+                    50% {
+                        height: 100%;
+                    }
+                }
+            `}</style>
+        </div>
   );
 }
