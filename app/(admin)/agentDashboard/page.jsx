@@ -10,9 +10,8 @@ export default function AgentDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    // State to toggle between Dashboard and All Agents view
-    const [view, setView] = useState('dashboard'); // 'dashboard' | 'allAgents'
+
+    const [view, setView] = useState('dashboard');
 
     const fetchData = async () => {
         try {
@@ -88,8 +87,7 @@ export default function AgentDashboard() {
     // --- MAIN DASHBOARD RENDER ---
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
-           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-            
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
                 {/* --- HEADER --- */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
@@ -151,9 +149,14 @@ export default function AgentDashboard() {
                         <div className="space-y-6">
                             {data?.topAgent?.slice(0, 3).map((agent, index) => {
                                 const income = Number(agent.current_income || 0);
-                                const target = 25000;
-                                const progress = Math.min(Math.round((income / target) * 100), 100);
-                                const remaining = Math.max(target - income, 0);
+                                const milestone = agent.milestone;
+
+                                if (!milestone) return null;
+
+                                const target = milestone.completed ? milestone.nextTarget : milestone.target;
+
+                                const progress = milestone.progress;
+                                const remaining = milestone.remaining;
 
                                 return (
                                     <div key={index} className="group">
@@ -162,20 +165,31 @@ export default function AgentDashboard() {
                                                 <span className="font-semibold text-slate-900">{agent.username}</span>
                                                 <span className="text-xs text-slate-400">Current: ₹{income.toLocaleString()}</span>
                                             </div>
+
                                             <div className="text-right">
                                                 <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{progress}%</span>
-                                                <div className="text-xs text-slate-400 mt-0.5">₹{remaining.toLocaleString()} left</div>
+
+                                                {milestone.completed ? (
+                                                    <div className="text-xs text-emerald-600 font-semibold mt-0.5">🎉 Milestone Achieved</div>
+                                                ) : (
+                                                    <div className="text-xs text-slate-400 mt-0.5">₹{remaining.toLocaleString()} left</div>
+                                                )}
                                             </div>
                                         </div>
+
                                         <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden relative">
                                             <div
-                                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-1000 ease-out"
+                                                className={`h-full rounded-full transition-all duration-1000 ease-out
+                        ${milestone.completed ? 'bg-gradient-to-r from-emerald-500 to-green-600' : 'bg-gradient-to-r from-blue-500 to-indigo-600'}`}
                                                 style={{ width: `${progress}%` }}
                                             />
                                         </div>
+
+                                        <div className="mt-1 text-[11px] text-slate-400">Target: ₹{target.toLocaleString()}</div>
                                     </div>
                                 );
                             })}
+
                             {(!data?.topAgent || data.topAgent.length === 0) && (
                                 <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
                                     <p className="text-slate-400 text-sm">No milestone data available yet.</p>
@@ -306,7 +320,7 @@ export default function AgentDashboard() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <ActionButton
                             onClick={() => setIsModalOpen(true)}
-                            label="New Agent"
+                            label="Add New Agent"
                             desc="Onboard team member"
                             icon={
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -319,14 +333,14 @@ export default function AgentDashboard() {
                             color="blue"
                         />
                         <Link href="/tasks" className="block">
-                            <ActionButton label="Go to Tasks" desc="Create for today" icon={<LightningIcon />} color="amber" isLink />
+                            <ActionButton label="Go to Agent Tasks" desc="Create for today" icon={<LightningIcon />} color="amber" isLink />
                         </Link>
                         <Link href="/tasks" className="block">
-                            <ActionButton label="Generate Task" desc="Your task will generate automatically" icon={<BrainCog /> } color="pink" isLink />
+                            <ActionButton label="Generate Agency Leader Task" desc="Your task will generate automatically" icon={<BrainCog />} color="pink" isLink />
                         </Link>
                         {/* Modified Link to use onClick handler for SPA feel */}
                         <div onClick={() => setView('allAgents')} className="block h-full cursor-pointer">
-                             <ActionButton label="Go to Agents" desc="View full list" icon={<UsersIcon />} color="emerald" isLink />
+                            <ActionButton label="Go to Agents" desc="View full list" icon={<UsersIcon />} color="emerald" isLink />
                         </div>
                     </div>
                 </div>
@@ -343,136 +357,172 @@ export default function AgentDashboard() {
 // =========================================================================
 
 function AllAgentsView({ onBack }) {
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const [agents, setAgents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchAgents = async () => {
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) return;
+    const fetchAgents = async () => {
+        try {
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) return;
 
-      const token = await user.getIdToken();
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/agents`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+            const token = await user.getIdToken();
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents`, { headers: { Authorization: `Bearer ${token}` } });
 
-      if (res.ok) {
-        const data = await res.json();
-        setAgents(data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch agents', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (res.ok) {
+                const data = await res.json();
+                setAgents(data || []);
+            }
+        } catch (err) {
+            console.error('Failed to fetch agents', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  useEffect(() => {
-    fetchAgents();
-  }, []);
+    useEffect(() => {
+        fetchAgents();
+    }, []);
 
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-      
-      {/* Header with Back Button */}
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-slate-50/50">
-        <div className="flex items-center gap-4">
-             <button onClick={onBack} className="p-2 -ml-2 hover:bg-white rounded-full transition-colors text-slate-500 hover:text-blue-600 border border-transparent hover:border-slate-200 hover:shadow-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-             </button>
-             <div>
-                <h2 className="text-xl font-bold text-gray-900">All Agents</h2>
-                <span className="text-sm text-gray-500">Manage your team members</span>
-             </div>
+    const filteredAgents = agents.filter((agent) => {
+        const q = searchTerm.toLowerCase();
+
+        return agent.username?.toLowerCase().includes(q) || agent.phone?.toLowerCase().includes(q) || agent.email?.toLowerCase().includes(q);
+    });
+
+    return (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Header with Back Button */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-slate-50/50">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    {/* LEFT */}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={onBack}
+                            className="p-2 -ml-2 hover:bg-white rounded-full transition-colors text-slate-500 hover:text-blue-600 border border-transparent hover:border-slate-200 hover:shadow-sm"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 12H5" />
+                                <path d="M12 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900">All Agents</h2>
+                            <span className="text-sm text-gray-500">
+                                {filteredAgents.length} of {agents.length} shown
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* RIGHT – SEARCH */}
+                    <div className="relative w-full md:w-80">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search by name, phone, or email"
+                            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           placeholder:text-slate-400 shadow-sm"
+                        />
+
+                        {/* Search Icon */}
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                        </div>
+
+                        {/* Clear Button */}
+                        {searchTerm && (
+                            <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                ✕
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {loading ? (
+                <div className="min-h-[400px] flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-gray-500 text-sm">Loading agents...</p>
+                    </div>
+                </div>
+            ) : filteredAgents.length === 0 ? (
+                <div className="min-h-[300px] flex flex-col items-center justify-center text-slate-400">
+                    <div className="text-4xl mb-2">🔍</div>
+                    <p className="font-medium">No matching agents found</p>
+                    <p className="text-xs mt-1">Try searching by name, phone, or email</p>
+                </div>
+            ) : (
+                <>
+                    {/* Table Header */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <div className="col-span-4">Agent Name</div>
+                        <div className="col-span-2">Contact</div>
+                        <div className="col-span-3 text-center">Performance (M / L / S)</div>
+                        <div className="col-span-2">Last Active</div>
+                        <div className="col-span-1 text-right">Action</div>
+                    </div>
+
+                    {/* Agent Rows */}
+                    <div className="divide-y divide-gray-100">
+                        {filteredAgents.map((agent) => (
+                            <Link
+                                key={agent.id}
+                                href={`/agents/${agent.id}`}
+                                className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 hover:bg-blue-50/50 transition cursor-pointer items-center group"
+                            >
+                                {/* Agent Info */}
+                                <div className="col-span-4 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shadow-sm border border-blue-200">
+                                        {agent.username?.charAt(0)?.toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-gray-900 group-hover:text-blue-700 transition">{agent.username}</div>
+                                        <div className="text-xs text-gray-500">{agent.employment_type || 'Full-time'}</div>
+                                    </div>
+                                </div>
+
+                                {/* Contact */}
+                                <div className="col-span-2 text-sm">
+                                    <div className="text-gray-700 font-medium">{agent.phone || '-'}</div>
+                                    <div className="text-xs text-gray-400 truncate max-w-[120px]" title={agent.email}>
+                                        {agent.email}
+                                    </div>
+                                </div>
+
+                                {/* Performance */}
+                                <div className="col-span-3 flex justify-start md:justify-center gap-6 text-sm">
+                                    <Metric label="Meetings" value={agent.total_meetings || 0} />
+                                    <Metric label="Leads" value={agent.total_leads || 0} />
+                                    <Metric label="Sales" value={agent.total_sales || 0} />
+                                </div>
+
+                                {/* Last Active */}
+                                <div className="col-span-2 text-sm text-gray-500">
+                                    {agent.last_active_date ? new Date(agent.last_active_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                </div>
+
+                                {/* Arrow */}
+                                <div className="col-span-1 flex justify-end text-gray-300 group-hover:text-blue-500 transition">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M5 12h14"></path>
+                                        <path d="M12 5l7 7-7 7"></path>
+                                    </svg>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </>
+            )}
         </div>
-        <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-bold text-gray-600 shadow-sm">
-          Total: {agents.length}
-        </span>
-      </div>
-
-      {loading ? (
-          <div className="min-h-[400px] flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <p className="text-gray-500 text-sm">Loading agents...</p>
-            </div>
-          </div>
-      ) : agents.length === 0 ? (
-          <div className="min-h-[400px] flex items-center justify-center text-gray-400">
-            No agents found
-          </div>
-      ) : (
-        <>
-            {/* Table Header */}
-            <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                <div className="col-span-4">Agent Name</div>
-                <div className="col-span-2">Contact</div>
-                <div className="col-span-3 text-center">Performance (M / L / S)</div>
-                <div className="col-span-2">Last Active</div>
-                <div className="col-span-1 text-right">Action</div>
-            </div>
-
-            {/* Agent Rows */}
-            <div className="divide-y divide-gray-100">
-                {agents.map((agent) => (
-                <Link
-                    key={agent.id}
-                    href={`/agents/${agent.id}`}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 hover:bg-blue-50/50 transition cursor-pointer items-center group"
-                >
-                    {/* Agent Info */}
-                    <div className="col-span-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shadow-sm border border-blue-200">
-                        {agent.username?.charAt(0)?.toUpperCase()}
-                    </div>
-                    <div>
-                        <div className="font-semibold text-gray-900 group-hover:text-blue-700 transition">
-                        {agent.username}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                        {agent.employment_type || 'Full-time'}
-                        </div>
-                    </div>
-                    </div>
-
-                    {/* Contact */}
-                    <div className="col-span-2 text-sm">
-                    <div className="text-gray-700 font-medium">{agent.phone || '-'}</div>
-                    <div className="text-xs text-gray-400 truncate max-w-[120px]" title={agent.email}>
-                        {agent.email}
-                    </div>
-                    </div>
-
-                    {/* Performance */}
-                    <div className="col-span-3 flex justify-start md:justify-center gap-6 text-sm">
-                    <Metric label="Meetings" value={agent.total_meetings || 0} />
-                    <Metric label="Leads" value={agent.total_leads || 0} />
-                    <Metric label="Sales" value={agent.total_sales || 0} />
-                    </div>
-
-                    {/* Last Active */}
-                    <div className="col-span-2 text-sm text-gray-500">
-                    {agent.last_active_date
-                        ? new Date(agent.last_active_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                        : '-'}
-                    </div>
-
-                    {/* Arrow */}
-                    <div className="col-span-1 flex justify-end text-gray-300 group-hover:text-blue-500 transition">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14"></path>
-                        <path d="M12 5l7 7-7 7"></path>
-                    </svg>
-                    </div>
-                </Link>
-                ))}
-            </div>
-        </>
-      )}
-    </div>
-  );
+    );
 }
 
 // --------------------------------
@@ -480,12 +530,12 @@ function AllAgentsView({ onBack }) {
 // --------------------------------
 
 function Metric({ label, value }) {
-  return (
-    <div className="text-center">
-      <div className="font-bold text-gray-900 text-base">{value}</div>
-      <div className="text-[10px] text-gray-400 uppercase tracking-wide">{label.charAt(0)}</div>
-    </div>
-  );
+    return (
+        <div className="text-center">
+            <div className="font-bold text-gray-900 text-base">{value}</div>
+            <div className="text-[10px] text-gray-400 uppercase tracking-wide">{label.charAt(0)}</div>
+        </div>
+    );
 }
 
 function RagCard({ label, count, type, sub }) {

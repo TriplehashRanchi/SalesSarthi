@@ -536,7 +536,7 @@ const reportData = useMemo(() => {
                 </div>
             </div>
           </section>
-            <FinancialKundliSeal ui={ui} />
+            
                          <FinancialHealthSnapshot snapshot={ui.snapshot} />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -644,8 +644,10 @@ const reportData = useMemo(() => {
                 </section>
             </div>
           </div>
-         {grahaData && <GrahaReport data={grahaData} />}
+           <FinancialKundliSeal ui={ui} />
 
+         {grahaData && <GrahaReport ui={ui} data={grahaData} />}
+        
         </main>
 
         <div className="hidden print:block text-center mt-12 pt-8 border-t border-stone-200 text-[10px] text-stone-300 uppercase tracking-widest">
