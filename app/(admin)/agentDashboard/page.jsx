@@ -10,7 +10,9 @@ export default function AgentDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
+    
+    // State for Milestone Categories (Updated for 5 Tiers)
+    const [milestoneTab, setMilestoneTab] = useState('tier1'); 
     const [view, setView] = useState('dashboard');
 
     const fetchData = async () => {
@@ -36,7 +38,6 @@ export default function AgentDashboard() {
     };
 
     useEffect(() => {
-        // Only fetch dashboard data if we are in dashboard view
         if (view === 'dashboard') {
             const timer = setTimeout(fetchData, 800);
             return () => clearTimeout(timer);
@@ -59,6 +60,34 @@ export default function AgentDashboard() {
         setIsModalOpen(false);
         fetchData();
     };
+
+    // --- HELPER: FILTER AGENTS BY INCOME CATEGORY (5 TIERS) ---
+    const getFilteredAgents = () => {
+        if (!data?.topAgent) return [];
+        
+        const income = (agent) => Number(agent.current_income || 0);
+
+        // Tier 1: 0 - 25,000
+        const tier1 = data.topAgent.filter(a => income(a) < 25000);
+        // Tier 2: 25,000 - 50,000
+        const tier2 = data.topAgent.filter(a => income(a) >= 25000 && income(a) < 50000);
+        // Tier 3: 50,000 - 1,00,000
+        const tier3 = data.topAgent.filter(a => income(a) >= 50000 && income(a) < 100000);
+        // Tier 4: 1,00,000 - 2,00,000
+        const tier4 = data.topAgent.filter(a => income(a) >= 100000 && income(a) < 200000);
+        // Tier 5: 2,00,000+
+        const tier5 = data.topAgent.filter(a => income(a) >= 200000);
+
+        switch(milestoneTab) {
+            case 'tier5': return tier5;
+            case 'tier4': return tier4;
+            case 'tier3': return tier3;
+            case 'tier2': return tier2;
+            default: return tier1;
+        }
+    };
+
+    const activeAgentsList = getFilteredAgents();
 
     // --- CONDITIONAL RENDER: ALL AGENTS VIEW ---
     if (view === 'allAgents') {
@@ -136,69 +165,123 @@ export default function AgentDashboard() {
 
                 {/* --- ROW 2: MILESTONES & BIRTHDAYS --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    {/* Milestone Tracker */}
+                    
+                    {/* --- CATEGORIZED MILESTONE TRACKER (5 TIERS) --- */}
                     <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">🏆 Next Milestone Tracker</h3>
-                                <p className="text-sm text-slate-500 mt-1">Progress towards the ₹25k income target.</p>
+                        <div className="flex flex-col gap-4 mb-6">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">🏆 Milestone Tracker</h3>
+                                    <p className="text-sm text-slate-500 mt-1">Income progress by category.</p>
+                                </div>
                             </div>
-                            <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1 rounded-full border border-slate-200">{Math.min(data?.topAgent?.length || 0, 3)} Agents</span>
+                            
+                            {/* CATEGORY TABS - SCROLLABLE ON MOBILE */}
+                            <div className="flex overflow-x-auto pb-2 -mx-2 px-2 md:pb-0 md:mx-0 md:px-0 custom-scrollbar">
+                                <div className="flex p-1 bg-slate-100 rounded-lg whitespace-nowrap">
+                                    <button 
+                                        onClick={() => setMilestoneTab('tier1')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier1' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        0 - 25k
+                                    </button>
+                                    <button 
+                                        onClick={() => setMilestoneTab('tier2')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier2' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        25k - 50k
+                                    </button>
+                                    <button 
+                                        onClick={() => setMilestoneTab('tier3')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier3' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        50k - 1L
+                                    </button>
+                                    <button 
+                                        onClick={() => setMilestoneTab('tier4')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier4' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        1L - 2L
+                                    </button>
+                                    <button 
+                                        onClick={() => setMilestoneTab('tier5')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier5' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        2L+
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="space-y-6">
-                            {data?.topAgent?.slice(0, 3).map((agent, index) => {
+                            {activeAgentsList.slice(0, 5).map((agent, index) => {
                                 const income = Number(agent.current_income || 0);
                                 const milestone = agent.milestone;
-
                                 if (!milestone) return null;
 
                                 const target = milestone.completed ? milestone.nextTarget : milestone.target;
-
                                 const progress = milestone.progress;
                                 const remaining = milestone.remaining;
 
+                                // Dynamic bar color based on category
+                                let barColor = 'bg-slate-400';
+                                if (milestoneTab === 'tier5') barColor = 'bg-gradient-to-r from-pink-500 to-rose-600';
+                                else if (milestoneTab === 'tier4') barColor = 'bg-gradient-to-r from-purple-500 to-fuchsia-600';
+                                else if (milestoneTab === 'tier3') barColor = 'bg-gradient-to-r from-indigo-500 to-violet-600';
+                                else if (milestoneTab === 'tier2') barColor = 'bg-gradient-to-r from-blue-500 to-cyan-600';
+                                else barColor = 'bg-gradient-to-r from-slate-400 to-slate-500';
+
                                 return (
-                                    <div key={index} className="group">
+                                    <div key={index} className="group animate-in fade-in slide-in-from-right-4 duration-300">
                                         <div className="flex justify-between items-end mb-2">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold text-slate-900">{agent.username}</span>
-                                                <span className="text-xs text-slate-400">Current: ₹{income.toLocaleString()}</span>
+                                                <span className="text-xs text-slate-400">Current Income: ₹{income.toLocaleString()}</span>
                                             </div>
 
                                             <div className="text-right">
-                                                <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{progress}%</span>
+                                                <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{progress}%</span>
 
                                                 {milestone.completed ? (
-                                                    <div className="text-xs text-emerald-600 font-semibold mt-0.5">🎉 Milestone Achieved</div>
+                                                    <div className="text-xs text-emerald-600 font-semibold mt-0.5">🎉 Achieved</div>
                                                 ) : (
-                                                    <div className="text-xs text-slate-400 mt-0.5">₹{remaining.toLocaleString()} left</div>
+                                                    <div className="text-xs text-slate-400 mt-0.5">₹{remaining.toLocaleString()} to go</div>
                                                 )}
                                             </div>
                                         </div>
 
                                         <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden relative">
                                             <div
-                                                className={`h-full rounded-full transition-all duration-1000 ease-out
-                        ${milestone.completed ? 'bg-gradient-to-r from-emerald-500 to-green-600' : 'bg-gradient-to-r from-blue-500 to-indigo-600'}`}
+                                                className={`h-full rounded-full transition-all duration-1000 ease-out ${milestone.completed ? 'bg-gradient-to-r from-emerald-500 to-green-600' : barColor}`}
                                                 style={{ width: `${progress}%` }}
                                             />
                                         </div>
 
-                                        <div className="mt-1 text-[11px] text-slate-400">Target: ₹{target.toLocaleString()}</div>
+                                        <div className="mt-1 text-[11px] text-slate-400 flex justify-between">
+                                            <span>Base: ₹{milestone.base?.toLocaleString() || 0}</span>
+                                            <span>Target: ₹{target.toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 );
                             })}
 
-                            {(!data?.topAgent || data.topAgent.length === 0) && (
-                                <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                    <p className="text-slate-400 text-sm">No milestone data available yet.</p>
+                            {activeAgentsList.length === 0 && (
+                                <div className="py-12 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                    <div className="text-2xl mb-2">📊</div>
+                                    <p className="text-slate-500 font-medium text-sm">No agents in this tier yet.</p>
+                                    <p className="text-slate-400 text-xs mt-1">
+                                        {milestoneTab === 'tier1' && "Everyone has graduated from the starter tier!"}
+                                        {milestoneTab === 'tier2' && "Keep pushing agents to cross 25k!"}
+                                        {milestoneTab === 'tier3' && "Push for that 1 Lakh milestone!"}
+                                        {milestoneTab === 'tier4' && "Aiming for the 2 Lakh club!"}
+                                        {milestoneTab === 'tier5' && "The elite club is waiting for its first member."}
+                                    </p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Birthdays */}
+                    {/* Birthdays (Unchanged) */}
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow flex flex-col">
                         <h3 className="font-bold text-slate-900 text-lg mb-4 flex items-center gap-2">
                             <span className="text-xl">🎂</span> Upcoming Birthdays
@@ -353,7 +436,7 @@ export default function AgentDashboard() {
 }
 
 // =========================================================================
-// SUB-COMPONENT: ALL AGENTS LIST VIEW
+// SUB-COMPONENT: ALL AGENTS LIST VIEW (Unchanged)
 // =========================================================================
 
 function AllAgentsView({ onBack }) {
