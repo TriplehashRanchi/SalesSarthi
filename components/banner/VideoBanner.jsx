@@ -14,7 +14,7 @@
     const MAIN_CATEGORIES = [
     'Facebook Ads',
     'Daily Motivation',
-    'Concepts',
+    'Recruitment',
     'Life Insurance',
     'Health Insurance',
     'Motor Insurance',
@@ -25,7 +25,7 @@
     const CATEGORY_ICONS = {
     'Facebook Ads': '📢',
     'Daily Motivation': '💡',
-    'Concepts': '📚',
+    'Recruitment': '📚',
     'Life Insurance': '🧬',
     'Health Insurance': '🏥',
     'Motor Insurance': '🚗',

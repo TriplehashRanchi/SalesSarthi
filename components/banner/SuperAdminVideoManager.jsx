@@ -21,7 +21,7 @@ const SuperAdminVideoManager = () => {
   const [message, setMessage] = useState('');
 
   const categories = [
-    'Facebook Ads', 'Daily Motivation', 'Concepts', 'Life Insurance',
+    'Facebook Ads', 'Daily Motivation', 'Recruitment', 'Life Insurance',
     'Health Insurance', 'Motor Insurance', 'Mutual Fund', 'Greetings',
   ];
 
