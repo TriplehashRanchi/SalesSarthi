@@ -28,17 +28,19 @@ const IconLoader = () => (
 );
 
 export default function ComponentsAuthLoginForm() {
-  const router           = useRouter();
-  const searchParams     = useSearchParams();           // ← new
-  const { user }         = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();           // ← new
+  const { user } = useAuth();
 
-  const [email, setEmail]       = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
+  const [error, setError] = useState('');
   const [isLoading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
 
-    // --- 1. NEW: Add state and logic to detect if the device is mobile ---
+
+  // --- 1. NEW: Add state and logic to detect if the device is mobile ---
   const [isMobile, setIsMobile] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -50,20 +52,20 @@ export default function ComponentsAuthLoginForm() {
   /* 1️⃣  Show success banner if redirected from checkout */
   useEffect(() => {
     const paymentFlag = searchParams.get('payment');
-    const trialFlag   = searchParams.get('trial');
+    const trialFlag = searchParams.get('trial');
 
     if (paymentFlag === 'success') {
       showNotification({
         title: 'Payment Successful',
         message: 'Thank you! Please sign in to access your dashboard.',
-        color:  'green',
+        color: 'green',
       });
     }
     if (trialFlag === 'started') {
       showNotification({
         title: 'Free Trial Started',
         message: 'Your 7-day trial is active. Sign in to get started!',
-        color:  'blue',
+        color: 'blue',
       });
     }
     // both params are harmless if absent; no further action needed
@@ -155,7 +157,7 @@ export default function ComponentsAuthLoginForm() {
           });
         } else {
           // If on desktop, just create the account. They will be in a 'pending' state.
-           showNotification({
+          showNotification({
             title: 'Account Created!',
             message: 'Please complete the payment to activate your account.',
             color: 'green',
@@ -182,7 +184,7 @@ export default function ComponentsAuthLoginForm() {
     } finally {
       setLoading(false);
     }
-  };    
+  };
 
   const handleForgotPassword = async () => {
     if (!email) {
@@ -234,22 +236,83 @@ export default function ComponentsAuthLoginForm() {
       {/* password */}
       <div>
         <label htmlFor="password">Password</label>
+
         <div className="relative text-white-dark">
           <input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Enter Password"
-            className="form-input ps-10 placeholder:text-white-dark disabled:bg-gray-200 dark:disabled:bg-gray-700"
+            className="form-input ps-10 pe-12 placeholder:text-white-dark disabled:bg-gray-200 dark:disabled:bg-gray-700"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
             required
           />
+
+          {/* left icon */}
           <span className="absolute start-4 top-1/2 -translate-y-1/2">
             <IconLockDots fill />
           </span>
+
+          {/* right eye toggle */}
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            disabled={isLoading}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
+            className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1
+                 text-white-dark hover:text-dark disabled:opacity-50"
+          >
+            {showPassword ? (
+              // eye-off icon (svg)
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M3 3l18 18"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M10.58 10.58A3 3 0 0013.42 13.42"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M9.88 5.09A10.43 10.43 0 0112 5c5.05 0 9.27 3.11 11 7-0.53 1.2-1.31 2.28-2.27 3.2"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M6.23 6.23C4.23 7.46 2.77 9.42 2 12c1.73 3.89 5.95 7 10 7 1.42 0 2.78-.29 4.02-.82"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ) : (
+              // eye icon (svg)
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
+
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
