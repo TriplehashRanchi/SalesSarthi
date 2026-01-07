@@ -20,6 +20,7 @@ import IconMenuInvoice from '@/components/icon/menu/icon-menu-invoice';
 import IconMenuCalendar from '@/components/icon/menu/icon-menu-calendar';
 import IconMenuComponents from '@/components/icon/menu/icon-menu-components';
 import IconMenuElements from '@/components/icon/menu/icon-menu-elements';
+import IconVideo  from '@/components/icon/icon-video';
 import IconMenuCharts from '@/components/icon/menu/icon-menu-charts';
 import IconMenuWidgets from '@/components/icon/menu/icon-menu-widgets';
 import IconMenuFontIcons from '@/components/icon/menu/icon-menu-font-icons';
@@ -160,6 +161,14 @@ const UserSide = () => {
                                     <div className="flex items-center">
                                         <IconLaptop className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Banner Maker')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+                             <li className="menu nav-item">
+                                <Link href="/superadmin/banner-maker/video">
+                                    <div className="flex items-center">
+                                        <IconVideo className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Video Banner')}</span>
                                     </div>
                                 </Link>
                             </li>
