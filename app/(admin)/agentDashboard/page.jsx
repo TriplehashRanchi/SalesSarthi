@@ -4,15 +4,19 @@ import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
 import Link from 'next/link';
 import AddAgentModal from '@/components/admin/AddAgentModal';
+import CelebrationPopup from '@/components/ui/CelebrationPopup';
+
 import { BrainCog } from 'lucide-react';
 
 export default function AgentDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+    const [celebrations, setCelebrations] = useState([]);
+
+
     // State for Milestone Categories (Updated for 5 Tiers)
-    const [milestoneTab, setMilestoneTab] = useState('tier1'); 
+    const [milestoneTab, setMilestoneTab] = useState('tier1');
     const [view, setView] = useState('dashboard');
 
     const fetchData = async () => {
@@ -44,6 +48,46 @@ export default function AgentDashboard() {
         }
     }, [view]);
 
+    useEffect(() => {
+        if (!data) return;
+
+        const today = new Date().toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+        });
+
+        const sessionKey = 'celebrations-seen';
+        const seen = JSON.parse(sessionStorage.getItem(sessionKey) || '[]');
+
+        const list = [];
+
+        // 🎂 Birthdays
+        data.birthdays?.forEach((b) => {
+            if (b.bday_fmt === today && !seen.includes(`b-${b.username}`)) {
+                list.push({
+                    type: 'birthday',
+                    username: b.username,
+                    key: `b-${b.username}`,
+                });
+            }
+        });
+
+        // 🎉 Anniversaries
+        data.anniversaries?.forEach((a) => {
+            if (a.anniversary_fmt === today && !seen.includes(`a-${a.username}`)) {
+                list.push({
+                    type: 'anniversary',
+                    username: a.username,
+                    years_completed: a.years_completed,
+                    key: `a-${a.username}`,
+                });
+            }
+        });
+
+        setCelebrations(list);
+    }, [data]);
+
+
     const handleAgentCreated = async (formData) => {
         const auth = getAuth();
         const token = await auth.currentUser?.getIdToken();
@@ -64,7 +108,7 @@ export default function AgentDashboard() {
     // --- HELPER: FILTER AGENTS BY INCOME CATEGORY (5 TIERS) ---
     const getFilteredAgents = () => {
         if (!data?.topAgent) return [];
-        
+
         const income = (agent) => Number(agent.current_income || 0);
 
         // Tier 1: 0 - 25,000
@@ -78,7 +122,7 @@ export default function AgentDashboard() {
         // Tier 5: 2,00,000+
         const tier5 = data.topAgent.filter(a => income(a) >= 200000);
 
-        switch(milestoneTab) {
+        switch (milestoneTab) {
             case 'tier5': return tier5;
             case 'tier4': return tier4;
             case 'tier3': return tier3;
@@ -165,7 +209,7 @@ export default function AgentDashboard() {
 
                 {/* --- ROW 2: MILESTONES & BIRTHDAYS --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    
+
                     {/* --- CATEGORIZED MILESTONE TRACKER (5 TIERS) --- */}
                     <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
                         <div className="flex flex-col gap-4 mb-6">
@@ -175,35 +219,35 @@ export default function AgentDashboard() {
                                     <p className="text-sm text-slate-500 mt-1">Income progress by category.</p>
                                 </div>
                             </div>
-                            
+
                             {/* CATEGORY TABS - SCROLLABLE ON MOBILE */}
                             <div className="flex overflow-x-auto pb-2 -mx-2 px-2 md:pb-0 md:mx-0 md:px-0 custom-scrollbar">
                                 <div className="flex p-1 bg-slate-100 rounded-lg whitespace-nowrap">
-                                    <button 
+                                    <button
                                         onClick={() => setMilestoneTab('tier1')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier1' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         0 - 25k
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setMilestoneTab('tier2')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier2' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         25k - 50k
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setMilestoneTab('tier3')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier3' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         50k - 1L
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setMilestoneTab('tier4')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier4' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         1L - 2L
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setMilestoneTab('tier5')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${milestoneTab === 'tier5' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
@@ -415,12 +459,26 @@ export default function AgentDashboard() {
                             }
                             color="blue"
                         />
-                        <Link href="/tasks" className="block">
-                            <ActionButton label="Go to Agent Tasks" desc="Create for today" icon={<LightningIcon />} color="amber" isLink />
+                        <Link href="/tasks?type=AGENT" className="block">
+                            <ActionButton
+                                label="Go to Agent Tasks"
+                                desc="Create for today"
+                                icon={<LightningIcon />}
+                                color="amber"
+                                isLink
+                            />
                         </Link>
-                        <Link href="/tasks" className="block">
-                            <ActionButton label="Generate Agency Leader Task" desc="Your task will generate automatically" icon={<BrainCog />} color="pink" isLink />
+
+                        <Link href="/tasks?type=ADMIN" className="block">
+                            <ActionButton
+                                label="Generate Agency Leader Task"
+                                desc="Your task will generate automatically"
+                                icon={<BrainCog />}
+                                color="pink"
+                                isLink
+                            />
                         </Link>
+
                         {/* Modified Link to use onClick handler for SPA feel */}
                         <div onClick={() => setView('allAgents')} className="block h-full cursor-pointer">
                             <ActionButton label="Go to Agents" desc="View full list" icon={<UsersIcon />} color="emerald" isLink />
@@ -428,6 +486,30 @@ export default function AgentDashboard() {
                     </div>
                 </div>
             </div>
+
+            <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
+                {celebrations.map((item) => (
+                    <CelebrationPopup
+                        key={item.key}
+                        item={item}
+                        onClose={() => {
+                            setCelebrations((prev) =>
+                                prev.filter((c) => c.key !== item.key)
+                            );
+
+                            const seen = JSON.parse(
+                                sessionStorage.getItem('celebrations-seen') || '[]'
+                            );
+
+                            sessionStorage.setItem(
+                                'celebrations-seen',
+                                JSON.stringify([...seen, item.key])
+                            );
+                        }}
+                    />
+                ))}
+            </div>
+
 
             {/* Modal */}
             <AddAgentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleAgentCreated} />

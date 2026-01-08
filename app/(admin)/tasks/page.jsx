@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { getAuth } from 'firebase/auth';
 import Link from 'next/link';
 import AddTaskModal from '@/components/admin/AddTaskModal';
+
 
 const STATUS_STYLES = {
     Pending: {
@@ -33,13 +35,16 @@ const STATUS_STYLES = {
 };
 
 const PRIORITY_STYLES = {
-  high: 'bg-red-500 text-white',
-  medium: 'bg-orange-500 text-white',
-  low: 'bg-blue-500 text-white',
+    high: 'bg-red-500 text-white',
+    medium: 'bg-orange-500 text-white',
+    low: 'bg-blue-500 text-white',
 };
 
 
 export default function TaskBoard() {
+    const searchParams = useSearchParams();
+    const typeFromUrl = searchParams.get('type'); // AGENT | ADMIN
+
     // Stores the organized columns for UI
     const [tasks, setTasks] = useState({ Pending: [], InProgress: [], Done: [], Skipped: [] });
     // Stores the raw list from API to allow client-side filtering
@@ -51,6 +56,13 @@ export default function TaskBoard() {
 
     // NEW: Filter State ('AGENT' or 'ADMIN')
     const [filterType, setFilterType] = useState('AGENT');
+
+    useEffect(() => {
+        if (typeFromUrl === 'ADMIN' || typeFromUrl === 'AGENT') {
+            setFilterType(typeFromUrl);
+        }
+    }, [typeFromUrl]);
+
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -251,18 +263,16 @@ export default function TaskBoard() {
             <div className="flex gap-4 mb-6">
                 <button
                     onClick={() => setFilterType('AGENT')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        filterType === 'AGENT' ? 'bg-blue-600 text-white border border-blue-600' : 'bg-white border text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterType === 'AGENT' ? 'bg-blue-600 text-white border border-blue-600' : 'bg-white border text-gray-700 hover:bg-gray-50'
+                        }`}
                 >
                     Agent Task
                 </button>
 
                 <button
                     onClick={() => setFilterType('ADMIN')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        filterType === 'ADMIN' ? 'bg-blue-600 text-white border border-blue-600' : 'bg-white border text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterType === 'ADMIN' ? 'bg-blue-600 text-white border border-blue-600' : 'bg-white border text-gray-700 hover:bg-gray-50'
+                        }`}
                 >
                     Your Task
                 </button>
