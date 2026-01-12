@@ -536,6 +536,10 @@ const reportData = useMemo(() => {
                 </div>
             </div>
           </section>
+           <FinancialKundliSeal ui={ui} />
+
+                   {grahaData && <GrahaReport ui={ui} data={grahaData} />}
+                   
             
                          <FinancialHealthSnapshot snapshot={ui.snapshot} />
 
@@ -644,9 +648,9 @@ const reportData = useMemo(() => {
                 </section>
             </div>
           </div>
-           <FinancialKundliSeal ui={ui} />
+          
 
-         {grahaData && <GrahaReport ui={ui} data={grahaData} />}
+
         
         </main>
 

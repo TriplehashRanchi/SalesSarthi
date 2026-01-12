@@ -41,45 +41,52 @@ export const generateFinancialReport = (rawResponse) => {
   const pageHeight = doc.internal.pageSize.height;
   const margin = 20;
 
-  const colors = {
-    primary: [0, 51, 102],        // Deep Navy Blue
-    accent: [220, 53, 69],         // Premium Red
-    accentLight: [255, 193, 7],    // Gold
-    bg: [250, 250, 252],           // Light Gray
-    textMain: [33, 37, 41],        // Almost Black
-    textLight: [108, 117, 125],    // Gray
-    white: [255, 255, 255],
-    success: [40, 167, 69],
-    warning: [255, 193, 7],
-    danger: [220, 53, 69],
-    border: [222, 226, 230]
-  };
+ const colors = {
+  primary: [74, 46, 31],     // Dark brown ink
+  secondary: [139, 94, 60],  // Sepia
+  accent: [200, 155, 60],    // Antique gold
+  accentLight: [232, 215, 190], // Highlight parchment
+  bg: [244, 230, 207],       // Paper background
+  textMain: [60, 45, 35],
+  textLight: [122, 106, 90],
+  white: [255, 255, 255],
+  success: [88, 140, 90],     // Muted green
+  warning: [180, 140, 60],    // Gold warning
+  danger: [150, 60, 50],      // Soft red
+  border: [214, 191, 166]
+};
+
 
   // Enhanced page background with subtle grid
   const applyPageBackground = () => {
-    doc.setFillColor(...colors.bg);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
-    
-    // Premium border
-    doc.setDrawColor(...colors.primary);
-    doc.setLineWidth(1);
-    doc.rect(margin - 5, margin - 5, pageWidth - (2 * margin) + 10, pageHeight - (2 * margin) + 10);
-    
-    // Inner accent line
-    doc.setDrawColor(...colors.accentLight);
-    doc.setLineWidth(0.3);
-    doc.rect(margin - 3, margin - 3, pageWidth - (2 * margin) + 6, pageHeight - (2 * margin) + 6);
-  };
+  // Paper
+  doc.setFillColor(...colors.bg);
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  // Outer aged border
+  doc.setDrawColor(...colors.border);
+  doc.setLineWidth(1.2);
+  doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+
+  // Inner manuscript frame
+  doc.setDrawColor(...colors.primary);
+  doc.setLineWidth(0.4);
+  doc.rect(14, 14, pageWidth - 28, pageHeight - 28);
+};
+
 
   const addSectionHeader = (title, yPos) => {
-    doc.setFillColor(...colors.primary);
-    doc.rect(margin, yPos - 5, pageWidth - (2 * margin), 10, 'F');
-    doc.setTextColor(...colors.white);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(title, margin + 5, yPos + 2);
-    return yPos + 12;
-  };
+  doc.setFillColor(...colors.accentLight);
+  doc.rect(margin, yPos - 5, pageWidth - (2 * margin), 10, 'F');
+
+  doc.setTextColor(...colors.primary);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(title.toUpperCase(), margin + 5, yPos + 2);
+
+  return yPos + 12;
+};
+
 
   const addDivider = (yPos) => {
     doc.setDrawColor(...colors.border);
@@ -93,8 +100,13 @@ export const generateFinancialReport = (rawResponse) => {
   let yPos = 50;
 
   // Header logo area (placeholder)
-  doc.setFillColor(...colors.primary);
-  doc.rect(margin, 30, pageWidth - (2 * margin), 25, 'F');
+doc.setFillColor(232, 215, 190); // parchment strip
+doc.rect(margin, 30, pageWidth - (2 * margin), 25, 'F');
+
+doc.setDrawColor(...colors.primary);
+doc.setLineWidth(0.3);
+doc.rect(margin, 30, pageWidth - (2 * margin), 25);
+
   
   doc.setTextColor(...colors.white);
   doc.setFont("helvetica", "bold");
@@ -136,7 +148,7 @@ export const generateFinancialReport = (rawResponse) => {
   // Overall Score Dashboard
   yPos += 40;
   
-  doc.setFillColor(245, 245, 250);
+  doc.setFillColor(248, 238, 220);
   doc.roundedRect(margin, yPos, pageWidth - (2 * margin), 50, 3, 3, 'F');
   
   // Score circle
