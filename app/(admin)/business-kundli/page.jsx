@@ -139,7 +139,7 @@ export default function BusinessKundliWizard() {
 
     // --- FORM STATE ---
     const [formData, setFormData] = useState({
-        identity: { name: user?.name || '', age: '', city: '', experience_years: '', work_type: 'Full Time', primary_product: [] },
+        identity: { name: user?.name || '', age: '', city: '', experience_years: '', work_type: 'Full Time', primary_product: [], report_language: 'English' },
         birthday: { dob: '', tob: '', pob: '', accuracy: 'Exact' },
         numbers: {
             commission_90: '',
@@ -283,6 +283,22 @@ export default function BusinessKundliWizard() {
                                 ))}
                             </div>
                         </div>
+                         <Label required>Report Language</Label>
+    <div className="flex flex-wrap gap-2 mt-1">
+        {['English', 'Hindi', 'Hinglish', 'Marathi', 'Gujarati'].map((lang) => (
+            <button
+                key={lang}
+                onClick={() => update('identity', 'report_language', lang)}
+                className={`px-4 py-2 rounded-lg text-xs border transition-all ${
+                    formData.identity.report_language === lang 
+                    ? 'bg-indigo-500/20 border-indigo-400 text-indigo-200' 
+                    : 'bg-white/5 border-white/10 text-slate-400'
+                }`}
+            >
+                {lang}
+            </button>
+        ))}
+    </div>
                     </div>
                 );
             case 2:
