@@ -195,12 +195,12 @@ useEffect(() => {
 
 
   const steps = [
-    { id: 'client', title: 'Client Profile', desc: 'Basic Information', icon: <Icons.User /> },
-    { id: 'cashflow', title: 'Cashflow & Tax', desc: 'Income & Inflation', icon: <Icons.Briefcase /> },
-    { id: 'assets', title: 'Asset Portfolio', desc: 'What you own', icon: <Icons.Briefcase /> },
-    { id: 'liabilities', title: 'Liabilities', desc: 'Debts & EMIs', icon: <Icons.CreditCard /> },
-    { id: 'insurance', title: 'Risk Protection', desc: 'Insurance coverage', icon: <Icons.Shield /> },
-    { id: 'goals', title: 'Financial Goals', desc: 'Future Aspirations', icon: <Icons.Target /> },
+    { id: 'client', title: ' Lagna Graha', desc: 'Basic Information -  Client Profile', icon: <Icons.User /> },
+    { id: 'cashflow', title: 'Surya Graha', desc: 'Income & Inflation - Cashflow & Tax', icon: <Icons.Briefcase /> },
+    { id: 'assets', title: 'Guru Graha', desc: 'What you own Asset -  Portfolio', icon: <Icons.Briefcase /> },
+    { id: 'liabilities', title: 'Shani Graha', desc: 'Debts & EMIs -  Liabilities', icon: <Icons.CreditCard /> },
+    { id: 'insurance', title: 'Mangal Graha', desc: 'Insurance coverage - Risk Protection', icon: <Icons.Shield /> },
+    { id: 'goals', title: 'Chandra Graha', desc: 'Future Aspirations - Financial Goals', icon: <Icons.Target /> },
   ];
 
   /* ===================== CALCULATIONS ===================== */

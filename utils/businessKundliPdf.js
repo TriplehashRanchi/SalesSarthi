@@ -22,25 +22,26 @@ const sanitizePdfText = (s = "") => {
 };
 
 export const generateFullAdvisorKundli = (rawResponse) => {
-//   const { data } = rawResponse;
-//   console.log("Generating PDF for Advisor Kundli:", rawResponse);
+  //   const { data } = rawResponse;
+  //   console.log("Generating PDF for Advisor Kundli:", rawResponse);
 
   const { identity, metrics, effort, graha_scores, ai_report, meta } = rawResponse;
-  
+
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
   const margin = 15;
 
   const colors = {
-    primary: [26, 35, 126],    // Indigo
-    secondary: [183, 28, 28],  // Deep Red
-    accent: [255, 111, 0],     // Amber
-    text: [33, 33, 33],
-    lightText: [117, 117, 117],
-    bg: [252, 252, 252],
-    border: [224, 224, 224]
+    primary: [74, 46, 31],     // Dark manuscript brown
+    secondary: [139, 94, 60],  // Sepia headings
+    accent: [200, 155, 60],    // Antique gold
+    text: [60, 45, 35],        // Body ink
+    lightText: [122, 106, 90], // Faded ink
+    bg: [244, 230, 207],       // Parchment paper
+    border: [214, 191, 166]    // Paper edge
   };
+
 
   // Helper: Page Setup
   const applyTemplate = () => {
@@ -68,14 +69,14 @@ export const generateFullAdvisorKundli = (rawResponse) => {
   doc.setFontSize(26);
   doc.setFont("helvetica", "bold");
   doc.text("ADVISOR KUNDLI", pageWidth / 2, 35, { align: 'center' });
-  
+
   doc.setFontSize(10);
   doc.setTextColor(...colors.secondary);
   doc.text(`REPORT ID: ${meta.report_id} | STATUS: ${meta.status.toUpperCase()}`, pageWidth / 2, 42, { align: 'center' });
 
   let yPos = 55;
   yPos = sectionTitle("IDENTITY & PROFESSIONAL PROFILE", yPos);
-  
+
   autoTable(doc, {
     startY: yPos,
     body: [
@@ -137,8 +138,8 @@ export const generateFullAdvisorKundli = (rawResponse) => {
 
   yPos += 40;
   const grahaRows = Object.keys(graha_scores.graha_scores).map(key => [
-    key, 
-    graha_scores.graha_scores[key], 
+    key,
+    graha_scores.graha_scores[key],
     graha_scores.graha_strengths[key]
   ]);
 
@@ -185,20 +186,20 @@ export const generateFullAdvisorKundli = (rawResponse) => {
 
   Object.entries(ai_report.graha_report).forEach(([name, data]) => {
     if (yPos > pageHeight - 50) { doc.addPage(); applyTemplate(); yPos = 30; }
-    
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...colors.primary);
     doc.text(`${name} - Score: ${data.score} (${data.status})`, margin, yPos);
-    
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...colors.text);
     const insight = doc.splitTextToSize(`Insight: ${data.insight}`, pageWidth - (2 * margin));
     doc.text(insight, margin, yPos + 5);
-    
+
     yPos += (insight.length * 5) + 8;
-    
+
     data.actions.forEach(act => {
       doc.setFont("helvetica", "bold");
       doc.text(`• ${act.title}:`, margin + 5, yPos);
@@ -238,7 +239,7 @@ export const generateFullAdvisorKundli = (rawResponse) => {
   doc.setFontSize(9);
   doc.setTextColor(...colors.text);
   ai_report.mandatory_kpis.forEach((kpi, i) => {
-    doc.text(`${i+1}. ${kpi}`, margin + 5, yPos + (i * 6));
+    doc.text(`${i + 1}. ${kpi}`, margin + 5, yPos + (i * 6));
   });
 
   // --- PAGE 5: 12-MONTH STRATEGIC ROADMAP ---
@@ -293,7 +294,7 @@ export const generateFullAdvisorKundli = (rawResponse) => {
     doc.setTextColor(...colors.text);
     doc.text(`Focus Areas: ${data.advisor_role_evolution.primary_focus.join(", ")}`, margin + 5, yPos);
     doc.text(`Income: ${data.income_evolution.income_type} (Predictability: ${data.income_evolution.predictability})`, margin + 5, yPos + 4);
-    
+
     yPos += 12;
   });
 
