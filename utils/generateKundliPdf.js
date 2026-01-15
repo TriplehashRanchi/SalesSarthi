@@ -157,7 +157,7 @@ doc.rect(margin, 30, pageWidth - (2 * margin), 25);
   
   doc.setDrawColor(...(output.overall_score >= 60 ? colors.success : output.overall_score >= 40 ? colors.warning : colors.danger));
   doc.setLineWidth(3);
-  doc.circle(centerX, circleY, 18);
+  // doc.circle(centerX, circleY, 18);
   
   doc.setFontSize(28);
   doc.setTextColor(...(output.overall_score >= 60 ? colors.success : output.overall_score >= 40 ? colors.warning : colors.danger));
@@ -218,6 +218,87 @@ doc.rect(margin, 30, pageWidth - (2 * margin), 25);
       1: { halign: 'right', fontStyle: 'bold' }
     },
     margin: { left: margin, right: margin }
+  });
+
+   // --- PAGE 5: GRAHA ANALYSIS ---
+  doc.addPage();
+  applyPageBackground();
+  yPos = 40;
+
+  doc.setFillColor(...colors.accent);
+  doc.rect(margin, yPos - 10, pageWidth - (2 * margin), 18, 'F');
+  doc.setTextColor(...colors.white);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("GRAHA ANALYSIS: PLANETARY WEALTH POSITIONS", pageWidth / 2, yPos, { align: 'center' });
+  
+  yPos += 15;
+  doc.setFontSize(9);
+  doc.setTextColor(...colors.textLight);
+  doc.setFont("helvetica", "italic");
+  const advisorNote = doc.splitTextToSize(`Advisor's Note: ${sanitizePdfText(ai_report.summary.advisor_note)}`, pageWidth - (2 * margin));
+  doc.text(advisorNote, margin, yPos);
+  yPos += (advisorNote.length * 5) + 10;
+
+  // Graha Cards
+  const grahaEntries = Object.entries(ai_report.grahas);
+  
+  grahaEntries.forEach(([key, val]) => {
+    if (yPos > pageHeight - 60) {
+      doc.addPage();
+      applyPageBackground();
+      yPos = 40;
+    }
+
+    // Card background
+    const cardHeight = 45;
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...colors.border);
+    doc.roundedRect(margin, yPos, pageWidth - (2 * margin), cardHeight, 2, 2, 'FD');
+
+    // Graha header with color indicator
+    const scoreColor = val.score >= 70 ? colors.success : val.score >= 40 ? colors.warning : colors.danger;
+    doc.setFillColor(...scoreColor);
+    doc.circle(margin + 8, yPos + 8, 3, 'F');
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...colors.primary);
+    doc.text(key.toUpperCase(), margin + 14, yPos + 9);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.textLight);
+    doc.text(`Strength: ${val.strength}`, margin + 14, yPos + 14);
+
+    // Score badge
+    doc.setFontSize(16);
+    doc.setTextColor(...scoreColor);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${val.score.toFixed(0)}`, pageWidth - margin - 15, yPos + 10, { align: 'right' });
+
+    // Interpretation
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.textMain);
+    const interpretation = doc.splitTextToSize(sanitizePdfText(val.interpretation), pageWidth - (2 * margin) - 20);
+    doc.text(interpretation, margin + 8, yPos + 20);
+
+    // Primary remedy
+    if (val.remedies && val.remedies.length > 0) {
+      const remedyY = yPos + 20 + (interpretation.length * 4) + 3;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.accent);
+      doc.text(`Action: ${sanitizePdfText(val.remedies[0].title)}`, margin + 8, remedyY);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...colors.textLight);
+      const remedyDesc = doc.splitTextToSize(sanitizePdfText(val.remedies[0].description), pageWidth - (2 * margin) - 20);
+      doc.text(remedyDesc, margin + 8, remedyY + 4);
+    }
+
+    yPos += cardHeight + 8;
   });
 
   // --- PAGE 2: EFFICIENCY ANALYSIS ---
@@ -411,86 +492,7 @@ doc.rect(margin, 30, pageWidth - (2 * margin), 25);
   doc.text(`Future Monthly Expense: ${formatCurrency(output.fire.future_monthly_expense)}`, margin, yPos);
   doc.text(`Current Financial Independence Ratio: ${output.net_worth.fi_ratio.toFixed(2)}`, margin, yPos + 6);
 
-  // --- PAGE 5: GRAHA ANALYSIS ---
-  doc.addPage();
-  applyPageBackground();
-  yPos = 40;
-
-  doc.setFillColor(...colors.accent);
-  doc.rect(margin, yPos - 10, pageWidth - (2 * margin), 18, 'F');
-  doc.setTextColor(...colors.white);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("GRAHA ANALYSIS: PLANETARY WEALTH POSITIONS", pageWidth / 2, yPos, { align: 'center' });
-  
-  yPos += 15;
-  doc.setFontSize(9);
-  doc.setTextColor(...colors.textLight);
-  doc.setFont("helvetica", "italic");
-  const advisorNote = doc.splitTextToSize(`Advisor's Note: ${sanitizePdfText(ai_report.summary.advisor_note)}`, pageWidth - (2 * margin));
-  doc.text(advisorNote, margin, yPos);
-  yPos += (advisorNote.length * 5) + 10;
-
-  // Graha Cards
-  const grahaEntries = Object.entries(ai_report.grahas);
-  
-  grahaEntries.forEach(([key, val]) => {
-    if (yPos > pageHeight - 60) {
-      doc.addPage();
-      applyPageBackground();
-      yPos = 40;
-    }
-
-    // Card background
-    const cardHeight = 45;
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(...colors.border);
-    doc.roundedRect(margin, yPos, pageWidth - (2 * margin), cardHeight, 2, 2, 'FD');
-
-    // Graha header with color indicator
-    const scoreColor = val.score >= 70 ? colors.success : val.score >= 40 ? colors.warning : colors.danger;
-    doc.setFillColor(...scoreColor);
-    doc.circle(margin + 8, yPos + 8, 3, 'F');
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...colors.primary);
-    doc.text(key.toUpperCase(), margin + 14, yPos + 9);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...colors.textLight);
-    doc.text(`Strength: ${val.strength}`, margin + 14, yPos + 14);
-
-    // Score badge
-    doc.setFontSize(16);
-    doc.setTextColor(...scoreColor);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${val.score.toFixed(0)}`, pageWidth - margin - 15, yPos + 10, { align: 'right' });
-
-    // Interpretation
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...colors.textMain);
-    const interpretation = doc.splitTextToSize(sanitizePdfText(val.interpretation), pageWidth - (2 * margin) - 20);
-    doc.text(interpretation, margin + 8, yPos + 20);
-
-    // Primary remedy
-    if (val.remedies && val.remedies.length > 0) {
-      const remedyY = yPos + 20 + (interpretation.length * 4) + 3;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(...colors.accent);
-      doc.text(`Action: ${sanitizePdfText(val.remedies[0].title)}`, margin + 8, remedyY);
-      
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...colors.textLight);
-      const remedyDesc = doc.splitTextToSize(sanitizePdfText(val.remedies[0].description), pageWidth - (2 * margin) - 20);
-      doc.text(remedyDesc, margin + 8, remedyY + 4);
-    }
-
-    yPos += cardHeight + 8;
-  });
+ 
 
   // --- FINAL PAGE: ACTION PLAN ---
   doc.addPage();
@@ -643,7 +645,7 @@ const finalRecommendations = recommendations.slice(0, 8);
     doc.setPage(i);
     doc.setFontSize(7);
     doc.setTextColor(...colors.textLight);
-    doc.text(`Confidential Financial Report | ${identity.name} | Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+    doc.text(` Financial Kundli Report | ${identity.name} | Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
   }
 
   doc.save(`Financial_Kundli_${identity.name.replace(/\s+/g, '_')}.pdf`);
