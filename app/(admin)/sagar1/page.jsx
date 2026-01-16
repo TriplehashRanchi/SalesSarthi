@@ -23,10 +23,10 @@ const IconChevronLeft = () => (
     </svg>
 );
 
-// --- UI HELPERS (Using #162D5C and #1E8455) ---
+// --- UI HELPERS (Updated with Logo Colors) ---
 const Label = ({ children, required }) => (
-    <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300 mb-1 ml-1">
-        {children} {required && <span className="text-[#1E8455]">*</span>}
+    <label className="block text-[11px] font-bold uppercase tracking-[0.2em] text-[#c5a059] mb-1 ml-1">
+        {children} {required && <span className="text-red-400">*</span>}
     </label>
 );
 
@@ -36,7 +36,7 @@ const InputText = ({ value, onChange, type = 'text', placeholder = '' }) => (
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl border border-white/10 bg-[#162D5C]/30 text-slate-50 placeholder:text-slate-500 focus:bg-[#162D5C]/50 focus:border-[#1E8455] focus:ring-1 focus:ring-[#1E8455]/30 outline-none transition-all shadow-lg"
+        className="w-full px-4 py-3 rounded-xl border border-[#c5a059]/20 bg-[#002147]/40 text-slate-50 placeholder:text-slate-500 focus:bg-[#002147]/60 focus:border-[#c5a059] focus:ring-1 focus:ring-[#c5a059]/30 outline-none transition-all shadow-lg"
     />
 );
 
@@ -45,8 +45,8 @@ const SelectChip = ({ label, selected, onClick, multi = false }) => (
         onClick={onClick}
         className={`px-4 py-3 rounded-xl text-sm font-semibold border transition-all shadow-sm flex items-center justify-center gap-2 ${
             selected
-                ? 'bg-gradient-to-r from-[#1E8455] to-[#162D5C] border-transparent text-white shadow-lg'
-                : 'bg-white/5 border-white/10 text-slate-300 hover:border-[#1E8455]/40 hover:bg-white/10'
+                ? 'bg-gradient-to-r from-[#004d40] to-[#002147] border-[#c5a059] text-[#c5a059] shadow-[0_5px_20px_rgba(197,160,89,0.2)]'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:border-[#c5a059]/40 hover:bg-white/10'
         }`}
     >
         {selected && multi && <IconCheck />}
@@ -55,10 +55,10 @@ const SelectChip = ({ label, selected, onClick, multi = false }) => (
 );
 
 const RangeSlider = ({ label, value, onChange, min = 1, max = 10, subLabels }) => (
-    <div className="bg-[#162D5C]/20 p-5 rounded-2xl border border-white/5 mb-3 shadow-md">
+    <div className="bg-[#001a33]/60 p-5 rounded-2xl border border-white/5 mb-3 shadow-xl">
         <div className="flex justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-100">{label}</span>
-            <span className="text-sm font-bold text-[#1E8455]">{value}</span>
+            <span className="text-sm font-semibold text-slate-200">{label}</span>
+            <span className="text-sm font-bold text-[#c5a059]">{value}</span>
         </div>
         <input
             type="range"
@@ -66,7 +66,7 @@ const RangeSlider = ({ label, value, onChange, min = 1, max = 10, subLabels }) =
             max={max}
             value={Number(value)}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#1E8455]"
+            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#c5a059]"
         />
         {subLabels && (
             <div className="flex justify-between mt-2 text-[10px] text-slate-400 uppercase tracking-widest">
@@ -79,18 +79,18 @@ const RangeSlider = ({ label, value, onChange, min = 1, max = 10, subLabels }) =
 );
 
 const ToggleYesNo = ({ label, value, onChange }) => (
-    <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-[#162D5C]/40 mb-2">
+    <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-[#002147]/30 mb-2">
         <span className="text-sm font-medium text-slate-200 pr-4">{label}</span>
         <div className="flex bg-black/20 rounded-lg p-1 border border-white/5">
             <button
                 onClick={() => onChange(true)}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === true ? 'bg-[#1E8455] text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === true ? 'bg-[#006837] text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
             >
                 YES
             </button>
             <button
                 onClick={() => onChange(false)}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === false ? 'bg-[#162D5C] text-white' : 'text-slate-500 hover:text-white'}`}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === false ? 'bg-red-900/60 text-white' : 'text-slate-500 hover:text-white'}`}
             >
                 NO
             </button>
@@ -99,12 +99,12 @@ const ToggleYesNo = ({ label, value, onChange }) => (
 );
 
 const LangToggle = ({ value, onChange }) => (
-    <div className="flex bg-[#162D5C]/80 border border-white/10 rounded-xl p-1">
+    <div className="flex bg-black/40 border border-[#c5a059]/30 rounded-xl p-1">
         {['English', 'Hindi'].map((lang) => (
             <button
                 key={lang}
                 onClick={() => onChange(lang)}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${value === lang ? 'bg-[#1E8455] text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${value === lang ? 'bg-[#c5a059] text-[#002147] shadow' : 'text-slate-400 hover:text-white'}`}
             >
                 {lang === 'English' ? 'EN' : 'हिं'}
             </button>
@@ -280,8 +280,8 @@ export default function BusinessKundliWizard() {
                             <div>
                                 <Label>{t('workType')}</Label>
                                 <div className="flex gap-2 mt-1">
-                                    {['Full Time', 'Part Time'].map((type) => (
-                                        <button key={type} onClick={() => update('identity', 'work_type', type)} className={`px-2 py-3 rounded-xl text-xs w-full border ${formData.identity.work_type === type ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'}`}>{type}</button>
+                                    {['Full Time', 'Part Time'].map((t) => (
+                                        <button key={t} onClick={() => update('identity', 'work_type', t)} className={`px-2 py-3 rounded-xl text-xs w-full border ${formData.identity.work_type === t ? 'bg-[#c5a059]/10 border-[#c5a059] text-[#c5a059]' : 'bg-white/5 border-white/10'}`}>{t}</button>
                                     ))}
                                 </div>
                             </div>
@@ -301,11 +301,19 @@ export default function BusinessKundliWizard() {
                     <div className="space-y-6 animate-fadeIn">
                         <h2 className="text-xl font-bold text-white">{t('birthdayTitle')}</h2>
                         <div className="space-y-4">
-                            <Label required>{t('dob')}</Label>
-                            <InputText type="date" value={formData.birthday.dob} onChange={(e) => update('birthday', 'dob', e.target.value)} />
                             <div className="grid grid-cols-2 gap-4">
-                                <div><Label required>{t('tob')}</Label><InputText type="time" value={formData.birthday.tob} onChange={(e) => update('birthday', 'tob', e.target.value)} /></div>
-                                <div><Label required>{t('pob')}</Label><InputText value={formData.birthday.pob} onChange={(e) => update('birthday', 'pob', e.target.value)} /></div>
+                                <div className="col-span-2">
+                                    <Label required>{t('dob')}</Label>
+                                    <InputText type="date" value={formData.birthday.dob} onChange={(e) => update('birthday', 'dob', e.target.value)} />
+                                </div>
+                                <div>
+                                    <Label required>{t('tob')}</Label>
+                                    <InputText type="time" value={formData.birthday.tob} onChange={(e) => update('birthday', 'tob', e.target.value)} />
+                                </div>
+                                <div>
+                                    <Label required>{t('pob')}</Label>
+                                    <InputText value={formData.birthday.pob} onChange={(e) => update('birthday', 'pob', e.target.value)} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -314,13 +322,13 @@ export default function BusinessKundliWizard() {
                 return (
                     <div className="space-y-6 animate-fadeIn">
                         <h2 className="text-xl font-bold text-white">{t('numbersTitle')}</h2>
-                        <div className="bg-[#162D5C]/30 p-4 rounded-2xl border border-white/5">
-                             <h3 className="text-[#1E8455] text-[10px] font-bold uppercase tracking-widest mb-4">{t('last90Days')}</h3>
-                             <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-[#001a33]/60 p-5 rounded-2xl border border-white/5 shadow-xl">
+                            <h3 className="text-[#c5a059] text-xs font-bold uppercase tracking-widest mb-4">{t('last90Days')}</h3>
+                            <div className="grid grid-cols-2 gap-3">
                                 <div><Label>{t('commissionEarned')}</Label><InputText type="number" value={formData.numbers.commission_90} onChange={(e) => update('numbers', 'commission_90', e.target.value)} /></div>
                                 <div><Label>{t('noOfSales')}</Label><InputText type="number" value={formData.numbers.sales_count_90} onChange={(e) => update('numbers', 'sales_count_90', e.target.value)} /></div>
                                 <div className="col-span-2"><Label>{t('totalIncome')}</Label><InputText type="number" value={formData.numbers.total_income_12m} onChange={(e) => update('numbers', 'total_income_12m', e.target.value)} /></div>
-                             </div>
+                            </div>
                         </div>
                     </div>
                 );
@@ -333,7 +341,7 @@ export default function BusinessKundliWizard() {
                                 <Label>{t('needsAnalysis')}</Label>
                                 <div className="grid grid-cols-4 gap-1 mt-1">
                                     {['Never', 'Rarely', 'Sometimes', 'Always'].map((o) => (
-                                        <button key={o} onClick={() => update('client', 'needs_analysis', o)} className={`py-2 text-[10px] rounded border ${formData.client.needs_analysis === o ? 'bg-[#1E8455]/40 border-[#1E8455]' : 'bg-white/5 border-white/10'}`}>{o}</button>
+                                        <button key={o} onClick={() => update('client', 'needs_analysis', o)} className={`py-2 text-[10px] rounded border ${formData.client.needs_analysis === o ? 'bg-[#006837]/30 border-[#c5a059]' : 'bg-white/5 border-white/10'}`}>{o}</button>
                                     ))}
                                 </div>
                             </div>
@@ -356,7 +364,7 @@ export default function BusinessKundliWizard() {
                 );
             case 6:
                 return (
-                    <div className="space-y-4 animate-fadeIn">
+                    <div className="space-y-6 animate-fadeIn">
                         <h2 className="text-xl font-bold text-white">{t('marketTitle')}</h2>
                         <RangeSlider label={t('competitorAwareness')} value={formData.market.competitor_aware} onChange={(v) => update('market', 'competitor_aware', v)} />
                         <RangeSlider label={t('valuePropClarity')} value={formData.market.value_prop_clarity} onChange={(v) => update('market', 'value_prop_clarity', v)} />
@@ -372,14 +380,14 @@ export default function BusinessKundliWizard() {
                                     <SelectChip key={t} label={t} multi selected={formData.tech.tools.includes(t)} onClick={() => toggleArrayItem('tech', 'tools', t)} />
                                 ))}
                         </div>
-                        <RangeSlider label="CRM Update Consistency" value={formData.tech.crm_update === 'Daily' ? 10 : 5} onChange={(v) => update('tech', 'crm_update', v > 7 ? 'Daily' : 'Weekly')} />
+                        <RangeSlider label="Digital Presentations Confidence" value={formData.tech.video_comfort === 'Very Comfortable' ? 10 : 5} onChange={(v) => update('tech', 'video_comfort', v > 7 ? 'Very Comfortable' : 'Moderately')} />
                     </div>
                 );
             case 8:
                 return (
                     <div className="space-y-6 animate-fadeIn">
                         <h2 className="text-xl font-bold text-white">{t('complianceTitle')}</h2>
-                        <div className="bg-[#1E8455]/10 border border-[#1E8455]/30 p-3 rounded-lg text-xs italic text-slate-300">{t('complianceWarning')}</div>
+                        <p className="text-[#c5a059]/80 text-xs bg-[#c5a059]/10 p-3 rounded-lg border border-[#c5a059]/20 italic">{t('complianceWarning')}</p>
                         <ToggleYesNo label={t('suitability')} value={formData.compliance.suitability} onChange={(v) => update('compliance', 'suitability', v)} />
                         <ToggleYesNo label={t('kyc')} value={formData.compliance.kyc} onChange={(v) => update('compliance', 'kyc', v)} />
                         <ToggleYesNo label={t('noMisselling')} value={formData.compliance.no_misselling} onChange={(v) => update('compliance', 'no_misselling', v)} />
@@ -390,7 +398,7 @@ export default function BusinessKundliWizard() {
                     <div className="space-y-4 animate-fadeIn">
                         <h2 className="text-xl font-bold text-white">{t('skillsTitle')}</h2>
                         <RangeSlider label={t('productKnowledge')} value={formData.skills.product_knowledge} onChange={(v) => update('skills', 'product_knowledge', v)} subLabels={[t('skillLow'), t('skillMid'), t('skillHigh')]} />
-                        <RangeSlider label={t('financialPlanning')} value={formData.skills.fin_planning} onChange={(v) => update('skills', 'fin_planning', v)} subLabels={[t('skillLow'), t('skillMid'), t('skillHigh')]} />
+                        <RangeSlider label={t('communication')} value={formData.skills.communication} onChange={(v) => update('skills', 'communication', v)} subLabels={[t('skillLow'), t('skillMid'), t('skillHigh')]} />
                         <RangeSlider label={t('sellingClosing')} value={formData.skills.selling} onChange={(v) => update('skills', 'selling', v)} subLabels={[t('skillLow'), t('skillMid'), t('skillHigh')]} />
                     </div>
                 );
@@ -415,18 +423,19 @@ export default function BusinessKundliWizard() {
                 return (
                     <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-fadeIn text-center">
                         <div className="relative w-48 h-48 flex items-center justify-center">
-                            <div className="absolute inset-0 bg-[#1E8455]/20 rounded-full animate-pulse" />
-                            <div className="relative z-10 w-24 h-24 bg-[#162D5C] rounded-3xl border border-white/10 flex items-center justify-center shadow-2xl">
-                                <div className="flex gap-1 items-end h-8">
+                            <div className="absolute inset-0 bg-[#006837]/20 rounded-full animate-pulse" />
+                            <div className="absolute inset-2 border-2 border-[#c5a059]/40 border-dashed rounded-full animate-[spin_10s_linear_infinite]" />
+                            <div className="relative z-10 w-20 h-20 bg-[#002147] rounded-3xl border border-[#c5a059]/40 flex items-center justify-center shadow-2xl">
+                                <div className="flex gap-1 items-end h-6">
                                     {[0, 1, 2].map((i) => (
-                                        <div key={i} className="w-2 bg-[#1E8455] rounded-full animate-[loading_1.5s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.2}s`, height: '40%' }} />
+                                        <div key={i} className="w-1.5 bg-[#c5a059] rounded-full animate-[loading_1.5s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.2}s`, height: '40%' }} />
                                     ))}
                                 </div>
                             </div>
                         </div>
                         <div className="max-w-xs space-y-2">
-                            <h2 className="text-2xl font-bold text-white">AI Analysis <span className="text-[#1E8455]">in Progress</span></h2>
-                            <p className="text-slate-400 text-sm italic">"{analysisSteps[tipIndex]}"</p>
+                            <h2 className="text-xl font-bold text-white">Generating Your <span className="text-[#c5a059]">Kundli</span></h2>
+                            <p className="text-indigo-200/60 text-sm italic">"{analysisSteps[tipIndex]}"</p>
                         </div>
                         <style jsx>{`
                             @keyframes loading { 0%, 100% { height: 30%; } 50% { height: 100%; } }
@@ -438,38 +447,44 @@ export default function BusinessKundliWizard() {
     };
 
     return (
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#000d1a] via-[#162D5C] to-[#001a33] text-slate-50 pb-28 lg:pb-12">
-            <div className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_20%_20%,#1E8455,transparent_30%),radial-gradient(circle_at_80%_0%,#162D5C,transparent_20%)]"></div>
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#000d1a] via-[#002147] to-[#001a33] text-slate-50 pb-28 lg:pb-12">
+            <div className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_20%_20%,#006837,transparent_30%),radial-gradient(circle_at_80%_0%,#c5a059,transparent_20%)]"></div>
 
             <div className="relative max-w-4xl mx-auto px-4 pt-6">
-                <div className="bg-black/30 border border-white/10 rounded-2xl px-4 py-3 sticky top-4 z-20 flex items-center justify-between gap-3 backdrop-blur-3xl shadow-2xl">
+                {/* Logo Section */}
+                <div className="flex flex-col items-center mb-6">
+                    <img src="/logo.png" alt="Logo" className="h-16 mb-2 object-contain" />
+                    <div className="h-0.5 w-24 bg-gradient-to-r from-transparent via-[#c5a059] to-transparent"></div>
+                </div>
+
+                <div className="bg-black/30 border border-[#c5a059]/20 rounded-2xl px-4 py-3 sticky top-4 z-20 flex items-center justify-between gap-3 backdrop-blur-3xl shadow-2xl">
                     {step > 1 && step < 12 ? (
-                        <button onClick={() => setStep((s) => s - 1)} className="p-2 text-slate-300 hover:bg-white/5 rounded-full transition">
+                        <button onClick={() => setStep((s) => s - 1)} className="p-2 text-[#c5a059] hover:bg-white/5 rounded-full transition">
                             <IconChevronLeft />
                         </button>
                     ) : <div className="w-10" />}
 
                     <div className="flex flex-col items-center flex-1">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#1E8455] mb-1">{step < 12 ? `Module 0${step} / ${totalSteps}` : 'Processing'}</span>
-                        <div className="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[#1E8455] to-[#162D5C] transition-all duration-700" style={{ width: `${progress}%` }}></div>
+                        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#c5a059] mb-1">{step < 12 ? `Module 0${step} / ${totalSteps}` : 'COMPILING'}</span>
+                        <div className="h-1 w-24 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-[#006837] to-[#c5a059] transition-all duration-700" style={{ width: `${progress}%` }}></div>
                         </div>
                     </div>
                     <LangToggle value={language} onChange={setLanguage} />
                 </div>
 
-                <div className="mt-8 mb-24">
-                    <div className="bg-[#162D5C]/30 border border-white/5 rounded-3xl p-6 backdrop-blur-xl shadow-2xl min-h-[480px]">
+                <div className="mt-6 mb-24">
+                    <div className="bg-[#002147]/40 border border-[#c5a059]/10 rounded-3xl p-6 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] min-h-[480px]">
                         {renderScreen()}
                     </div>
                 </div>
 
                 {step < 12 && (
-                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/90 border-t border-white/10 backdrop-blur-xl z-30 lg:static lg:bg-transparent lg:border-none lg:p-0">
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#000d1a]/95 border-t border-[#c5a059]/20 backdrop-blur-xl z-30 lg:static lg:bg-transparent lg:border-none lg:p-0">
                         <button
                             onClick={() => (step < totalSteps ? handleNext() : handleSubmit())}
                             disabled={loading}
-                            className="w-full bg-[#1E8455] hover:bg-[#1E8455]/90 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+                            className="w-full bg-gradient-to-r from-[#006837] to-[#002147] border border-[#c5a059]/30 text-white font-bold py-4 rounded-2xl shadow-2xl flex items-center justify-center gap-2 active:scale-95 hover:border-[#c5a059] transition-all"
                         >
                             <span className="tracking-widest uppercase text-sm">{step === totalSteps ? t('generate') : t('next')}</span>
                             <IconArrowRight />
@@ -480,7 +495,7 @@ export default function BusinessKundliWizard() {
 
             <style jsx global>{`
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-                .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+                .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
             `}</style>
         </div>
     );

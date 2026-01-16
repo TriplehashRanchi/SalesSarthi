@@ -81,7 +81,7 @@ const Icons = {
 ========================================================= */
 const InputGroup = ({ label, value, onChange, type = 'text', placeholder, prefix, suffix, className = '' }) => (
     <div className={`space-y-1.5 ${className}`}>
-        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-0.5">{label}</label>
+        <label className="text-[11px] font-bold text-slate-500 uppercase  ml-0.5">{label}</label>
         <div className="flex items-center w-full bg-white border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all duration-200 shadow-sm overflow-hidden h-11 lg:h-10">
             {prefix && <div className="pl-3 pr-2 text-slate-400 text-sm font-medium bg-slate-50 h-full flex items-center border-r border-slate-100">{prefix}</div>}
             <input
@@ -558,7 +558,7 @@ export default function FinancialKundliPage() {
     }, [currentStep]);
 
     return (
-        <div className="lg:flex lg:h-screen lg:overflow-hidden bg-slate-50 text-slate-900">
+        <div className="lg:flex lg:h-screen lg:overflow-hidden bg-slate-50 text-slate-900 ">
             {/* ================= SIDEBAR ================= */}
             <aside className="hidden lg:flex flex-col w-80 bg-white border-r border-slate-200 h-full z-20">
                 <div className="p-8">

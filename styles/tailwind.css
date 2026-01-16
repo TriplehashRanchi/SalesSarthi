@@ -18,6 +18,13 @@
   padding-bottom: calc(var(--safe-bottom) + 8px); /* keep above gesture/nav bar */
 }
 
+.font-hindi {
+  font-family: 'Noto Sans', system-ui, sans-serif;
+  line-height: 1.65;
+  letter-spacing: 0.2px;
+}
+
+
 @layer components {
     html {
         @apply scroll-smooth;

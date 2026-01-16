@@ -5,8 +5,7 @@ import { Metadata } from 'next';
 import { Nunito, Righteous } from 'next/font/google';
 import Head from 'next/head';
 import SafeArea from '@/components/SafeArea';
-import { Toaster } from "react-hot-toast";
-
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
     title: {
@@ -26,20 +25,23 @@ const righteous = Righteous({
     subsets: ['latin'],
     display: 'swap',
     variable: '--font-righteous',
-})
+});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <Head>
+            <head>
                 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-            </Head>
-            <body
-                className={`${nunito.variable} ${righteous.variable}`}
-            >
-                  <SafeArea edges={['top','bottom']} className="min-h-screen flex flex-col">
+
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&display=swap" rel="stylesheet" />
+            </head>
+
+            <body className={`${nunito.variable} ${righteous.variable}`}>
+                <SafeArea edges={['top', 'bottom']} className="min-h-screen flex flex-col">
                     <Toaster position="top-right" />
-                <ProviderComponent>{children}</ProviderComponent>
+                    <ProviderComponent>{children}</ProviderComponent>
                 </SafeArea>
             </body>
         </html>

@@ -35,18 +35,17 @@ const IconWarning = () => (
 
 // --- UI HELPERS ---
 const Label = ({ children, required }) => (
-    <label className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-200/80 mb-1 ml-1">
-        {children} {required && <span className="text-pink-400">*</span>}
+    <label className="block text-[12px] font-bold uppercase   text-slate-300 mb-1 ml-1">
+        {children} {required && <span className="text-[#1E8455]">*</span>}
     </label>
 );
-
 const InputText = ({ value, onChange, type = 'text', placeholder = '' }) => (
     <input
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-2xl border border-white/10 bg-white/5 text-slate-50 placeholder:text-slate-500 focus:bg-slate-900/30 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-200/30 outline-none transition-all shadow-md shadow-indigo-950/30"
+        className="w-full px-4 py-3 rounded-xl border border-white/10 bg-[#162D5C]/30 text-slate-50 placeholder:text-slate-500 focus:bg-[#162D5C]/50 focus:border-[#1E8455] focus:ring-1 focus:ring-[#1E8455]/30 outline-none transition-all shadow-lg"
     />
 );
 
@@ -55,8 +54,8 @@ const SelectChip = ({ label, selected, onClick, multi = false }) => (
         onClick={onClick}
         className={`px-4 py-3 rounded-xl text-sm font-semibold border transition-all shadow-sm flex items-center justify-center gap-2 ${
             selected
-                ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400 border-transparent text-white shadow-[0_10px_40px_rgba(99,102,241,0.35)]'
-                : 'bg-white/5 border-white/10 text-slate-200 hover:border-white/20 hover:bg-white/10'
+                ? 'bg-gradient-to-r from-[#1E8455] to-[#162D5C] border-transparent text-white shadow-lg'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:border-[#1E8455]/40 hover:bg-white/10'
         }`}
     >
         {selected && multi && <IconCheck />}
@@ -65,10 +64,10 @@ const SelectChip = ({ label, selected, onClick, multi = false }) => (
 );
 
 const RangeSlider = ({ label, value, onChange, min = 1, max = 10, subLabels }) => (
-    <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/10 mb-3 shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+    <div className="bg-[#162D5C]/20 p-5 rounded-2xl border border-white/5 mb-3 shadow-md">
         <div className="flex justify-between mb-2">
             <span className="text-sm font-semibold text-slate-100">{label}</span>
-            <span className="text-sm font-bold text-cyan-300">{value}</span>
+            <span className="text-sm font-bold text-[#1E8455]">{value}</span>
         </div>
         <input
             type="range"
@@ -76,10 +75,10 @@ const RangeSlider = ({ label, value, onChange, min = 1, max = 10, subLabels }) =
             max={max}
             value={Number(value)}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-300"
+            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#1E8455]"
         />
         {subLabels && (
-            <div className="flex justify-between mt-2 text-[10px] text-slate-400 uppercase tracking-wider">
+            <div className="flex justify-between mt-2 text-[10px] text-slate-400 uppercase tracking-widest">
                 <span>{subLabels[0]}</span>
                 <span>{subLabels[1]}</span>
                 <span>{subLabels[2]}</span>
@@ -88,19 +87,20 @@ const RangeSlider = ({ label, value, onChange, min = 1, max = 10, subLabels }) =
     </div>
 );
 
+
 const ToggleYesNo = ({ label, value, onChange }) => (
-    <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/5 mb-2">
+    <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-[#162D5C]/40 mb-2">
         <span className="text-sm font-medium text-slate-200 pr-4">{label}</span>
-        <div className="flex bg-slate-900 rounded-lg p-1 border border-white/5">
+        <div className="flex bg-black/20 rounded-lg p-1 border border-white/5">
             <button
                 onClick={() => onChange(true)}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === true ? 'bg-green-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === true ? 'bg-[#1E8455] text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
             >
                 YES
             </button>
             <button
                 onClick={() => onChange(false)}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === false ? 'bg-red-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${value === false ? 'bg-[#162D5C] text-white' : 'text-slate-500 hover:text-white'}`}
             >
                 NO
             </button>
@@ -108,15 +108,16 @@ const ToggleYesNo = ({ label, value, onChange }) => (
     </div>
 );
 
+
 const LangToggle = ({ value, onChange }) => (
-    <div className="flex bg-slate-900/60 border border-white/10 rounded-xl p-1">
+    <div className="flex bg-[#162D5C]/80 border border-white/10 rounded-xl p-1">
         {['English', 'Hindi'].map((lang) => (
             <button
                 key={lang}
                 onClick={() => onChange(lang)}
-                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${value === lang ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${value === lang ? 'bg-[#1E8455] text-white shadow' : 'text-slate-400 hover:text-white'}`}
             >
-                {lang === 'English' ? 'English' : 'हिंदी'}
+                {lang === 'English' ? 'EN' : 'हिं'}
             </button>
         ))}
     </div>
@@ -517,7 +518,7 @@ export default function BusinessKundliWizard() {
                                         <button
                                             key={t}
                                             onClick={() => update('identity', 'work_type', t)}
-                                            className={`px-2 py-3 rounded-lg text-xs w-full border ${formData.identity.work_type === t ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200' : 'bg-white/5 border-white/10'}`}
+                                            className={`px-2 py-3 rounded-lg text-xs w-full border ${formData.identity.work_type === t ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'}`}
                                         >
                                             {t}
                                         </button>
@@ -540,7 +541,7 @@ export default function BusinessKundliWizard() {
                                     key={lang}
                                     onClick={() => update('identity', 'report_language', lang)}
                                     className={`px-4 py-2 rounded-lg text-xs border transition-all ${
-                                        formData.identity.report_language === lang ? 'bg-indigo-500/20 border-indigo-400 text-indigo-200' : 'bg-white/5 border-white/10 text-slate-400'
+                                        formData.identity.report_language === lang ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'
                                     }`}
                                 >
                                     {lang}
@@ -651,7 +652,7 @@ export default function BusinessKundliWizard() {
                                         <button
                                             key={o}
                                             onClick={() => update('client', 'needs_analysis', o)}
-                                            className={`py-2 text-[10px] rounded border ${formData.client.needs_analysis === o ? 'bg-cyan-500/30 border-cyan-400' : 'bg-white/5 border-white/10'}`}
+                                            className={`py-2 text-[10px] rounded border ${formData.client.needs_analysis === o ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'}`}
                                         >
                                             {o}
                                         </button>
@@ -665,7 +666,7 @@ export default function BusinessKundliWizard() {
                                         <button
                                             key={o}
                                             onClick={() => update('client', 'portfolio_checkup', o)}
-                                            className={`py-2 text-[10px] rounded border ${formData.client.portfolio_checkup === o ? 'bg-cyan-500/30 border-cyan-400' : 'bg-white/5 border-white/10'}`}
+                                            className={`py-2 text-[10px] rounded border ${formData.client.portfolio_checkup === o ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'}`}
                                         >
                                             {o}
                                         </button>
@@ -749,7 +750,7 @@ export default function BusinessKundliWizard() {
                                     <div
                                         key={d}
                                         onClick={() => toggleArrayItem('market', 'differentiation', d)}
-                                        className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${formData.market.differentiation.includes(d) ? 'bg-fuchsia-500/20 border-fuchsia-400 text-white' : 'border-white/10 text-slate-400'}`}
+                                        className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${formData.market.differentiation.includes(d) ? 'bg-[#1E8455]/20 border-[#1E8455] text-white ' : 'bg-white/5 border-white/10'}`}
                                     >
                                         {d}
                                     </div>
@@ -788,7 +789,7 @@ export default function BusinessKundliWizard() {
                                         <button
                                             key={o}
                                             onClick={() => update('tech', 'crm_update', o)}
-                                            className={`flex-1 py-2 text-[10px] rounded border ${formData.tech.crm_update === o ? 'bg-indigo-500/40 border-indigo-400' : 'bg-white/5 border-white/10'}`}
+                                            className={`flex-1 py-2 text-[10px] rounded border ${formData.tech.crm_update === o ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'}`}
                                         >
                                             {o}
                                         </button>
@@ -802,7 +803,7 @@ export default function BusinessKundliWizard() {
                                         <button
                                             key={o}
                                             onClick={() => update('tech', 'digital_pres', o)}
-                                            className={`flex-1 py-2 text-[10px] rounded border ${formData.tech.digital_pres === o ? 'bg-indigo-500/40 border-indigo-400' : 'bg-white/5 border-white/10'}`}
+                                            className={`flex-1 py-2 text-[10px] rounded border ${formData.tech.digital_pres === o ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'}`}
                                         >
                                             {o}
                                         </button>
@@ -816,7 +817,7 @@ export default function BusinessKundliWizard() {
                                         <button
                                             key={o}
                                             onClick={() => update('tech', 'video_comfort', o)}
-                                            className={`px-2 py-2 text-[10px] whitespace-nowrap rounded border ${formData.tech.video_comfort === o ? 'bg-indigo-500/40 border-indigo-400' : 'bg-white/5 border-white/10'}`}
+                                            className={`px-2 py-2 text-[10px] whitespace-nowrap rounded border ${formData.tech.video_comfort === o ? 'bg-[#1E8455]/20 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'}`}
                                         >
                                             {o}
                                         </button>
@@ -837,11 +838,10 @@ export default function BusinessKundliWizard() {
                 return (
                     <div className="space-y-6 animate-fadeIn">
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
-                               
+                            <div className="flex items-center gap-2 mb-2">
                                 <h2 className="text-xl font-bold text-white">{t('complianceTitle')}</h2>
                             </div>
-                            <p className="text-amber-200/80 text-sm bg-amber-900/20 p-3 rounded-lg border border-amber-900/50">{t('complianceWarning')}</p>
+                            <p className="bg-[#1E8455]/10 border border-[#1E8455]/30 p-3 rounded-lg text-xs italic text-slate-300">{t('complianceWarning')}</p>
                         </div>
                         <div className="space-y-2">
                             <ToggleYesNo label={t('suitability')} value={formData.compliance.suitability} onChange={(v) => update('compliance', 'suitability', v)} />
@@ -933,7 +933,7 @@ export default function BusinessKundliWizard() {
                     <div className="space-y-6 animate-fadeIn">
                         <div>
                             <h2 className="text-xl font-bold text-white">{t('mindsetTitle')}</h2>
-                         </div>
+                        </div>
                         <div className="space-y-4">
                             <RangeSlider label={t('confidenceCalling')} value={formData.mindset.confidence} onChange={(v) => update('mindset', 'confidence', v)} />
                             <RangeSlider label={t('weeklyConsistency')} value={formData.mindset.consistency} onChange={(v) => update('mindset', 'consistency', v)} />
@@ -979,7 +979,7 @@ export default function BusinessKundliWizard() {
                         <div className="max-w-md space-y-4 px-6">
                             <div className="space-y-1">
                                 <h2 className="text-2xl font-bold text-white tracking-tight">
-                                    AI Analysis <span className="text-cyan-400">in Progress</span>
+                                    AI Analysis <span className="text-[#1E8455]">in Progress</span>
                                 </h2>
                                 <p className="text-xs text-slate-500 uppercase tracking-[0.3em] font-semibold">Deep Diagnostic Engine Active</p>
                             </div>
@@ -1039,33 +1039,32 @@ export default function BusinessKundliWizard() {
     };
 
     return (
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-slate-50 pb-28 pt-[-40] lg:pb-24">
-            <div className="pointer-events-none absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_20%_20%,rgba(129,140,248,0.25),transparent_25%),radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.25),transparent_20%)]"></div>
+        <div className={`min-h-screen ${language === 'Hindi' ? 'font-hindi' : ''} relative overflow-hidden bg-gradient-to-br from-[#000d1a] via-[#162D5C] to-[#001a33] text-slate-50 pb-28 lg:pb-12`}>
+            <div className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_20%_20%,#1E8455,transparent_30%),radial-gradient(circle_at_80%_0%,#162D5C,transparent_20%)]"></div>
 
-            <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8">
-                <div className="bg-white/10 border border-white/15 rounded-2xl px-4 py-3 sticky top-4 z-20 flex items-center justify-between gap-3 backdrop-blur-2xl shadow-lg">
+            <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8">
+                <div className="bg-black/30 border border-white/10 rounded-xl  px-4 py-3 sticky top-4 z-20 flex items-center justify-between gap-3 backdrop-blur-2xl shadow-lg">
                     {step > 1 && step < 12 ? (
-                        <button onClick={() => setStep((s) => s - 1)} className="p-2 text-indigo-100 hover:bg-white/10 rounded-full border border-white/10 transition">
+                        <button onClick={() => setStep((s) => s - 1)} className="p-2 text-slate-300 hover:bg-white/5 rounded-full transitio">
                             <IconChevronLeft />
                         </button>
                     ) : (
                         <div className="w-10" />
                     )}
 
-                    <div className="flex flex-col items-center flex-1">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-1">{step < 12 ? `Step ${step} / ${totalSteps}` : 'Processing'}</span>
-                        <div className="h-1 w-32 bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-indigo-400 to-cyan-400 transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                    <div className="flex flex-col items-center ">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#1E8455] mb-1">{step < 12 ? `Step ${step} / ${totalSteps}` : 'Processing'}</span>
+                        <div className="h-1.5 w-28 bg-white/10  rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-[#1E8455] to-[#162D5C] transition-all duration-700" style={{ width: `${progress}%` }}></div>
                         </div>
                     </div>
-                    <div className="w-10" />
                     <div className="flex items-center gap-2">
                         <LangToggle value={language} onChange={setLanguage} />
                     </div>
                 </div>
 
-                <div className="mt-8 mb-20">
-                    <div className="bg-white/5 border border-white/10 rounded-3xl p-5 sm:p-8 backdrop-blur-xl shadow-2xl min-h-[500px]">{renderScreen()}</div>
+                <div className="mt-8 mb-24">
+                    <div className="bg-[#162D5C]/30 border border-white/5 rounded-xl p-6 backdrop-blur-xl shadow-2xl min-h-[480px]">{renderScreen()}</div>
                 </div>
 
                 {step < 12 && (
@@ -1074,7 +1073,7 @@ export default function BusinessKundliWizard() {
                             <button
                                 onClick={() => (step < totalSteps ? handleNext() : handleSubmit())}
                                 disabled={loading}
-                                className="w-full bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-cyan-500 hover:from-indigo-500 text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                className="w-full bg-[#1E8455] hover:bg-[#1E8455]/90 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
                             >
                                 {step === totalSteps ? `${t('generate')}` : `${t('next')}`}
                                 <IconArrowRight />
