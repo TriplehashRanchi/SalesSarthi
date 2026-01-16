@@ -644,7 +644,7 @@ import {
   Box, LayoutDashboard, Map, Calendar, ArrowUpRight, AlertCircle, 
   Rocket, User, Clock, CheckCircle2, Star, ZapOff, Users, 
   Workflow, Trophy, Globe, Briefcase, Eye, ShieldAlert, FileSearch,
-  ArrowRightLeft, BadgePercent, Coins, BarChart3
+  ArrowRightLeft, BadgePercent, Coins, BarChart3, Loader
 } from 'lucide-react';
 import OverviewSection from '../../../../components/kundli/Overview';
 import { generateFullAdvisorKundli } from '../../../../utils/businessKundliPdf';
@@ -664,7 +664,10 @@ export default function ComprehensiveBusinessKundli() {
   const searchParams = useSearchParams();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | grahas | strategy | legacy | projections
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState('idle'); // idle | processing | success | error
+  const [downloadError, setDownloadError] = useState(null); // dashboard | grahas | strategy | legacy | projections
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -683,6 +686,62 @@ export default function ComprehensiveBusinessKundli() {
     };
     fetchReport();
   }, [searchParams]);
+
+  const downloadPdf = async () => {
+    const id = searchParams.get("id");
+    if (!id) {
+      setDownloadStatus('error');
+      setDownloadError('Invalid report ID');
+      setTimeout(() => setDownloadStatus('idle'), 3000);
+      return;
+    }
+
+    setIsDownloading(true);
+    setDownloadStatus('processing');
+    setDownloadError(null);
+
+    try {
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/kundli/report/${id}/pdf`,
+        {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const blob = await res.blob();
+      if (blob.size === 0) throw new Error('Empty PDF received');
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${report?.identity?.name || 'Report'}_Business_Kundli.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      setDownloadStatus('success');
+      setTimeout(() => {
+        setDownloadStatus('idle');
+        setIsDownloading(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Download error:', err);
+      setDownloadStatus('error');
+      setDownloadError(err.message || 'Failed to download PDF');
+      setTimeout(() => {
+        setDownloadStatus('idle');
+        setIsDownloading(false);
+      }, 3000);
+    }
+  };
+
 
   if (loading) return <LoadingScreen />;
   if (!report) return <ErrorScreen />;
@@ -723,7 +782,11 @@ export default function ComprehensiveBusinessKundli() {
                   </p>
                </div>
                <div className="h-16 w-px bg-white/10" />
-               <button onClick={() => generateFullAdvisorKundli(report)} className="p-4 bg-white hover:bg-slate-200 text-slate-900 rounded-xl transition-all shadow-xl shadow-white/5 active:scale-95">
+               <button 
+                 onClick={downloadPdf}
+                 disabled={isDownloading}
+                 className="p-4 bg-white hover:bg-slate-200 disabled:bg-slate-400 text-slate-900 rounded-xl transition-all shadow-xl shadow-white/5 active:scale-95 disabled:cursor-not-allowed"
+               >
                   <Download size={24} />
                </button>
             </div>
@@ -750,6 +813,13 @@ export default function ComprehensiveBusinessKundli() {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* --- DOWNLOAD MODAL --- */}
+      <AnimatePresence>
+        {(isDownloading || downloadStatus !== 'idle') && (
+          <DownloadModal status={downloadStatus} error={downloadError} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1182,5 +1252,126 @@ function ErrorScreen() {
           <button onClick={() => window.history.back()} className="px-8 py-3 bg-white text-slate-900 font-black rounded-xl">Return Home</button>
        </div>
     </div>
+  );
+}
+
+// --- DOWNLOAD MODAL COMPONENT ---
+function DownloadModal({ status, error }) {
+  const isSuccess = status === 'success';
+  const isError = status === 'error';
+  const isProcessing = status === 'processing';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        className={`w-full max-w-sm mx-4 rounded-[1.5rem] p-10 text-center overflow-hidden border shadow-2xl ${
+          isSuccess
+            ? 'bg-gradient-to-br from-emerald-950/40 to-[#020617] border-emerald-500/20'
+            : isError
+            ? 'bg-gradient-to-br from-red-950/40 to-[#020617] border-red-500/20'
+            : 'bg-gradient-to-br from-indigo-950/40 to-[#020617] border-indigo-500/20'
+        }`}
+      >
+        {/* Animated Background Gradient */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          className={`absolute inset-0 opacity-20 pointer-events-none ${
+            isSuccess ? 'bg-emerald-500/10' : isError ? 'bg-red-500/10' : 'bg-indigo-500/10'
+          }`}
+        />
+
+        <div className="relative z-10">
+          {/* Icon */}
+          <motion.div
+            animate={
+              isProcessing
+                ? { rotate: 360 }
+                : isSuccess
+                ? { scale: [0.8, 1.1, 1] }
+                : { x: [0, -10, 10, -10, 0] }
+            }
+            transition={{
+              duration: isProcessing ? 2 : 0.6,
+              repeat: isProcessing ? Infinity : 0,
+              ease: 'easeInOut',
+            }}
+            className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center shadow-2xl"
+            style={{
+              background: isSuccess
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : isError
+                ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            }}
+          >
+            {isProcessing && <Loader className="text-white" size={32} />}
+            {isSuccess && <CheckCircle2 className="text-white" size={32} />}
+            {isError && <AlertCircle className="text-white" size={32} />}
+          </motion.div>
+
+          {/* Title */}
+          <h3 className="text-2xl font-black mb-3">
+            {isProcessing && 'Generating PDF'}
+            {isSuccess && 'Download Complete!'}
+            {isError && 'Download Failed'}
+          </h3>
+
+          {/* Description */}
+          <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+            {isProcessing && 'Your Business Kundli report is being generated. This may take a moment...'}
+            {isSuccess && 'Your Business Kundli PDF has been downloaded successfully. Check your downloads folder.'}
+            {isError && error && `${error}. Please try again.`}
+          </p>
+
+          {/* Loading Bars (Processing) */}
+          {isProcessing && (
+            <div className="space-y-2 mb-6">
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 0.8, ease: 'easeInOut', repeat: Infinity }}
+                className="h-1.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded-full"
+              />
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '70%' }}
+                transition={{ duration: 1, ease: 'easeInOut', repeat: Infinity, delay: 0.2 }}
+                className="h-1.5 bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-full"
+              />
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '40%' }}
+                transition={{ duration: 1.2, ease: 'easeInOut', repeat: Infinity, delay: 0.4 }}
+                className="h-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+              />
+            </div>
+          )}
+
+          {/* Status Message */}
+          {(isSuccess || isError) && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`text-xs font-bold py-2 px-4 rounded-lg ${
+                isSuccess
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
+              }`}
+            >
+              {isSuccess ? '✓ Ready in your downloads' : '✗ Please try again'}
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
