@@ -95,6 +95,11 @@ const InputGroup = ({ label, value, onChange, type = 'text', placeholder, prefix
         </div>
     </div>
 );
+const Label = ({ children, required }) => (
+    <label className="text-[11px] font-bold text-slate-500 uppercase  ml-0.5">
+        {children} {required && <span className="text-[#1E8455]">*</span>}
+    </label>
+);
 
 const StepItem = ({ step, index, current, onClick }) => {
     const isActive = current === index;
@@ -167,6 +172,7 @@ export default function FinancialKundliPage() {
             profession: '',
             city: '',
             wanted_retirement_age: '',
+            report_language: 'English' ,
             current_year: new Date().getFullYear(),
         },
         cashflow: {
@@ -701,6 +707,23 @@ export default function FinancialKundliPage() {
                                                 value={data.client.family_members}
                                                 onChange={(e) => update('client', 'family_members', e.target.value)}
                                             />
+                                             <div>
+                                                 <Label required>{t('report Language')}</Label>
+                                                  <div className="flex flex-wrap gap-2 mt-1">
+                                            {['English', 'Hindi', 'Hinglish', 'Marathi', 'Gujarati'].map((lang) => (
+                                                <button
+                                                    key={lang}
+                                                    onClick={() => update('client', 'report_language', lang)}
+                                                    className={`px-2 py-2 rounded-lg text-xs border transition-all ${
+                                                        data.client.report_language === lang ? 'bg-indigo-600 border-[#1E8455] text-white' : 'bg-white/5 border-white/10'
+                                                    }`}
+                                                >
+                                                    {lang}
+                                                </button>
+                                            ))}
+                                        </div>
+                                             </div>
+                                       
                                         </div>
                                     </div>
                                 </div>

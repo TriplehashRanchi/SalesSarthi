@@ -5,6 +5,8 @@
   import { getAuth } from 'firebase/auth';
   import { generateFinancialReport } from '../../../../../utils/generateKundliPdf';
   import GrahaReport from '@/components/Graha';
+import { AnimatePresence,motion } from 'framer-motion';
+import { AlertCircle, CheckCircle2, Loader } from 'lucide-react';
 
   /* =========================================================
     ICONS (Elegant & Minimalist)
@@ -398,6 +400,128 @@ const FinancialKundliSeal = ({ ui }) => {
 };
 
 
+// --- DOWNLOAD MODAL COMPONENT ---
+function DownloadModal({ status, error }) {
+  const isSuccess = status === 'success';
+  const isError = status === 'error';
+  const isProcessing = status === 'processing';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        className={`w-full max-w-sm mx-4 rounded-[1.5rem] p-10 text-center overflow-hidden border shadow-2xl ${
+          isSuccess
+            ? 'bg-gradient-to-br from-emerald-950/40 to-[#020617] border-emerald-500/20'
+            : isError
+            ? 'bg-gradient-to-br from-red-950/40 to-[#020617] border-red-500/20'
+            : 'bg-gradient-to-br from-indigo-950/40 to-[#020617] border-indigo-500/20'
+        }`}
+      >
+        {/* Animated Background Gradient */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          className={`absolute inset-0 opacity-20 pointer-events-none ${
+            isSuccess ? 'bg-emerald-500/10' : isError ? 'bg-red-500/10' : 'bg-indigo-500/10'
+          }`}
+        />
+
+        <div className="relative z-10">
+          {/* Icon */}
+          <motion.div
+            animate={
+              isProcessing
+                ? { rotate: 360 }
+                : isSuccess
+                ? { scale: [0.8, 1.1, 1] }
+                : { x: [0, -10, 10, -10, 0] }
+            }
+            transition={{
+              duration: isProcessing ? 2 : 0.6,
+              repeat: isProcessing ? Infinity : 0,
+              ease: 'easeInOut',
+            }}
+            className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center shadow-2xl"
+            style={{
+              background: isSuccess
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : isError
+                ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            }}
+          >
+            {isProcessing && <Loader className="text-white" size={32} />}
+            {isSuccess && <CheckCircle2 className="text-white" size={32} />}
+            {isError && <AlertCircle className="text-white" size={32} />}
+          </motion.div>
+
+          {/* Title */}
+          <h3 className="text-2xl font-black mb-3">
+            {isProcessing && 'Generating PDF'}
+            {isSuccess && 'Download Complete!'}
+            {isError && 'Download Failed'}
+          </h3>
+
+          {/* Description */}
+          <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+            {isProcessing && 'Your Business Kundli report is being generated. This may take a moment...'}
+            {isSuccess && 'Your Business Kundli PDF has been downloaded successfully. Check your downloads folder.'}
+            {isError && error && `${error}. Please try again.`}
+          </p>
+
+          {/* Loading Bars (Processing) */}
+          {isProcessing && (
+            <div className="space-y-2 mb-6">
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 0.8, ease: 'easeInOut', repeat: Infinity }}
+                className="h-1.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded-full"
+              />
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '70%' }}
+                transition={{ duration: 1, ease: 'easeInOut', repeat: Infinity, delay: 0.2 }}
+                className="h-1.5 bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-full"
+              />
+              <motion.div
+                initial={{ width: '0%' }}
+                animate={{ width: '40%' }}
+                transition={{ duration: 1.2, ease: 'easeInOut', repeat: Infinity, delay: 0.4 }}
+                className="h-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+              />
+            </div>
+          )}
+
+          {/* Status Message */}
+          {(isSuccess || isError) && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`text-xs font-bold py-2 px-4 rounded-lg ${
+                isSuccess
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
+              }`}
+            >
+              {isSuccess ? '✓ Ready in your downloads' : '✗ Please try again'}
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+
 
 
   /* =========================================================
@@ -410,6 +534,9 @@ const FinancialKundliSeal = ({ ui }) => {
     const auth = getAuth();
     const [loading, setLoading] = useState(true);
     const [report, setReport] = useState(null);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadStatus, setDownloadStatus] = useState('idle'); // idle | processing | success | error
+    const [downloadError, setDownloadError] = useState(null); // dashboard | grahas | strategy | legacy | projections
 
     
 
@@ -427,6 +554,61 @@ const FinancialKundliSeal = ({ ui }) => {
       };
       load();
     }, [id, auth]);
+
+    const downloadPdf = async () => {
+    
+    if (!id) {
+      setDownloadStatus('error');
+      setDownloadError('Invalid report ID');
+      setTimeout(() => setDownloadStatus('idle'), 3000);
+      return;
+    }
+
+    setIsDownloading(true);
+    setDownloadStatus('processing');
+    setDownloadError(null);
+
+    try {
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/financial-kundli/report/${id}/download`,
+        {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const blob = await res.blob();
+      if (blob.size === 0) throw new Error('Empty PDF received');
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${report?.identity?.name || 'Report'}_Financial_Kundli.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      setDownloadStatus('success');
+      setTimeout(() => {
+        setDownloadStatus('idle');
+        setIsDownloading(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Download error:', err);
+      setDownloadStatus('error');
+      setDownloadError(err.message || 'Failed to download PDF');
+      setTimeout(() => {
+        setDownloadStatus('idle');
+        setIsDownloading(false);
+      }, 3000);
+    }
+  };
 
     const ui = useMemo(() => {
       if (!report?.output) return null;
@@ -497,8 +679,11 @@ const reportData = useMemo(() => {
           <button onClick={() => router.back()} className="flex items-center space-x-2 text-stone-500 hover:text-stone-900 transition-colors">
             <Icons.ArrowLeft /> <span className="text-sm font-medium">Back</span>
           </button>
-          <button onClick={() => generateFinancialReport(reportData)} className="flex items-center space-x-2 bg-stone-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 shadow-xl shadow-stone-200">
-            <Icons.Print /> <span>Download Report</span>
+          <button 
+          onClick={downloadPdf}
+          disabled={isDownloading} 
+          className="flex items-center space-x-2 bg-stone-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 shadow-xl shadow-stone-200">
+           <Icons.Print /> <span>Download Report</span>
           </button>
         </nav>
 
@@ -657,6 +842,12 @@ const reportData = useMemo(() => {
         <div className="hidden print:block text-center mt-12 pt-8 border-t border-stone-200 text-[10px] text-stone-300 uppercase tracking-widest">
           Confidential Financial Diagnosis • Generated via Financial Kundli Engine
         </div>
-      </div>
+         {/* --- DOWNLOAD MODAL --- */}
+      <AnimatePresence>
+        {(isDownloading || downloadStatus !== 'idle') && (
+          <DownloadModal status={downloadStatus} error={downloadError} />
+        )}
+      </AnimatePresence>
+    </div>
     );
   }
