@@ -8,6 +8,7 @@
     handleVideoDownload,
     handleVideoShare,
     } from '@/utils/videoDownloadUtils';
+import VideoThumbnail from './VideoThumbnail';
 
     /* ------------------ CATEGORIES ------------------ */
 
@@ -206,13 +207,10 @@
 
                 {/* NO VIDEO RENDERING */}
                <div className="relative w-full h-40 rounded overflow-hidden mb-3 bg-gray-200">
-  <img
-    src={getVideoThumbnail(video.url)}
-    alt={video.title || 'Video thumbnail'}
-    className="w-full h-full object-cover"
-    loading="lazy"
-  />
-
+ <VideoThumbnail
+    src={video.url}
+    className="w-full h-40 object-cover bg-gray-200"
+/>
   {/* Play icon overlay (visual cue only) */}
   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
     <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center text-lg">

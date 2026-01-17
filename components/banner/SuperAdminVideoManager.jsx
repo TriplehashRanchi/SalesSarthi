@@ -9,6 +9,8 @@ import {
 import { IconVideo, IconCheck, IconX, IconTrash, IconPlayerPlay } from '@tabler/icons-react';
 // 1. Import the new dedicated video hook
 import { useVideoCloudinaryUpload } from '@/utils/useVideoCloudinaryUpload';
+import { useR2Upload } from '../../utils/useR2Upload';
+import VideoThumbnail from './VideoThumbnail';
 
 const SuperAdminVideoManager = () => {
   const [videos, setVideos] = useState([]);
@@ -32,7 +34,8 @@ const SuperAdminVideoManager = () => {
   ];
 
   // 2. Use the video-specific hook with progress tracking
-  const { uploadVideo, uploading, progress } = useVideoCloudinaryUpload();
+  const { uploadFile, uploading, progress } = useR2Upload();
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const fetchVideos = async () => {
@@ -57,7 +60,7 @@ const SuperAdminVideoManager = () => {
 
     try {
       // 3. Call uploadVideo (using the XHR-based progress hook)
-      const url = await uploadVideo(file);
+      const url = await uploadFile(file);
       
       await axios.post(`${API_URL}/api/banners/video`, {
         url,
@@ -219,12 +222,10 @@ const SuperAdminVideoManager = () => {
     <Card key={video.id} shadow="sm" p="sm" radius="md" withBorder>
       <Card.Section className="relative">
         {/* 1. Use an <img> instead of <video> to save bandwidth */}
-        <img 
-            src={thumbnailUrl} 
-            alt={video.title}
-            className="w-full h-48 object-cover bg-gray-200"
-            loading="lazy" 
-        />
+       <VideoThumbnail
+  src={video.url}
+  className="w-full h-48 object-cover bg-gray-200"
+/>
         
         {/* 2. Overlay a Play Icon so admin knows it's a video */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 group">
