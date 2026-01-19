@@ -440,8 +440,8 @@ const ReportingDashboard = () => {
 
     return (
         <div className="p-2 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen relative">
-            <OfferPopupBanner /> 
-            <OfferStickyWidget />
+            {/* <OfferPopupBanner />  */}
+            {/* <OfferStickyWidget /> */}
             <LoadingOverlay visible={loading} overlayBlur={2} />
             {/* <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">Sales & Activity Dashboard</h2> */}
             {error && (
