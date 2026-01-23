@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { getAuth } from 'firebase/auth';
 import Link from 'next/link';
@@ -42,6 +42,7 @@ const PRIORITY_STYLES = {
 
 
 export default function TaskBoard() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const typeFromUrl = searchParams.get('type'); // AGENT | ADMIN
 
@@ -62,6 +63,14 @@ export default function TaskBoard() {
             setFilterType(typeFromUrl);
         }
     }, [typeFromUrl]);
+
+    const handleBack = () => {
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+        } else {
+            router.push('/dashboard');
+        }
+    };
 
 
     useEffect(() => {
@@ -225,9 +234,9 @@ export default function TaskBoard() {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen flex flex-col relative">
-            <Link href="/dashboard" className="text-sm text-gray-500 mb-4 inline-block">
+            <button type="button" onClick={handleBack} className="self-start text-sm text-gray-500 mb-4">
                 ← Back to Dashboard
-            </Link>
+            </button>
 
             <div className="flex justify-between items-center mb-6">
                 {/* LEFT SIDE TITLE */}

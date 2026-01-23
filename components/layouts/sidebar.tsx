@@ -24,6 +24,8 @@ import {
     IconAi,
     IconAngle,
     IconBrandFacebook,
+    IconBrandFunimation,
+    IconBrandVisualStudio,
     IconBrandWhatsappFilled,
     IconCubeSend,
     IconCursorText,
@@ -49,6 +51,7 @@ import IconMail from '../icon/icon-mail';
 import IconLogout from '../icon/icon-logout';
 import { getAuth, signOut } from 'firebase/auth';
 import axios from 'axios';
+import { Building2, ChartCandlestick } from 'lucide-react';
 
 interface Banner {
     created_at: string;
@@ -404,6 +407,24 @@ const Sidebar = () => {
                                 </Link>
                             </li>
 
+                            <li className="menu nav-item">
+                                <Link href="/financial-kundli">
+                                    <div className="flex items-center">
+                                        <ChartCandlestick className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Financials Kundli')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
+                            <li className="menu nav-item">
+                                <Link href="/business-kundli">
+                                    <div className="flex items-center">
+                                        <Building2 className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Business Kundli')}</span>
+                                    </div>
+                                </Link>
+                            </li>
+
                             <li className="block md:hidden menu nav-item">
                                 <a onClick={handleSignOut}>
                                     <div className="flex items-center">
@@ -413,7 +434,7 @@ const Sidebar = () => {
                                 </a>
                             </li>
 
-                            {/* <li className="menu nav-item">
+                            <li className="menu nav-item">
                                 <button type="button" className={`${currentMenu === 'agents' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('agents')}>
                                     <div className="flex items-center">
                                         <IconAngle className="shrink-0 group-hover:!text-primary" />
@@ -435,7 +456,7 @@ const Sidebar = () => {
                                         </li>
                                     </ul>
                                 </AnimateHeight>
-                            </li> */}
+                            </li>
                         </ul>
                     </PerfectScrollbar>
                 </div>
