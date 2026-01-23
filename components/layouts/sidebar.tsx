@@ -274,6 +274,78 @@ const Sidebar = () => {
                                 </Link>
                             </li>
 
+                              <li className="menu nav-item">
+                                <button type="button" className={`${currentMenu === 'financial' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('financial')}>
+                                    <div className="flex items-center">
+                                        <ChartCandlestick className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Financial Kundli')}</span>
+                                    </div>
+
+                                    <div className={currentMenu !== 'financial' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                        <IconCaretDown />
+                                    </div>
+                                </button>
+
+                                <AnimateHeight duration={300} height={currentMenu === 'financial' ? 'auto' : 0}>
+                                    <ul className="sub-menu text-gray-500">
+                                        <li>
+                                            <Link href="/financial-kundli">{t('Financial Kundli')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/financehistory">{t('History')}</Link>
+                                        </li>
+                                    </ul>
+                                </AnimateHeight>
+                            </li>
+
+                             <li className="menu nav-item">
+                                <button type="button" className={`${currentMenu === 'business' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('business')}>
+                                    <div className="flex items-center">
+                                        <Building2 className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Business Kundli')}</span>
+                                    </div>
+
+                                    <div className={currentMenu !== 'business' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                        <IconCaretDown />
+                                    </div>
+                                </button>
+
+                                <AnimateHeight duration={300} height={currentMenu === 'business' ? 'auto' : 0}>
+                                    <ul className="sub-menu text-gray-500">
+                                        <li>
+                                            <Link href="/business-kundli">{t('Business Kundli')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/history">{t('History')}</Link>
+                                        </li>
+                                    </ul>
+                                </AnimateHeight>
+                            </li>
+
+                            <li className="menu  nav-item">
+                                <button type="button" className={`${currentMenu === 'agents' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('agents')}>
+                                    <div className="flex items-center">
+                                        <IconAngle className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Rag')}</span>
+                                    </div>
+
+                                    <div className={currentMenu !== 'agents' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                        <IconCaretDown />
+                                    </div>
+                                </button>
+
+                                <AnimateHeight duration={300} height={currentMenu === 'agents' ? 'auto' : 0}>
+                                    <ul className="sub-menu text-gray-500">
+                                        <li>
+                                            <Link href="/agentDashboard">{t('Agent Dashboard')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/assessment">{t('Assessment')}</Link>
+                                        </li>
+                                    </ul>
+                                </AnimateHeight>
+                            </li>
+
                             <li className="menu nav-item">
                                 <Link href="/appointments">
                                     <div className="flex items-center">
@@ -342,6 +414,8 @@ const Sidebar = () => {
                                 </AnimateHeight>
                             </li>
 
+                            
+
                             {/* <li className="menu nav-item">
                                 <Link href="/reports">
                                     <div className="flex items-center">
@@ -407,53 +481,7 @@ const Sidebar = () => {
                                 </Link>
                             </li>
 
-                             <li className="menu nav-item">
-                                <button type="button" className={`${currentMenu === 'financial' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('financial')}>
-                                    <div className="flex items-center">
-                                        <ChartCandlestick className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('financial')}</span>
-                                    </div>
-
-                                    <div className={currentMenu !== 'financial' ? '-rotate-90 rtl:rotate-90' : ''}>
-                                        <IconCaretDown />
-                                    </div>
-                                </button>
-
-                                <AnimateHeight duration={300} height={currentMenu === 'financial' ? 'auto' : 0}>
-                                    <ul className="sub-menu text-gray-500">
-                                        <li>
-                                            <Link href="/financial-kundli">{t('Financial Kundli')}</Link>
-                                        </li>
-                                        <li>
-                                            <Link href="/financehistory">{t('History')}</Link>
-                                        </li>
-                                    </ul>
-                                </AnimateHeight>
-                            </li>
-
-                             <li className="menu nav-item">
-                                <button type="button" className={`${currentMenu === 'business' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('business')}>
-                                    <div className="flex items-center">
-                                        <Building2 className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('business')}</span>
-                                    </div>
-
-                                    <div className={currentMenu !== 'business' ? '-rotate-90 rtl:rotate-90' : ''}>
-                                        <IconCaretDown />
-                                    </div>
-                                </button>
-
-                                <AnimateHeight duration={300} height={currentMenu === 'business' ? 'auto' : 0}>
-                                    <ul className="sub-menu text-gray-500">
-                                        <li>
-                                            <Link href="/business-kundli">{t('Business Kundli')}</Link>
-                                        </li>
-                                        <li>
-                                            <Link href="/history">{t('History')}</Link>
-                                        </li>
-                                    </ul>
-                                </AnimateHeight>
-                            </li>
+                           
 
                             {/* <li className="menu nav-item">
                                 <Link href="/financial-kundli">
@@ -482,29 +510,7 @@ const Sidebar = () => {
                                 </a>
                             </li>
 
-                            <li className="menu nav-item">
-                                <button type="button" className={`${currentMenu === 'agents' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('agents')}>
-                                    <div className="flex items-center">
-                                        <IconAngle className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Rag')}</span>
-                                    </div>
-
-                                    <div className={currentMenu !== 'agents' ? '-rotate-90 rtl:rotate-90' : ''}>
-                                        <IconCaretDown />
-                                    </div>
-                                </button>
-
-                                <AnimateHeight duration={300} height={currentMenu === 'agents' ? 'auto' : 0}>
-                                    <ul className="sub-menu text-gray-500">
-                                        <li>
-                                            <Link href="/agentDashboard">{t('Agent Dashboard')}</Link>
-                                        </li>
-                                        <li>
-                                            <Link href="/assessment">{t('Assessment')}</Link>
-                                        </li>
-                                    </ul>
-                                </AnimateHeight>
-                            </li>
+                            
                         </ul>
                     </PerfectScrollbar>
                 </div>
