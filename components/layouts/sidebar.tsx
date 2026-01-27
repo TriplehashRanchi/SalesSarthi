@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { toggleSidebar } from '@/store/themeConfigSlice';
 import AnimateHeight from 'react-animate-height';
 import { IRootState } from '@/store';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import IconCaretsDown from '@/components/icon/icon-carets-down';
 import IconMenuDashboard from '@/components/icon/menu/icon-menu-dashboard';
 import IconCaretDown from '@/components/icon/icon-caret-down';
@@ -52,6 +52,7 @@ import IconLogout from '../icon/icon-logout';
 import { getAuth, signOut } from 'firebase/auth';
 import axios from 'axios';
 import { Building2, ChartCandlestick } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface Banner {
     created_at: string;
@@ -66,6 +67,12 @@ const Sidebar = () => {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const semidark = useSelector((state: IRootState) => state.themeConfig.semidark);
     const [todayBannerCount, setTodayBannerCount] = useState(0);
+
+    const { profile } = useAuth();
+    const addOnSet = useMemo(() => new Set(profile?.add_ons || []), [profile?.add_ons]);
+    const hasFinancial = addOnSet.has('FINANCIAL_KUNDLI');
+    const hasBusiness = addOnSet.has('BUSINESS_KUNDLI');
+    const hasRag = addOnSet.has('RAG_DASHBOARD');
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -274,7 +281,8 @@ const Sidebar = () => {
                                 </Link>
                             </li>
 
-                              <li className="menu nav-item">
+                              {hasFinancial && (
+                            <li className="menu nav-item">
                                 <button type="button" className={`${currentMenu === 'financial' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('financial')}>
                                     <div className="flex items-center">
                                         <ChartCandlestick className="shrink-0 group-hover:!text-primary" />
@@ -297,7 +305,9 @@ const Sidebar = () => {
                                     </ul>
                                 </AnimateHeight>
                             </li>
+                            )}
 
+                            {hasBusiness && (
                              <li className="menu nav-item">
                                 <button type="button" className={`${currentMenu === 'business' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('business')}>
                                     <div className="flex items-center">
@@ -321,7 +331,9 @@ const Sidebar = () => {
                                     </ul>
                                 </AnimateHeight>
                             </li>
+                            )}
 
+                            {hasRag && (
                             <li className="menu  nav-item">
                                 <button type="button" className={`${currentMenu === 'agents' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('agents')}>
                                     <div className="flex items-center">
@@ -345,6 +357,7 @@ const Sidebar = () => {
                                     </ul>
                                 </AnimateHeight>
                             </li>
+                            )}
 
                             <li className="menu nav-item">
                                 <Link href="/appointments">

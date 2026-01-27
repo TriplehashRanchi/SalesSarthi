@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import PremiumGate from '@/components/premium/PremiumGate';
 export default function KundliHistoryPage() {
   const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
@@ -19,6 +21,9 @@ export default function KundliHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
+
+  const { profile, loading: authLoading } = useAuth();
+  const hasAccess = profile?.add_ons?.includes('BUSINESS_KUNDLI');
 
   // Fetch Kundli History
   const fetchHistory = async () => {
@@ -50,8 +55,9 @@ export default function KundliHistoryPage() {
   };
 
   useEffect(() => {
+    if (authLoading || !hasAccess) return;
     fetchHistory();
-  }, []);
+  }, [authLoading, hasAccess]);
 
   const cityOptions = useMemo(() => {
     const set = new Set();
@@ -151,15 +157,30 @@ export default function KundliHistoryPage() {
   }, [page, safePage]);
 
   if (loading) {
+    return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+  }
+
+  if (authLoading) {
+    return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+  }
+
+  if (!hasAccess) {
     return (
-      <div className="p-6">
-        <div className="text-gray-600">Loading kundli history...</div>
-      </div>
+      <PremiumGate
+        title="Business Kundli History Locked"
+        subtitle="History access is part of the Business Kundli premium add-on."
+        features={[
+          'Historical reports archive',
+          'Plan comparisons',
+          'PDF re-downloads',
+        ]}
+        ctaLabel="Request Access"
+      />
     );
   }
 
-  return (
-    <div className="p-6 space-y-6">
+return (
+  <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Business Kundli History</h1>

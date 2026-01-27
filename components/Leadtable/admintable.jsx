@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Button, Card, Grid, Text, Title, Badge, Menu, TextInput, Select, Modal, Group } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { DataTable } from 'mantine-datatable';
@@ -204,9 +205,16 @@ const AdminTable = () => {
             accessor: 'action',
             title: 'Action',
             render: (admin) => (
-                <Button variant="light" color="blue" size="xs" leftSection={<IconEdit size={16} />} onClick={() => handleEditClick(admin)}>
-                    Edit
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="light" color="blue" size="xs" leftSection={<IconEdit size={16} />} onClick={() => handleEditClick(admin)}>
+                        Edit
+                    </Button>
+                    <Link href={`/superadmin/admins/${admin.admin_id}`} className="inline-flex">
+                        <Button variant="outline" color="gray" size="xs">
+                            Manage Add-ons
+                        </Button>
+                    </Link>
+                </div>
             ),
         },
     ];
@@ -216,7 +224,7 @@ const AdminTable = () => {
             {/* Header + Actions */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <Title order={3}>Customer Management</Title>
+                    <Title order={3}>Admin Management</Title>
                     <Text size="sm" color="dimmed">
                         Monitor, search, and analyze all your platform admins
                     </Text>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
+import { useAuth } from '@/context/AuthContext';
+import PremiumGate from '@/components/premium/PremiumGate';
 import Link from 'next/link';
 import AddAgentModal from '@/components/admin/AddAgentModal';
 import CelebrationPopup from '@/components/ui/CelebrationPopup';
@@ -9,6 +11,27 @@ import CelebrationPopup from '@/components/ui/CelebrationPopup';
 import { BrainCog } from 'lucide-react';
 
 export default function AgentDashboard() {
+    const { profile, loading: authLoading } = useAuth();
+    const hasAccess = profile?.add_ons?.includes('RAG_DASHBOARD');
+
+    if (authLoading) {
+        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+    }
+
+    if (!hasAccess) {
+        return (
+            <PremiumGate
+                title="RAG Agent Dashboard is a Premium Add-on"
+                subtitle="Monitor agent activity, risk tiers, and revival tasks in one executive view."
+                features={[
+                    'Live RAG status monitoring',
+                    'Priority agent interventions',
+                    'Agent performance insights',
+                ]}
+                ctaLabel="Request RAG Dashboard Access"
+            />
+        );
+    }
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);

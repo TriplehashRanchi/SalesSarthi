@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import PremiumGate from '@/components/premium/PremiumGate';
 import next from 'next';
 
 /* =========================================================
@@ -133,6 +135,28 @@ const StepItem = ({ step, index, current, onClick }) => {
 export default function FinancialKundliPage() {
     const router = useRouter();
     const auth = getAuth();
+
+    const { profile, loading: authLoading } = useAuth();
+    const hasAccess = profile?.add_ons?.includes('FINANCIAL_KUNDLI');
+
+    if (authLoading) {
+        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+    }
+
+    if (!hasAccess) {
+        return (
+            <PremiumGate
+                title="Financial Kundli is a Premium Add-on"
+                subtitle="Unlock deep financial diagnostics, AI insights, and export-ready reports for every client."
+                features={[
+                    'Insurance gap & risk score engine',
+                    'Goal-based action plan with timelines',
+                    'Professional PDF reports for clients',
+                ]}
+                ctaLabel="Request Financial Kundli Access"
+            />
+        );
+    }
 
     const [loading, setLoading] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);

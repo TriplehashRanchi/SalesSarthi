@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import PremiumGate from '@/components/premium/PremiumGate';
 
 export default function FinancialKundliHistoryPage() {
   const [data, setData] = useState([]);
@@ -19,6 +21,10 @@ export default function FinancialKundliHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
+
+  const { profile, loading: authLoading } = useAuth();
+  const hasAccess = profile?.add_ons?.includes('FINANCIAL_KUNDLI');
+
 
   const fetchHistory = async () => {
     try {
@@ -49,8 +55,9 @@ export default function FinancialKundliHistoryPage() {
   };
 
   useEffect(() => {
+    if (authLoading || !hasAccess) return;
     fetchHistory();
-  }, []);
+  }, [authLoading, hasAccess]);
 
   const cityOptions = useMemo(() => {
     const set = new Set();
@@ -145,6 +152,25 @@ export default function FinancialKundliHistoryPage() {
       <div className="p-6">
         <div className="text-gray-600">Loading financial history...</div>
       </div>
+    );
+  }
+
+  if (authLoading) {
+    return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+  }
+
+  if (!hasAccess) {
+    return (
+      <PremiumGate
+        title="Financial Kundli History Locked"
+        subtitle="History access is part of the Financial Kundli premium add-on."
+        features={[
+          'Historical report access',
+          'Downloadable PDFs',
+          'AI insights archive',
+        ]}
+        ctaLabel="Request Access"
+      />
     );
   }
 

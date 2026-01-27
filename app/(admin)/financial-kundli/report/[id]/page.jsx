@@ -531,6 +531,27 @@ function DownloadModal({ status, error }) {
   export default function FinancialKundliReportPage() {
     const { id } = useParams();
     const router = useRouter();
+    const { profile, loading: authLoading } = useAuth();
+    const hasAccess = profile?.add_ons?.includes('FINANCIAL_KUNDLI');
+
+    if (authLoading) {
+        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+    }
+
+    if (!hasAccess) {
+        return (
+            <PremiumGate
+                title="Financial Kundli Report Locked"
+                subtitle="This report is available only for admins with the Financial Kundli add-on enabled."
+                features={[
+                    'Full report access & download',
+                    'AI summary with action plan',
+                    'Client-ready PDF delivery',
+                ]}
+                ctaLabel="Request Access"
+            />
+        );
+    }
     const auth = getAuth();
     const [loading, setLoading] = useState(true);
     const [report, setReport] = useState(null);

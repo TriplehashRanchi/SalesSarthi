@@ -4,9 +4,16 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import superAdminAxios from '@/utils/superAdminAxios';
 import {
-  Title, Text, Badge, Card, Grid, Loader, Switch, Group, Table, Button
+  Title, Text, Badge, Card, Grid, Loader, Switch, Group, Table, Button, Stack
 } from '@mantine/core';
 import { IconLockOpen, IconLock } from '@tabler/icons-react';
+
+
+const ADD_ONS = [
+  { code: 'BUSINESS_KUNDLI', label: 'Business Kundli', description: 'Playbook, repair plan, and PDF reports.' },
+  { code: 'FINANCIAL_KUNDLI', label: 'Financial Kundli', description: 'Financial diagnostic engine and exports.' },
+  { code: 'RAG_DASHBOARD', label: 'RAG Agent Dashboard', description: 'Agent health tracking and risk insights.' },
+];
 
 const AdminDetailsPage = () => {
   const { id } = useParams();
@@ -14,6 +21,27 @@ const AdminDetailsPage = () => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [addOns, setAddOns] = useState({});
+  const [addOnsLoading, setAddOnsLoading] = useState(true);
+  const [addOnUpdating, setAddOnUpdating] = useState({});
+
+
+  const fetchAddOns = async () => {
+    try {
+      setAddOnsLoading(true);
+      const res = await superAdminAxios.get(`/api/superadmin/admins/${id}/add-ons`);
+      const active = res.data?.add_ons || [];
+      const nextState = {};
+      ADD_ONS.forEach((addon) => {
+        nextState[addon.code] = active.includes(addon.code);
+      });
+      setAddOns(nextState);
+    } catch (err) {
+      console.error('Failed to fetch add-ons:', err.message);
+    } finally {
+      setAddOnsLoading(false);
+    }
+  };
 
   const fetchAdmin = async () => {
     try {
@@ -28,8 +56,26 @@ const AdminDetailsPage = () => {
   };
 
   useEffect(() => {
-    if (id) fetchAdmin();
+    if (id) {
+      fetchAdmin();
+      fetchAddOns();
+    }
   }, [id]);
+
+  const toggleAddOnAccess = async (code) => {
+    if (!admin) return;
+    try {
+      setAddOnUpdating((prev) => ({ ...prev, [code]: true }));
+      const current = !!addOns[code];
+      const status = current ? 'Inactive' : 'Active';
+      await superAdminAxios.patch(`/api/superadmin/admins/${admin.admin_id}/add-ons/${code}`, { status });
+      setAddOns((prev) => ({ ...prev, [code]: !current }));
+    } catch (err) {
+      console.error('Add-on update failed:', err.message);
+    } finally {
+      setAddOnUpdating((prev) => ({ ...prev, [code]: false }));
+    }
+  };
 
   const formatDate = (d) =>
     new Date(d).toLocaleString('en-IN', {
@@ -112,6 +158,40 @@ const toggleAccess = async () => {
 </Group>
           </Grid.Col>
         </Grid>
+      </Card>
+
+
+      <Card withBorder shadow="sm" padding="lg">
+        <Group justify="space-between" align="center" mb="sm">
+          <div>
+            <Title order={5}>Premium Access Controls</Title>
+            <Text size="sm" color="dimmed">Enable or disable add-on modules for this admin.</Text>
+          </div>
+          <Badge color="yellow" variant="light">Add-on Access</Badge>
+        </Group>
+        {addOnsLoading ? (
+          <Loader size="sm" />
+        ) : (
+          <Stack gap="sm">
+            {ADD_ONS.map((addon) => (
+              <Card key={addon.code} withBorder radius="md" padding="md" className="bg-gray-50">
+                <Group justify="space-between" align="center">
+                  <div>
+                    <Text fw={600}>{addon.label}</Text>
+                    <Text size="xs" color="dimmed">{addon.description}</Text>
+                  </div>
+                  <Switch
+                    checked={!!addOns[addon.code]}
+                    onChange={() => toggleAddOnAccess(addon.code)}
+                    disabled={addOnUpdating[addon.code]}
+                    onLabel={<IconLockOpen size={16} />}
+                    offLabel={<IconLock size={16} />}
+                  />
+                </Group>
+              </Card>
+            ))}
+          </Stack>
+        )}
       </Card>
 
       {/* 📊 Metrics */}

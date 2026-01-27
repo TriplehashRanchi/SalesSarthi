@@ -125,6 +125,27 @@ const LangToggle = ({ value, onChange }) => (
 
 export default function BusinessKundliWizard() {
     const router = useRouter();
+    const { profile, loading: authLoading } = useAuth();
+    const hasAccess = profile?.add_ons?.includes('BUSINESS_KUNDLI');
+
+    if (authLoading) {
+        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+    }
+
+    if (!hasAccess) {
+        return (
+            <PremiumGate
+                title="Business Kundli is a Premium Add-on"
+                subtitle="Unlock the Business Kundli playbook with 90-day repair plans and AI guidance."
+                features={[
+                    'Execution discipline scorecard',
+                    '90-day repair plan & roadmap',
+                    'Client-ready PDF playbooks',
+                ]}
+                ctaLabel="Request Business Kundli Access"
+            />
+        );
+    }
     const { user } = useAuth();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
