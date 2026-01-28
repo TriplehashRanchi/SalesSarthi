@@ -14,24 +14,6 @@ export default function AgentDashboard() {
     const { profile, loading: authLoading } = useAuth();
     const hasAccess = profile?.add_ons?.includes('RAG_DASHBOARD');
 
-    if (authLoading) {
-        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
-    }
-
-    if (!hasAccess) {
-        return (
-            <PremiumGate
-                title="RAG Agent Dashboard is a Premium Add-on"
-                subtitle="Monitor agent activity, risk tiers, and revival tasks in one executive view."
-                features={[
-                    'Live RAG status monitoring',
-                    'Priority agent interventions',
-                    'Agent performance insights',
-                ]}
-                ctaLabel="Request RAG Dashboard Access"
-            />
-        );
-    }
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,11 +47,12 @@ export default function AgentDashboard() {
     };
 
     useEffect(() => {
-        if (view === 'dashboard') {
-            const timer = setTimeout(fetchData, 800);
-            return () => clearTimeout(timer);
-        }
-    }, [view]);
+    if (authLoading || !hasAccess) return;
+    if (view === 'dashboard') {
+        const timer = setTimeout(fetchData, 800);
+        return () => clearTimeout(timer);
+    }
+}, [view, authLoading, hasAccess]);
 
     useEffect(() => {
         if (!data) return;
@@ -155,6 +138,25 @@ export default function AgentDashboard() {
     };
 
     const activeAgentsList = getFilteredAgents();
+
+    if (authLoading) {
+        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+    }
+
+    if (!hasAccess) {
+        return (
+            <PremiumGate
+                title="RAG Agent Dashboard is a Premium Add-on"
+                subtitle="Monitor agent activity, risk tiers, and revival tasks in one executive view."
+                features={[
+                    'Live RAG status monitoring',
+                    'Priority agent interventions',
+                    'Agent performance insights',
+                ]}
+                ctaLabel="Request RAG Dashboard Access"
+            />
+        );
+    }
 
     // --- CONDITIONAL RENDER: ALL AGENTS VIEW ---
     if (view === 'allAgents') {

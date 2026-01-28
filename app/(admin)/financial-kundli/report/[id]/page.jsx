@@ -3,7 +3,9 @@
   import { useEffect, useMemo, useState } from 'react';
   import { useParams, useRouter } from 'next/navigation';
   import { getAuth } from 'firebase/auth';
+   import { useAuth } from "@/context/AuthContext";
   import { generateFinancialReport } from '../../../../../utils/generateKundliPdf';
+  import PremiumGate from '@/components/premium/PremiumGate';
   import GrahaReport from '@/components/Graha';
 import { AnimatePresence,motion } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Loader } from 'lucide-react';
