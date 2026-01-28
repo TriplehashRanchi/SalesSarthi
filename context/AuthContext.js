@@ -5,6 +5,18 @@ import { signInWithGoogle, signInWithEmail, signUpWithEmail, logout, getFirebase
 import { useRouter } from 'next/navigation';
 
 // Create Auth Context
+/**
+ * @typedef {Object} AuthContextValue
+ * @property {any} user
+ * @property {any} profile
+ * @property {boolean} loading
+ * @property {(user: any) => void} setUser
+ * @property {Function} signInWithGoogle
+ * @property {Function} signInWithEmail
+ * @property {Function} signUpWithEmail
+ * @property {Function} logout
+ */
+/** @type {import('react').Context<AuthContextValue | null>} */
 const AuthContext = createContext(null);
 
 // Auth Provider Component
@@ -126,6 +138,9 @@ export const AuthProvider = ({ children }) => {
 };
 
 // Custom Hook to use Auth Context
+/**
+ * @returns {AuthContextValue | null}
+ */
 export const useAuth = () => {
     return useContext(AuthContext);
 };

@@ -1,6 +1,7 @@
 'use client';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { toggleSidebar } from '@/store/themeConfigSlice';
 import AnimateHeight from 'react-animate-height';
@@ -52,7 +53,6 @@ import IconLogout from '../icon/icon-logout';
 import { getAuth, signOut } from 'firebase/auth';
 import axios from 'axios';
 import { Building2, ChartCandlestick } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
 
 interface Banner {
     created_at: string;
@@ -68,7 +68,8 @@ const Sidebar = () => {
     const semidark = useSelector((state: IRootState) => state.themeConfig.semidark);
     const [todayBannerCount, setTodayBannerCount] = useState(0);
 
-    const { profile } = useAuth();
+    const auth = useAuth();
+    const profile = auth?.profile;
     const addOnSet = useMemo(() => new Set(profile?.add_ons || []), [profile?.add_ons]);
     const hasFinancial = addOnSet.has('FINANCIAL_KUNDLI');
     const hasBusiness = addOnSet.has('BUSINESS_KUNDLI');
