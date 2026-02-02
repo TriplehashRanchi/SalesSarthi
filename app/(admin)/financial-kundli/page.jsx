@@ -576,7 +576,13 @@ export default function FinancialKundliPage() {
                 body: JSON.stringify(data),
             });
             const result = await res.json();
-            router.push(`/financial-kundli/report/${result.reportId || ''}`);
+            if(result.success && result.reportId){
+                router.push(`/financial-kundli/report/${result.reportId}`);
+            }
+            else{
+                setLoading(false);
+                console.error('Submission failed:', result);
+            }
         } catch (e) {
             console.error(e);
             setLoading(false);
