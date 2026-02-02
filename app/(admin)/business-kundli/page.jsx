@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { showNotification } from '@mantine/notifications';
 import { getAuth } from 'firebase/auth';
-import PremiumGate from '@/components/premium/PremiumGate';
+import PremiumGate from '../../../components/premium/PremiumGate';
+
 
 // --- ICONS (SVG) ---
 const IconCheck = () => (
