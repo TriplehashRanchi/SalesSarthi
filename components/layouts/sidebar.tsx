@@ -52,7 +52,7 @@ import IconMail from '../icon/icon-mail';
 import IconLogout from '../icon/icon-logout';
 import { getAuth, signOut } from 'firebase/auth';
 import axios from 'axios';
-import { Building2, ChartCandlestick } from 'lucide-react';
+import { Building2, CalculatorIcon, ChartCandlestick } from 'lucide-react';
 
 interface Banner {
     created_at: string;
@@ -264,7 +264,7 @@ const Sidebar = () => {
                                 </Link>
                             </li>
 
-                            <li className="menu nav-item">
+                            {/* <li className="menu nav-item">
                                 <Link href="/fhclog">
                                     <div className="flex items-center">
                                         <IconHistory className="shrink-0 group-hover:!text-primary" />
@@ -280,6 +280,29 @@ const Sidebar = () => {
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Fin Health Calculator')}</span>
                                     </div>
                                 </Link>
+                            </li> */}
+                              <li className="menu nav-item">
+                                <button type="button" className={`${currentMenu === 'healthcalculator' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('healthcalculator')}>
+                                    <div className="flex items-center">
+                                        <CalculatorIcon className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Health Calculator')}</span>
+                                    </div>
+
+                                    <div className={currentMenu !== 'healthcalculator' ? '-rotate-90 rtl:rotate-90' : ''}>
+                                        <IconCaretDown />
+                                    </div>
+                                </button>
+
+                                <AnimateHeight duration={300} height={currentMenu === 'healthcalculator' ? 'auto' : 0}>
+                                    <ul className="sub-menu text-gray-500">
+                                        <li>
+                                            <Link href="/fincalc">{t('Financial Health Calc')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/fhclog">{t('History')}</Link>
+                                        </li>
+                                    </ul>
+                                </AnimateHeight>
                             </li>
 
                               {hasFinancial && (
@@ -486,14 +509,14 @@ const Sidebar = () => {
                                 </AnimateHeight>
                             </li>
 
-                            <li className="menu nav-item">
+                            {/* <li className="menu nav-item">
                                 <Link href="/profile">
                                     <div className="flex items-center">
                                         <IconSettings className="shrink-0 group-hover:!text-primary" />
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Settings')}</span>
                                     </div>
                                 </Link>
-                            </li>
+                            </li> */}
 
                            
 

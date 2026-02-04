@@ -728,7 +728,8 @@ const reportData = useMemo(() => {
                   <div>
                       <span className="inline-block px-3 py-1 bg-stone-100 text-stone-600 rounded-full text-[10px] font-bold tracking-widest uppercase mb-3">Diagnostic Summary</span>
                       <h1 className="text-3xl font-serif text-stone-900 mb-2">Hello, {ui.identity.name}</h1>
-                      <p className="text-stone-500 leading-relaxed max-w-sm">
+                       <span className='text-stone-700 text-md font-medium'>Phone: {ui.identity.phone} •Age: {ui.identity.age} •  City: {ui.identity.city} </span>
+                      <p className="text-stone-500 mt-4 leading-relaxed max-w-sm">
                         {ui.score < 50 
                           ? "High priority risks identified in protection and long-term goal funding. Immediate realignment is recommended." 
                           : "Solid financial foundation. Focus on optimizing high-interest liabilities and finalizing protection covers."}
