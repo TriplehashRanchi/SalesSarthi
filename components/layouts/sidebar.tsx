@@ -102,18 +102,7 @@ const Sidebar = () => {
         });
     };
 
-    const router = useRouter();
-
-    // --- Handle Sign Out ---
-    const handleSignOut = async () => {
-        const auth = getAuth();
-        try {
-            await signOut(auth);
-            router.push('/login'); // Adjust redirect path as needed
-        } catch (error) {
-            console.error('Error signing out: ', error);
-        }
-    };
+    
 
     useEffect(() => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
@@ -538,15 +527,7 @@ const Sidebar = () => {
                                 </Link>
                             </li> */}
 
-                            <li className="block md:hidden menu nav-item">
-                                <a onClick={handleSignOut}>
-                                    <div className="flex items-center">
-                                        <IconLogout className="shrink-0 group-hover:!text-primary" />
-                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Log Out')}</span>
-                                    </div>
-                                </a>
-                            </li>
-
+                           
                             
                         </ul>
                     </PerfectScrollbar>

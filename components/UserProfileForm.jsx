@@ -10,6 +10,8 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import IconLogout from './icon/icon-logout';
 
 /** ───────────────────────── helpers: E.164 ───────────────────────── **/
 const toE164 = (raw) => {
@@ -167,8 +169,6 @@ const AccountSettingsTabs = () => {
         return !errs.phone;
     };
 
-
-   
     const saveProfileInfo = async () => {
         // normalize & validate phone before sending
         const normalizedPhone = toE164(profile.phone);
@@ -195,7 +195,7 @@ const AccountSettingsTabs = () => {
                     avatar_url: nextProfile.avatar,
                     website: nextProfile.website,
                     yearly_target: nextProfile.yearly_target,
-                    yearly_goal: nextProfile.yearly_goal
+                    yearly_goal: nextProfile.yearly_goal,
                 },
                 { headers: { Authorization: `Bearer ${token}` } },
             );
@@ -325,12 +325,30 @@ const AccountSettingsTabs = () => {
         const invalid2 = company.phone2 && !isValidE164(company.phone2);
         return savingCompany || invalid1 || invalid2 || cloudUploading;
     }, [savingCompany, company.phone1, company.phone2, cloudUploading]);
+    const router = useRouter();
+
+    // --- Handle Sign Out ---
+    const handleSignOut = async () => {
+        const auth = getAuth();
+        try {
+            await signOut(auth);
+            router.push('/login'); // Adjust redirect path as needed
+        } catch (error) {
+            console.error('Error signing out: ', error);
+        }
+    };
 
     return (
         <div className="pt-5">
             {/* header */}
             <div className="mb-5 flex items-center justify-between">
                 <h5 className="text-lg font-semibold dark:text-white-light">Settings</h5>
+
+                <button className='block md:hidden' onClick={handleSignOut}>
+                    <div className="flex items-center">
+                         <span className="text-[#eb2323] ltr:pl-3 rtl:pr-3 text-[16px] font-medium dark:text-[#eb2323] dark:group-hover:text-white-dark">Log Out</span>
+                    </div>
+                </button>
             </div>
 
             {/* tab nav */}
@@ -438,28 +456,26 @@ const AccountSettingsTabs = () => {
                                     />
                                     {profileErrors.phone && <p className="mt-1 text-xs text-red-500">{profileErrors.phone}</p>}
                                 </div>
-                                 <div>
+                                <div>
                                     <label htmlFor="yearly_target">Yearly Target</label>
                                     <input
                                         id="yearly_target"
-                                        name='yearly_target'
+                                        name="yearly_target"
                                         className="form-input"
                                         placeholder="Enter Yearly Target"
                                         value={profile.yearly_target}
-                                        onChange={(e)=> handleProfileChange('yearly_target',e.target.value)}
-                                        
+                                        onChange={(e) => handleProfileChange('yearly_target', e.target.value)}
                                     />
                                 </div>
-                                 <div>
+                                <div>
                                     <label htmlFor="yearly_goal">Yearly Goal</label>
                                     <input
                                         id="yearly_goal"
                                         className="form-input"
                                         placeholder="Enter Yearly Goal"
                                         value={profile.yearly_goal}
-                                        name='yearly_goal'
-                                        onChange={(e)=> handleProfileChange('yearly_goal',e.target.value)}
-                                       
+                                        name="yearly_goal"
+                                        onChange={(e) => handleProfileChange('yearly_goal', e.target.value)}
                                     />
                                 </div>
                                 {/* CHANGE PASSWORD SECTION */}
