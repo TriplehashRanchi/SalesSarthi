@@ -159,7 +159,7 @@ const Sidebar = () => {
                         </button>
                     </div>
                     <PerfectScrollbar className="relative h-[calc(100vh-80px)]">
-                        <ul className="relative space-y-0.5 p-4 py-0 font-semibold">
+                        <ul className="relative space-y-0.5 p-4 py-0  font-semibold pb-28 sm:pb-0">
                             <li className="menu nav-item">
                                 <button type="button" className={`${currentMenu === 'dashboard' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('dashboard')}>
                                     <Link href={'/dashboard'} className="flex items-center">
