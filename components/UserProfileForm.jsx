@@ -4,7 +4,7 @@ import IconHome from '@/components/icon/icon-home';
 import IconDollarSignCircle from '@/components/icon/icon-dollar-sign-circle';
 import IconUser from '@/components/icon/icon-user';
 import axios from 'axios';
-import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider, signOut } from 'firebase/auth';
 import { useCloudinaryUpload } from '@/utils/useCloudinaryUpload';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -12,6 +12,7 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import IconLogout from './icon/icon-logout';
+import { PowerCircleIcon, PowerOffIcon } from 'lucide-react';
 
 /** ───────────────────────── helpers: E.164 ───────────────────────── **/
 const toE164 = (raw) => {
@@ -346,6 +347,7 @@ const AccountSettingsTabs = () => {
 
                 <button className='block md:hidden' onClick={handleSignOut}>
                     <div className="flex items-center">
+                        <PowerCircleIcon className="h-5 w-5 text-[#eb2323] dark:text-[#eb2323]" />
                          <span className="text-[#eb2323] ltr:pl-3 rtl:pr-3 text-[16px] font-medium dark:text-[#eb2323] dark:group-hover:text-white-dark">Log Out</span>
                     </div>
                 </button>
