@@ -920,40 +920,68 @@ export default function FinancialKundliPage() {
                                         </button>
                                     </div>
 
-                                    {data.goals.length === 0 && (
-                                        <div className="bg-indigo-50/50 border-2 border-dashed border-indigo-100 rounded-3xl p-12 text-center">
-                                            <p className="text-indigo-900 font-bold mb-1">{t('noGoalsTitle')}</p>
-                                            <p className="text-indigo-400 text-sm mb-4">{t('noGoalsDesc')}</p>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {data.goals.map((g, i) => (
-                                            <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group relative">
-                                                <button
-                                                    onClick={() => {
-                                                        const goals = data.goals.filter((_, idx) => idx !== i);
-                                                        setData((prev) => ({ ...prev, goals }));
-                                                    }}
-                                                    className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors"
-                                                >
-                                                    <Icons.Trash />
-                                                </button>
-                                                <div className="space-y-4">
-                                                    <InputGroup
-                                                        label={t('goalName')}
-                                                        placeholder={t('goalPlaceholder')}
-                                                        value={g.goal_name}
-                                                        onChange={(e) => updateGoal(i, 'goal_name', e.target.value)}
-                                                    />
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <InputGroup label={t('costToday')} prefix="₹" value={g.current_cost} onChange={(e) => updateGoal(i, 'current_cost', e.target.value)} />
-                                                        <InputGroup label={t('targetYear')} placeholder="2040" value={g.target_year} onChange={(e) => updateGoal(i, 'target_year', e.target.value)} />
-                                                    </div>
-                                                    <InputGroup label={t('existingCorpus')} prefix="₹" value={g.existing_corpus} onChange={(e) => updateGoal(i, 'existing_corpus', e.target.value)} />
-                                                </div>
+                                        {data.goals.length === 0 && (
+                                            <div className="bg-indigo-50/50 border-2 border-dashed border-indigo-100 rounded-3xl p-12 text-center">
+                                                <p className="text-indigo-900 font-bold mb-1">{t('noGoalsTitle')}</p>
+                                                <p className="text-indigo-400 text-sm mb-4">{t('noGoalsDesc')}</p>
                                             </div>
-                                        ))}
+                                        )}
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {data.goals.map((g, i) => {
+                                                const gn = (g.goal_name || '').toLowerCase();
+                                                const isHindi = lang === 'Hindi';
+
+                                                // Default fallback (uses the translation object)
+                                                let costLabel = t('costToday');
+
+                                                // Custom logic for specific Goal types
+                                                if (gn.includes('child') || gn.includes('education') || gn.includes('college') || gn.includes('school')) {
+                                                    costLabel = isHindi ? 'शिक्षा का कुल खर्च (आज)' : 'Total Education Cost (Today)';
+                                                }
+                                                else if (gn.includes('home') || gn.includes('house') || gn.includes('property') || gn.includes('flat')) {
+                                                    costLabel = isHindi ? 'घर की कुल लागत (आज)' : 'Total Home Cost (Today)';
+                                                }
+                                                else if (gn.includes('retirement')) {
+                                                    costLabel = isHindi ? 'वर्तमान मासिक खर्च' : 'Current Monthly Living Expense';
+                                                }
+                                                else if (gn.includes('freedom') || gn.includes('fire')) {
+                                                    costLabel = isHindi ? 'वर्तमान मासिक जीवनशैली खर्च' : 'Current Monthly Lifestyle Expense';
+                                                }
+
+                                                return (
+                                                    <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group relative">
+                                                        <button
+                                                            onClick={() => {
+                                                                const goals = data.goals.filter((_, idx) => idx !== i);
+                                                                setData((prev) => ({ ...prev, goals }));
+                                                            }}
+                                                            className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors"
+                                                        >
+                                                            <Icons.Trash />
+                                                        </button>
+                                                        <div className="space-y-4">
+                                                            <InputGroup
+                                                                label={t('goalName')}
+                                                                placeholder={t('goalPlaceholder')}
+                                                                value={g.goal_name}
+                                                                onChange={(e) => updateGoal(i, 'goal_name', e.target.value)}
+                                                            />
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                {/* 2. Apply the dynamic label here */}
+                                                                <InputGroup
+                                                                    label={costLabel}
+                                                                    prefix="₹"
+                                                                    value={g.current_cost}
+                                                                    onChange={(e) => updateGoal(i, 'current_cost', e.target.value)}
+                                                                />
+                                                                <InputGroup label={t('targetYear')} placeholder="2040" value={g.target_year} onChange={(e) => updateGoal(i, 'target_year', e.target.value)} />
+                                                            </div>
+                                                            <InputGroup label={t('existingCorpus')} prefix="₹" value={g.existing_corpus} onChange={(e) => updateGoal(i, 'existing_corpus', e.target.value)} />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                     </div>
                                 </div>
                             )}
