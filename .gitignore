@@ -36,3 +36,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 >>>>>>> 88a768f (Initial commit)
+.DS_Store
