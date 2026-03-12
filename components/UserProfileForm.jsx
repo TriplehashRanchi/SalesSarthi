@@ -459,22 +459,22 @@ const AccountSettingsTabs = () => {
                                     {profileErrors.phone && <p className="mt-1 text-xs text-red-500">{profileErrors.phone}</p>}
                                 </div>
                                 <div>
-                                    <label htmlFor="yearly_target">Yearly Target</label>
+                                    <label htmlFor="yearly_target">Annual Business Target (₹)</label>
                                     <input
                                         id="yearly_target"
                                         name="yearly_target"
                                         className="form-input"
-                                        placeholder="Enter Yearly Target"
+                                        placeholder="eg. 50,00,000"
                                         value={profile.yearly_target}
                                         onChange={(e) => handleProfileChange('yearly_target', e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="yearly_goal">Yearly Goal</label>
+                                    <label htmlFor="yearly_goal">Annual Income Target (₹)</label>
                                     <input
                                         id="yearly_goal"
                                         className="form-input"
-                                        placeholder="Enter Yearly Goal"
+                                        placeholder="eg. 10,00,000"
                                         value={profile.yearly_goal}
                                         name="yearly_goal"
                                         onChange={(e) => handleProfileChange('yearly_goal', e.target.value)}
