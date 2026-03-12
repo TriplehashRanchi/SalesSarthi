@@ -31,6 +31,10 @@ export default function AgentDetails() {
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
     const [isRagHistoryOpen, setIsRagHistoryOpen] = useState(false);
     const [ragSnapshot, setRagSnapshot] = useState([]);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+    const [deleteError, setDeleteError] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // 1. Fetch Agent Data
     const fetchAgentData = async () => {
@@ -116,6 +120,67 @@ export default function AgentDetails() {
         setRagSnapshot(data);
     };
 
+
+    const openDeleteModal = () => {
+        setDeleteConfirmation('');
+        setDeleteError('');
+        setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        if (isDeleting) return;
+        setIsDeleteModalOpen(false);
+        setDeleteConfirmation('');
+        setDeleteError('');
+    };
+
+    const handleDeleteAgent = async () => {
+        const firstName = (agent?.username || '').trim().split(/\s+/)[0] || '';
+        const typedName = deleteConfirmation.trim();
+
+        if (!typedName) {
+            setDeleteError('Please type the first name to confirm deletion.');
+            return;
+        }
+
+        if (typedName.toLowerCase() !== firstName.toLowerCase()) {
+            setDeleteError(`Please type "${firstName}" exactly to delete this agent.`);
+            return;
+        }
+
+        try {
+            setIsDeleting(true);
+            setDeleteError('');
+            const auth = getAuth();
+            const token = await auth.currentUser?.getIdToken();
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ confirmation_name: typedName }),
+            });
+
+            const result = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                throw new Error(result.message || 'Failed to delete agent');
+            }
+
+            setIsDeleteModalOpen(false);
+            setDeleteConfirmation('');
+            setDeleteError('');
+            router.push('/agents');
+            router.refresh();
+        } catch (error) {
+            setDeleteError(error.message || 'Failed to delete agent');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const ragChartData = ragSnapshot.map((row) => ({
         date: new Date(row.date).toLocaleDateString('en-GB', {
             day: 'numeric',
@@ -138,6 +203,7 @@ export default function AgentDetails() {
 
     // Destructure with safe defaults
     const { agent = {}, income = [], activity = [] } = data;
+    const agentFirstName = (agent.username || '').trim().split(/\s+/)[0] || '';
 
     // --- DATA PREPARATION & FIXES ---
 
@@ -202,7 +268,7 @@ export default function AgentDetails() {
                         <ActionButton icon={<PhoneIcon />} label="Call" />
                         <ActionButton icon={<MessageIcon />} label="Message" />
                         <div className="w-px h-10 bg-slate-200 mx-1"></div>
-                        <ActionButton icon={<DeleteIcon />} isDelete label="Remove" />
+                        <ActionButton icon={<DeleteIcon />} isDelete label="Remove" onClick={openDeleteModal} />
                     </div>
                 </div>
 
@@ -513,6 +579,55 @@ export default function AgentDetails() {
                     </div>
                 )}
 
+
+                {isDeleteModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">Delete agent</h3>
+                                    <p className="mt-1 text-sm text-slate-500">This action cannot be undone. Type <span className="font-semibold text-slate-900">{agentFirstName}</span> to confirm deletion.</p>
+                                </div>
+                                <button onClick={closeDeleteModal} disabled={isDeleting} className="text-slate-400 transition hover:text-slate-700 disabled:cursor-not-allowed">✕</button>
+                            </div>
+
+                            <div className="mt-5 space-y-3">
+                                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                    You are deleting <span className="font-semibold">{agent.username || 'this agent'}</span> permanently.
+                                </div>
+                                <input
+                                    type="text"
+                                    value={deleteConfirmation}
+                                    onChange={(e) => {
+                                        setDeleteConfirmation(e.target.value);
+                                        if (deleteError) setDeleteError('');
+                                    }}
+                                    placeholder={`Type ${agentFirstName}`}
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                                />
+                                {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+                            </div>
+
+                            <div className="mt-6 flex justify-end gap-3">
+                                <button
+                                    onClick={closeDeleteModal}
+                                    disabled={isDeleting}
+                                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteAgent}
+                                    disabled={isDeleting || deleteConfirmation.trim().toLowerCase() !== agentFirstName.toLowerCase()}
+                                    className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+                                >
+                                    {isDeleting ? 'Deleting...' : 'Delete Agent'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* --- MODAL --- */}
                 <AddActivityModal isOpen={isActivityModalOpen} onClose={() => setIsActivityModalOpen(false)} onSave={handleAddActivity} />
 
@@ -524,10 +639,12 @@ export default function AgentDetails() {
 
 // --- SUB COMPONENTS FOR PREMIUM STYLING ---
 
-function ActionButton({ icon, isDelete, label }) {
+function ActionButton({ icon, isDelete, label, onClick }) {
     return (
         <button
+            type="button"
             title={label}
+            onClick={onClick}
             className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm
             ${
                 isDelete
