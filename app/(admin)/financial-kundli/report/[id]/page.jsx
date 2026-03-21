@@ -15,6 +15,7 @@ import { AlertCircle, CheckCircle2, Loader } from 'lucide-react';
   ========================================================= */
   const Icons = {
     Print: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>,
+    Share: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8.684 13.342A3 3 0 1110.5 8.5l3 1.5a3 3 0 110 5l-3 1.5a3 3 0 11-1.816-2.658" /></svg>,
     ArrowLeft: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     CheckCircle: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     AlertCircle: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -403,10 +404,11 @@ const FinancialKundliSeal = ({ ui }) => {
 
 
 // --- DOWNLOAD MODAL COMPONENT ---
-function DownloadModal({ status, error }) {
+function DownloadModal({ status, error, action = 'download' }) {
   const isSuccess = status === 'success';
   const isError = status === 'error';
   const isProcessing = status === 'processing';
+  const isShare = action === 'share';
 
   return (
     <motion.div
@@ -467,15 +469,15 @@ function DownloadModal({ status, error }) {
 
           {/* Title */}
           <h3 className="text-2xl font-black mb-3">
-            {isProcessing && 'Generating PDF'}
-            {isSuccess && 'Download Complete!'}
-            {isError && 'Download Failed'}
+            {isProcessing && (isShare ? 'Preparing Share' : 'Generating PDF')}
+            {isSuccess && (isShare ? 'Share Ready!' : 'Download Complete!')}
+            {isError && (isShare ? 'Share Failed' : 'Download Failed')}
           </h3>
 
           {/* Description */}
           <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-            {isProcessing && 'Your Business Kundli report is being generated. This may take a moment...'}
-            {isSuccess && 'Your Business Kundli PDF has been downloaded successfully. Check your downloads folder.'}
+            {isProcessing && (isShare ? 'Your Financial Kundli PDF is being prepared for sharing. This may take a moment...' : 'Your Financial Kundli report is being generated. This may take a moment...')}
+            {isSuccess && (isShare ? 'Your Financial Kundli PDF is ready to share.' : 'Your Financial Kundli PDF has been downloaded successfully. Check your downloads folder.')}
             {isError && error && `${error}. Please try again.`}
           </p>
 
@@ -514,7 +516,7 @@ function DownloadModal({ status, error }) {
                   : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}
             >
-              {isSuccess ? '✓ Ready in your downloads' : '✗ Please try again'}
+              {isSuccess ? (isShare ? '✓ Ready to share' : '✓ Ready in your downloads') : '✗ Please try again'}
             </motion.div>
           )}
         </div>
@@ -560,6 +562,7 @@ function DownloadModal({ status, error }) {
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadStatus, setDownloadStatus] = useState('idle'); // idle | processing | success | error
     const [downloadError, setDownloadError] = useState(null); // dashboard | grahas | strategy | legacy | projections
+    const [pdfAction, setPdfAction] = useState('download');
 
     
 
@@ -578,28 +581,30 @@ function DownloadModal({ status, error }) {
       load();
     }, [id, auth]);
 
-    const downloadPdf = async () => {
-    
-    if (!id) {
-      setDownloadStatus('error');
-      setDownloadError('Invalid report ID');
-      setTimeout(() => setDownloadStatus('idle'), 3000);
-      return;
-    }
+    const finishPdfAction = (status, error = null, delay = status === 'success' ? 2000 : 3000) => {
+      setDownloadStatus(status);
+      setDownloadError(error);
 
-    setIsDownloading(true);
-    setDownloadStatus('processing');
-    setDownloadError(null);
+      if (delay === 0) {
+        setIsDownloading(false);
+        return;
+      }
 
-    try {
-      const auth = getAuth();
+      setTimeout(() => {
+        setDownloadStatus('idle');
+        setIsDownloading(false);
+      }, delay);
+    };
+
+    const getReportFileName = () => `${report?.identity?.name || 'Report'}_Financial_Kundli.pdf`;
+
+    const fetchReportPdfBlob = async () => {
       const token = await auth.currentUser?.getIdToken();
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/financial-kundli/report/${id}/download`,
         {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
       );
 
@@ -607,31 +612,76 @@ function DownloadModal({ status, error }) {
 
       const blob = await res.blob();
       if (blob.size === 0) throw new Error('Empty PDF received');
+      return blob;
+    };
 
+    const triggerPdfDownload = (blob) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${report?.identity?.name || 'Report'}_Financial_Kundli.pdf`;
+      link.download = getReportFileName();
       document.body.appendChild(link);
       link.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
+    };
 
-      setDownloadStatus('success');
-      setTimeout(() => {
-        setDownloadStatus('idle');
-        setIsDownloading(false);
-      }, 2000);
-    } catch (err) {
-      console.error('Download error:', err);
-      setDownloadStatus('error');
-      setDownloadError(err.message || 'Failed to download PDF');
-      setTimeout(() => {
-        setDownloadStatus('idle');
-        setIsDownloading(false);
-      }, 3000);
-    }
-  };
+    const startPdfAction = (action) => {
+      if (!id) {
+        setPdfAction(action);
+        finishPdfAction('error', 'Invalid report ID');
+        return false;
+      }
+
+      setPdfAction(action);
+      setIsDownloading(true);
+      setDownloadStatus('processing');
+      setDownloadError(null);
+      return true;
+    };
+
+    const downloadPdf = async () => {
+      if (!startPdfAction('download')) return;
+
+      try {
+        const blob = await fetchReportPdfBlob();
+        triggerPdfDownload(blob);
+        finishPdfAction('success');
+      } catch (err) {
+        console.error('Download error:', err);
+        finishPdfAction('error', err.message || 'Failed to download PDF');
+      }
+    };
+
+    const sharePdf = async () => {
+      if (!startPdfAction('share')) return;
+
+      try {
+        const blob = await fetchReportPdfBlob();
+        const file = new File([blob], getReportFileName(), { type: 'application/pdf' });
+
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            title: 'Financial Kundli Report',
+            text: 'Sharing Financial Kundli PDF',
+            files: [file],
+          });
+          finishPdfAction('success');
+          return;
+        }
+
+        triggerPdfDownload(blob);
+        finishPdfAction('success');
+      } catch (err) {
+        if (err?.name === 'AbortError') {
+          finishPdfAction('idle', null, 0);
+          return;
+        }
+
+        console.error('Share error:', err);
+        finishPdfAction('error', err.message || 'Failed to share PDF');
+      }
+    };
 
     const ui = useMemo(() => {
       if (!report?.output) return null;
@@ -698,16 +748,25 @@ const reportData = useMemo(() => {
       <div className="min-h-screen bg-[#FDFBF7] text-stone-800 font-sans pb-20 print:bg-white print:p-0">
         
         {/* HEADER NAV */}
-        <nav className="max-w-5xl mx-auto px-6 py-6 flex justify-between items-center print:hidden">
+        <nav className="max-w-5xl mx-auto px-6 py-6 flex flex-wrap justify-between items-center gap-3 print:hidden">
           <button onClick={() => router.back()} className="flex items-center space-x-2 text-stone-500 hover:text-stone-900 transition-colors">
             <Icons.ArrowLeft /> <span className="text-sm font-medium">Back</span>
           </button>
-          <button 
-          onClick={downloadPdf}
-          disabled={isDownloading} 
-          className="flex items-center space-x-2 bg-stone-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 shadow-xl shadow-stone-200">
-           <Icons.Print /> <span>Download Report</span>
-          </button>
+          <div className="flex w-full sm:w-auto items-center justify-end gap-3">
+            <button
+              onClick={sharePdf}
+              disabled={isDownloading}
+              className="flex items-center space-x-2 border border-stone-300 bg-white text-stone-900 px-4 sm:px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-50 shadow-xl shadow-stone-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Icons.Share /> <span>Share Report</span>
+            </button>
+            <button 
+              onClick={downloadPdf}
+              disabled={isDownloading} 
+              className="flex items-center space-x-2 bg-stone-900 text-white px-4 sm:px-5 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 shadow-xl shadow-stone-200 disabled:opacity-60 disabled:cursor-not-allowed">
+             <Icons.Print /> <span>Download Report</span>
+            </button>
+          </div>
         </nav>
 
         {/* PRINT HEADER ONLY */}
@@ -869,7 +928,7 @@ const reportData = useMemo(() => {
          {/* --- DOWNLOAD MODAL --- */}
       <AnimatePresence>
         {(isDownloading || downloadStatus !== 'idle') && (
-          <DownloadModal status={downloadStatus} error={downloadError} />
+          <DownloadModal status={downloadStatus} error={downloadError} action={pdfAction} />
         )}
       </AnimatePresence>
     </div>
