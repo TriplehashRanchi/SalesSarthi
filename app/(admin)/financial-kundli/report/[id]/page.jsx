@@ -1,6 +1,9 @@
   'use client';
 
   import { useEffect, useMemo, useState } from 'react';
+  import { Capacitor } from '@capacitor/core';
+  import { Directory, Filesystem } from '@capacitor/filesystem';
+  import { Share } from '@capacitor/share';
   import { useParams, useRouter } from 'next/navigation';
   import { getAuth } from 'firebase/auth';
    import { useAuth } from "@/context/AuthContext";
@@ -409,6 +412,7 @@ function DownloadModal({ status, error, action = 'download' }) {
   const isError = status === 'error';
   const isProcessing = status === 'processing';
   const isShare = action === 'share';
+  const isNative = Capacitor.isNativePlatform();
 
   return (
     <motion.div
@@ -477,7 +481,13 @@ function DownloadModal({ status, error, action = 'download' }) {
           {/* Description */}
           <p className="text-slate-400 text-sm mb-6 leading-relaxed">
             {isProcessing && (isShare ? 'Your Financial Kundli PDF is being prepared for sharing. This may take a moment...' : 'Your Financial Kundli report is being generated. This may take a moment...')}
-            {isSuccess && (isShare ? 'Your Financial Kundli PDF is ready to share.' : 'Your Financial Kundli PDF has been downloaded successfully. Check your downloads folder.')}
+            {isSuccess && (
+              isShare
+                ? 'Your Financial Kundli PDF is ready to share.'
+                : isNative
+                ? 'Your Financial Kundli PDF has been saved to your device documents.'
+                : 'Your Financial Kundli PDF has been downloaded successfully. Check your downloads folder.'
+            )}
             {isError && error && `${error}. Please try again.`}
           </p>
 
@@ -516,7 +526,7 @@ function DownloadModal({ status, error, action = 'download' }) {
                   : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}
             >
-              {isSuccess ? (isShare ? '✓ Ready to share' : '✓ Ready in your downloads') : '✗ Please try again'}
+              {isSuccess ? (isShare ? '✓ Ready to share' : isNative ? '✓ Saved on your device' : '✓ Ready in your downloads') : '✗ Please try again'}
             </motion.div>
           )}
         </div>
@@ -537,25 +547,6 @@ function DownloadModal({ status, error, action = 'download' }) {
     const router = useRouter();
     const { profile, loading: authLoading } = useAuth();
     const hasAccess = profile?.add_ons?.includes('FINANCIAL_KUNDLI');
-
-    if (authLoading) {
-        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
-    }
-
-    if (!hasAccess) {
-        return (
-            <PremiumGate
-                title="Financial Kundli Report Locked"
-                subtitle="This report is available only for admins with the Financial Kundli add-on enabled."
-                features={[
-                    'Full report access & download',
-                    'AI summary with action plan',
-                    'Client-ready PDF delivery',
-                ]}
-                ctaLabel="Request Access"
-            />
-        );
-    }
     const auth = getAuth();
     const [loading, setLoading] = useState(true);
     const [report, setReport] = useState(null);
@@ -567,6 +558,11 @@ function DownloadModal({ status, error, action = 'download' }) {
     
 
     useEffect(() => {
+      if (authLoading || !hasAccess || !id) {
+        setLoading(false);
+        return;
+      }
+
       const load = async () => {
         try {
           const token = await auth.currentUser?.getIdToken();
@@ -579,7 +575,7 @@ function DownloadModal({ status, error, action = 'download' }) {
         finally { setLoading(false); }
       };
       load();
-    }, [id, auth]);
+    }, [auth, authLoading, hasAccess, id]);
 
     const finishPdfAction = (status, error = null, delay = status === 'success' ? 2000 : 3000) => {
       setDownloadStatus(status);
@@ -597,6 +593,14 @@ function DownloadModal({ status, error, action = 'download' }) {
     };
 
     const getReportFileName = () => `${report?.identity?.name || 'Report'}_Financial_Kundli.pdf`;
+
+    const blobToBase64 = (blob) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result || ''));
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
 
     const fetchReportPdfBlob = async () => {
       const token = await auth.currentUser?.getIdToken();
@@ -626,6 +630,40 @@ function DownloadModal({ status, error, action = 'download' }) {
       document.body.removeChild(link);
     };
 
+    const savePdfForNativeDownload = async (blob) => {
+      const base64Data = await blobToBase64(blob);
+      const filename = getReportFileName();
+
+      await Filesystem.writeFile({
+        path: filename,
+        data: base64Data.split(',')[1],
+        directory: Directory.Documents,
+      });
+    };
+
+    const sharePdfFromNativeDevice = async (blob) => {
+      const base64Data = await blobToBase64(blob);
+      const filename = getReportFileName();
+
+      await Filesystem.writeFile({
+        path: filename,
+        data: base64Data.split(',')[1],
+        directory: Directory.Cache,
+      });
+
+      const { uri } = await Filesystem.getUri({
+        directory: Directory.Cache,
+        path: filename,
+      });
+
+      await Share.share({
+        title: 'Financial Kundli Report',
+        text: 'Sharing Financial Kundli PDF',
+        files: [uri],
+        dialogTitle: 'Share Financial Kundli',
+      });
+    };
+
     const startPdfAction = (action) => {
       if (!id) {
         setPdfAction(action);
@@ -645,7 +683,11 @@ function DownloadModal({ status, error, action = 'download' }) {
 
       try {
         const blob = await fetchReportPdfBlob();
-        triggerPdfDownload(blob);
+        if (Capacitor.isNativePlatform()) {
+          await savePdfForNativeDownload(blob);
+        } else {
+          triggerPdfDownload(blob);
+        }
         finishPdfAction('success');
       } catch (err) {
         console.error('Download error:', err);
@@ -658,16 +700,34 @@ function DownloadModal({ status, error, action = 'download' }) {
 
       try {
         const blob = await fetchReportPdfBlob();
+
+        if (Capacitor.isNativePlatform()) {
+          await sharePdfFromNativeDevice(blob);
+          finishPdfAction('success');
+          return;
+        }
+
         const file = new File([blob], getReportFileName(), { type: 'application/pdf' });
 
         if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            title: 'Financial Kundli Report',
-            text: 'Sharing Financial Kundli PDF',
-            files: [file],
-          });
-          finishPdfAction('success');
-          return;
+          try {
+            await navigator.share({
+              title: 'Financial Kundli Report',
+              text: 'Sharing Financial Kundli PDF',
+              files: [file],
+            });
+            finishPdfAction('success');
+            return;
+          } catch (shareErr) {
+            if (shareErr?.name === 'AbortError') {
+              finishPdfAction('idle', null, 0);
+              return;
+            }
+
+            if (shareErr?.name !== 'NotAllowedError') {
+              throw shareErr;
+            }
+          }
         }
 
         triggerPdfDownload(blob);
@@ -740,6 +800,25 @@ const reportData = useMemo(() => {
     return report;
   }
 }, [report]);
+
+    if (authLoading) {
+      return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+    }
+
+    if (!hasAccess) {
+      return (
+        <PremiumGate
+          title="Financial Kundli Report Locked"
+          subtitle="This report is available only for admins with the Financial Kundli add-on enabled."
+          features={[
+            'Full report access & download',
+            'AI summary with action plan',
+            'Client-ready PDF delivery',
+          ]}
+          ctaLabel="Request Access"
+        />
+      );
+    }
 
 
     if (loading || !ui) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center text-stone-400">Loading Analysis...</div>;
@@ -911,7 +990,7 @@ const reportData = useMemo(() => {
                   <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Financial Diagnosis</h3>
                   <div className="space-y-4 text-sm text-stone-600 leading-relaxed">
                     <p>Based on the current trajectory, you have a <strong>{Math.round(ui.score)}%</strong> alignment with your financial objectives. The most significant drag on your score is the <strong>{ui.snapshot.average_interest_rate.toFixed(1)}%</strong> average cost of debt.</p>
-                    <p>Action Plan: Prioritize filling the <strong>{formatCurrency(ui.emergency.gap)}</strong> emergency fund gap and review Term Life cover to protect your family's lifestyle from the total liabilities of {formatCurrency(ui.loans.total_loan_amount)}.</p>
+                    <p>Action Plan: Prioritize filling the <strong>{formatCurrency(ui.emergency.gap)}</strong> emergency fund gap and review Term Life cover to protect your family&apos;s lifestyle from the total liabilities of {formatCurrency(ui.loans.total_loan_amount)}.</p>
                   </div>
                 </section>
             </div>
