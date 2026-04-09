@@ -157,15 +157,24 @@ const AdminTable = () => {
             title: 'Plan',
             render: ({ subscription_plan }) => <div>{subscription_plan || 'Basic'}</div>,
         },
-        {
-            accessor: 'subscription_status',
-            title: 'Status',
-            render: ({ expires_at }) => {
-                const subscription_status = expires_at >= Date.now() ? 'Active' : 'Expired';
-                const color = subscription_status === 'Active' ? 'green' : 'red';
-                return <Badge color={color}>{subscription_status}</Badge>;
-            },
-        },
+{
+    accessor: 'subscription_status',
+    title: 'Status',
+    render: ({ expires_at }) => {
+        if (!expires_at) {
+            return <Badge color="gray">No Expiry</Badge>;
+        }
+
+        const expiryTime = new Date(expires_at).getTime();
+        const isActive = expiryTime >= Date.now();
+
+        return (
+            <Badge color={isActive ? 'green' : 'red'}>
+                {isActive ? 'Active' : 'Expired'}
+            </Badge>
+        );
+    },
+},
         {
             accessor: 'stats',
             title: 'Stats',
