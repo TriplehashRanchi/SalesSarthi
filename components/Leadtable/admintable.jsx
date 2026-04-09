@@ -160,8 +160,9 @@ const AdminTable = () => {
         {
             accessor: 'subscription_status',
             title: 'Status',
-            render: ({ subscription_status }) => {
-                const color = subscription_status === 'Active' ? 'green' : subscription_status === 'Expired' ? 'red' : 'yellow';
+            render: ({ expires_at }) => {
+                const subscription_status = expires_at >= Date.now() ? 'Active' : 'Expired';
+                const color = subscription_status === 'Active' ? 'green' : 'red';
                 return <Badge color={color}>{subscription_status}</Badge>;
             },
         },
