@@ -797,7 +797,7 @@ const reportData = useMemo(() => {
                 </div>
                 <div className="w-full lg:w-auto grid grid-cols-2 gap-3 min-w-[320px]">
                   <VitalCard label="Savings Rate" value={`${ui.cashflow.savings_rate.toFixed(1)}%`} sub="Target: 25%+" status={ui.cashflow.savings_rate < 20 ? 'warning' : 'good'} />
-                  <VitalCard label="FI Ratio" value={ui.fire.fi_ratio.toFixed(2)} sub="Asset Multiplier" status="good" />
+                  <VitalCard label="FI Ratio" value={ui.fi_ratio ? ui.fi_ratio.toFixed(2) : 'N/A'} sub="Asset Multiplier" status="good" />
                   <div className="col-span-2">
                       <VitalCard label="Net Worth" value={formatCurrency(ui.netWorth.net_worth)} sub={`Assets: ${formatCurrency(ui.netWorth.total_assets)} | Liabilities: ${formatCurrency(ui.loans.total_loan_amount)}`} status="neutral" />
                   </div>
