@@ -98,7 +98,7 @@ export default function AgentDashboard() {
         const auth = getAuth();
         const token = await auth.currentUser?.getIdToken();
 
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/agents`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -106,6 +106,18 @@ export default function AgentDashboard() {
             },
             body: JSON.stringify(formData),
         });
+
+        let data = null;
+        try {
+            data = await res.json();
+        } catch {
+            data = null;
+        }
+
+        if (!res.ok || data?.success === false) {
+            const message = data?.message || `Failed to create agent (HTTP ${res.status})`;
+            throw new Error(message);
+        }
 
         setIsModalOpen(false);
         fetchData();
