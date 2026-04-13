@@ -40,6 +40,33 @@ import { AlertCircle, CheckCircle2, Loader } from 'lucide-react';
   };
 
   /* =========================================================
+    SAFE FALLBACK HELPERS
+  ========================================================= */
+  const toNumber = (value, fallback = 0) => {
+    const num = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  };
+
+  const toPlainObject = (value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return value;
+  };
+
+  const toArray = (value) => (Array.isArray(value) ? value : []);
+
+  const safeJsonParse = (value) => {
+    if (typeof value !== 'string') return null;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  };
+
+  const parseJsonIfNeeded = (value) =>
+    typeof value === 'string' ? safeJsonParse(value) : value;
+
+  /* =========================================================
     SUB-COMPONENTS
   ========================================================= */
 
@@ -119,11 +146,11 @@ import { AlertCircle, CheckCircle2, Loader } from 'lucide-react';
           />
           <MiniStat
             label="Financial Independence Ratio"
-            value={`${snapshot.financial_independence_ratio.toFixed(2)}%`}
+            value={`${snapshot.financial_independence_ratio ? snapshot.financial_independence_ratio.toFixed(2) : 'N/A'}%`}
           />
         </div>
       </div>
-
+      
     </section>
   );
 };
@@ -745,20 +772,120 @@ function DownloadModal({ status, error, action = 'download' }) {
 
     const ui = useMemo(() => {
       if (!report?.output) return null;
-      const out = typeof report.output === 'string' ? JSON.parse(report.output) : report.output;
-      
+
+      const out = toPlainObject(parseJsonIfNeeded(report.output));
+
+      const identityRaw = toPlainObject(parseJsonIfNeeded(report.identity));
+      const identity = {
+        name: identityRaw?.name ?? '—',
+        phone: identityRaw?.phone ?? '—',
+        age: identityRaw?.age ?? '—',
+        city: identityRaw?.city ?? '—',
+      };
+
+      const cashflowRaw = toPlainObject(out.cashflow);
+      const cashflow = {
+        savings_rate: toNumber(cashflowRaw.savings_rate),
+        emi_ratio_total: toNumber(cashflowRaw.emi_ratio_total),
+      };
+
+      const netWorthRaw = toPlainObject(out.net_worth);
+      const netWorth = {
+        net_worth: toNumber(netWorthRaw.net_worth),
+        total_assets: toNumber(netWorthRaw.total_assets),
+      };
+
+      const loansRaw = toPlainObject(out.loans);
+      const loans = {
+        total_loan_amount: toNumber(loansRaw.total_loan_amount),
+        total_monthly_emi: toNumber(loansRaw.total_monthly_emi),
+      };
+
+      const emergencyRaw = toPlainObject(out.emergency);
+      const emergency = {
+        months_covered: toNumber(emergencyRaw.months_covered),
+        status:
+          typeof emergencyRaw.status === 'string' && emergencyRaw.status
+            ? emergencyRaw.status
+            : 'UNKNOWN',
+        current: toNumber(emergencyRaw.current),
+        gap: toNumber(emergencyRaw.gap),
+      };
+
+      const scoresRaw = toPlainObject(out.scores);
+      const scores = {
+        emergency: toNumber(scoresRaw.emergency),
+        protection: toNumber(scoresRaw.protection),
+        goals: toNumber(scoresRaw.goals),
+      };
+
+      const protectionRaw = toPlainObject(out.protection);
+      const recommendedRaw = toPlainObject(protectionRaw.recommended);
+      const actualRaw = toPlainObject(protectionRaw.actual);
+      const protection = {
+        recommended: {
+          life: toNumber(recommendedRaw.life),
+          health: toNumber(recommendedRaw.health),
+          critical: toNumber(recommendedRaw.critical),
+          accident: toNumber(recommendedRaw.accident),
+        },
+        actual: {
+          life: toNumber(actualRaw.life),
+          health: toNumber(actualRaw.health),
+          critical: toNumber(actualRaw.critical),
+          accident: toNumber(actualRaw.accident),
+        },
+      };
+
+      const fireRaw = toPlainObject(out.fire);
+      const fire = {
+        fire_number: toNumber(fireRaw.fire_number),
+        future_annual_expense: toNumber(fireRaw.future_annual_expense),
+        fi_ratio: toNumber(fireRaw.fi_ratio),
+      };
+
+      const snapshotRaw = toPlainObject(out.financial_snapshot);
+      const snapshot = {
+        total_loan_amount: toNumber(snapshotRaw.total_loan_amount),
+        average_interest_rate: toNumber(snapshotRaw.average_interest_rate),
+        total_emi_amount: toNumber(snapshotRaw.total_emi_amount),
+        emi_ratio_total: toNumber(snapshotRaw.emi_ratio_total),
+        emi_warning_total:
+          typeof snapshotRaw.emi_warning_total === 'string' &&
+          snapshotRaw.emi_warning_total
+            ? snapshotRaw.emi_warning_total
+            : '—',
+        yearly_expenses: toNumber(snapshotRaw.yearly_expenses),
+        yearly_savings: toNumber(snapshotRaw.yearly_savings),
+        avg_monthly_emi: toNumber(snapshotRaw.avg_monthly_emi),
+        emi_ratio_avg: toNumber(snapshotRaw.emi_ratio_avg),
+        emi_warning_avg:
+          typeof snapshotRaw.emi_warning_avg === 'string' && snapshotRaw.emi_warning_avg
+            ? snapshotRaw.emi_warning_avg
+            : '—',
+        savings_rate: toNumber(snapshotRaw.savings_rate),
+        financial_independence_ratio:
+          snapshotRaw.financial_independence_ratio === null ||
+          typeof snapshotRaw.financial_independence_ratio === 'undefined'
+            ? null
+            : toNumber(snapshotRaw.financial_independence_ratio),
+      };
+
+      const goals = toArray(out.goals).filter((g) => g && typeof g === 'object');
+
       return {
-        identity: report.identity,
-        score: out.overall_score || 0,
-        cashflow: out.cashflow,
-        netWorth: out.net_worth,
-        loans: out.loans || {},
-        emergency: out.emergency,
-        scores: out.scores || {},
-        protection: out.protection,
-        goals: out.goals || [],
-        fire: out.fire || {},
-        snapshot: out.financial_snapshot || {}
+        identity,
+        score: toNumber(out.overall_score),
+        fi_ratio: toNumber(out.fi_ratio),
+        cashflow,
+        netWorth,
+        loans,
+        emergency,
+        scores,
+        protection,
+        goals,
+        fire,
+        snapshot,
       };
     }, [report]);
 
