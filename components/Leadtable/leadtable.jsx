@@ -44,7 +44,7 @@ import IconChecks from '../icon/icon-checks';
 import IconClock from '../icon/icon-clock';
 import IconPhone from '../icon/icon-phone';
 
-const LeadTable = ({ profile }) => {
+const LeadTable = ({ profile, userId }) => {
     console.log('profile in leadtable', profile);
     /* ───────────────────── state ───────────────────── */
     const [leads, setLeads] = useState([]);
@@ -79,6 +79,13 @@ const LeadTable = ({ profile }) => {
 
     const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
     const [filteredLeads, setFilteredLeads] = useState([]);
+
+    const [assignedUserFilter, setAssignedUserFilter] = useState(null);
+    const FACEBOOK_POLL_SETUP_ERRORS = new Set([
+        'Admin ID missing',
+        'Facebook token not found for admin',
+        'No Facebook page selections found',
+    ]);
 
     const handleLoadMore = () => {
         // Increase the count by another 20 items
@@ -177,7 +184,7 @@ const LeadTable = ({ profile }) => {
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 },
             );
-            const newCount = data?.newLeadsCount ?? 0;
+            const newCount = data?.newLeadsCount ?? data?.newLeads ?? 0;
             await fetchLeads(false);
 
             const notify = manual ? updateNotification : showNotification;
@@ -192,15 +199,23 @@ const LeadTable = ({ profile }) => {
             });
             return true;
         } catch (err) {
-            console.error(err);
-            showNotification({
-                id: `fb-poll-error-${Date.now()}`,
-                title: 'Polling Failed',
-                message: err.response?.data?.message || err.message,
-                color: 'red',
-                icon: <IconAlertCircle size={16} />,
-                autoClose: 7000,
-            });
+            const message = err.response?.data?.message || err.message || 'Polling failed';
+            const isSetupError = err.response?.status === 400 && FACEBOOK_POLL_SETUP_ERRORS.has(message);
+
+            if (!isSetupError) {
+                console.error(err);
+            }
+
+            if (manual || !isSetupError) {
+                showNotification({
+                    id: `fb-poll-error-${Date.now()}`,
+                    title: isSetupError ? 'Facebook Leads Not Configured' : 'Polling Failed',
+                    message: isSetupError ? 'Connect Facebook pages in Facebook Leads before polling.' : message,
+                    color: isSetupError ? 'yellow' : 'red',
+                    icon: <IconAlertCircle size={16} />,
+                    autoClose: 7000,
+                });
+            }
             return false;
         } finally {
             setIsPolling(false);
@@ -251,21 +266,25 @@ const LeadTable = ({ profile }) => {
             }
 
             if (!hasPolledInitially) {
-                pollFacebookLeads(false).then(() => {
-                    setHasPolledInit(true);
-                });
+                setHasPolledInit(true);
             }
         })();
         return () => {
             mounted = false;
         };
-    }, []); // once
+    }, [hasPolledInitially]); // once
 
     /* ───────────────────── filter / sort / paginate ───────────────────── */
     useEffect(() => {
         let data = [...leads];
-        // if (userId) data = data.filter(l => l.user_id === userId);
+
         data = data.filter((l) => l.lead_status?.toLowerCase() !== 'customer');
+
+        // when userId is passed from user-performance page,
+        // show only that user's assigned leads
+        if (userId) {
+            data = data.filter((l) => String(l.user_id) === String(userId));
+        }
 
         if (search) {
             const q = search.toLowerCase();
@@ -275,10 +294,22 @@ const LeadTable = ({ profile }) => {
                     l.email?.toLowerCase().includes(q) ||
                     l.phone_number?.toLowerCase().includes(q) ||
                     l.lead_status?.toLowerCase().includes(q) ||
-                    l.source?.toLowerCase().includes(q),
+                    l.source?.toLowerCase().includes(q)
             );
         }
-        if (statusFilter) data = data.filter((l) => l.lead_status === statusFilter);
+
+        if (statusFilter) {
+            data = data.filter((l) => l.lead_status === statusFilter);
+        }
+
+        // only apply assigned-user dropdown filter when not coming from a fixed user page
+        if (!userId && assignedUserFilter) {
+            if (assignedUserFilter === 'unassigned') {
+                data = data.filter((l) => !l.user_id);
+            } else {
+                data = data.filter((l) => String(l.user_id) === String(assignedUserFilter));
+            }
+        }
 
         if (sortStatus.columnAccessor) {
             data = sortBy(data, sortStatus.columnAccessor);
@@ -287,9 +318,8 @@ const LeadTable = ({ profile }) => {
 
         setTotalCount(data.length);
         setFilteredLeads(data);
-        // const from = (page-1)*pageSize, to = from + pageSize;
-        // setRecordsData(data.slice(from,to));
-    }, [leads, search, statusFilter, sortStatus]);
+    }, [leads, search, statusFilter, assignedUserFilter, sortStatus, userId]);
+
 
     useEffect(() => {
         // This effect only runs when the full list or the page/pageSize changes.
@@ -569,6 +599,7 @@ const LeadTable = ({ profile }) => {
                             setPage(1);
                         }}
                     />
+
                     <Select
                         data={statusOptions}
                         placeholder="Filter by Status"
@@ -578,10 +609,31 @@ const LeadTable = ({ profile }) => {
                             setPage(1);
                         }}
                         clearable
-                        theme="dark"
                         searchable
                     />
+
+                    {!userId && (
+                        <Select
+                            data={[
+                                { value: 'unassigned', label: 'Unassigned' },
+                                ...teamMembers.map((u) => ({
+                                    value: u.id.toString(),
+                                    label: `${u.username} (${u.role})`,
+                                })),
+                            ]}
+                            placeholder="Filter by Assigned User"
+                            value={assignedUserFilter}
+                            onChange={(v) => {
+                                setAssignedUserFilter(v);
+                                setPage(1);
+                            }}
+                            clearable
+                            searchable
+                            style={{ minWidth: '240px' }}
+                        />
+                    )}
                 </div>
+
 
                 {/* facebook + csv buttons */}
                 {/* <button className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50" onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
@@ -633,6 +685,32 @@ const LeadTable = ({ profile }) => {
                         setPage(1);
                     }}
                 />
+
+
+                <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                        {!userId && (
+                            <Select
+                                data={[
+                                    { value: 'unassigned', label: 'Unassigned' },
+                                    ...teamMembers.map((u) => ({
+                                        value: u.id.toString(),
+                                        label: `${u.username} (${u.role})`,
+                                    })),
+                                ]}
+                                placeholder="Assigned user"
+                                value={assignedUserFilter}
+                                onChange={(v) => {
+                                    setAssignedUserFilter(v);
+                                    setPage(1);
+                                }}
+                                clearable
+                                searchable
+                            />
+                        )}
+                    </div>
+                </div>
+
 
                 {/* Line 2: Filter + Facebook + CSV */}
                 <div className="flex gap-2 items-center">
@@ -742,16 +820,16 @@ const LeadTable = ({ profile }) => {
                                                 record.lead_status === 'Hot Lead'
                                                     ? 'red'
                                                     : record.lead_status === 'Cold Lead'
-                                                      ? 'blue'
-                                                      : record.lead_status === 'Qualified Lead'
-                                                        ? 'green'
-                                                        : record.lead_status === 'Lost Lead'
-                                                          ? 'gray'
-                                                          : record.lead_status === 'Follow-up'
-                                                            ? 'lime'
-                                                            : record.lead_status === 'Fin Health Checkup Done'
-                                                              ? 'teal'
-                                                              : 'orange'
+                                                        ? 'blue'
+                                                        : record.lead_status === 'Qualified Lead'
+                                                            ? 'green'
+                                                            : record.lead_status === 'Lost Lead'
+                                                                ? 'gray'
+                                                                : record.lead_status === 'Follow-up'
+                                                                    ? 'lime'
+                                                                    : record.lead_status === 'Fin Health Checkup Done'
+                                                                        ? 'teal'
+                                                                        : 'orange'
                                             }
                                             variant="light"
                                         >
