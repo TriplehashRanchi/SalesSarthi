@@ -248,9 +248,7 @@ const UserSide = () => {
                             </li>
 
                             <li className="menu nav-item block md:hidden">
-                                <div className="nav-link group w-full">
-                                    <DelphiFloatingLauncher variant="sidebar" />
-                                </div>
+                                <DelphiFloatingLauncher variant="sidebar" />
                             </li>
 
                             <li className="block md:hidden menu nav-item">

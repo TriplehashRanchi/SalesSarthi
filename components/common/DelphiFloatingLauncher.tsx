@@ -55,38 +55,38 @@ const DelphiFloatingLauncher = ({ variant = 'floating' }: DelphiFloatingLauncher
                 </section>
             )}
 
-            <div className={isSidebar ? '' : 'group fixed bottom-6 right-4 z-[81] hidden md:block md:right-6'}>
+            {isSidebar ? (
                 <button
                     type="button"
                     onClick={() => setIsOpen(true)}
                     aria-label={isOpen ? 'Close Yogendra Malik assistant' : 'Open Yogendra Malik assistant'}
-                    className={
-                        isSidebar
-                            ? 'flex w-full items-center text-black dark:text-[#506690] dark:hover:text-white-dark'
-                            : 'flex items-center gap-3 overflow-hidden rounded-full border border-white/35 bg-white/16 px-2 py-2 text-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.24)] backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:bg-white/24 dark:text-white supports-[backdrop-filter]:bg-white/10'
-                    }
+                    className="nav-link group w-full"
                 >
-                    <span
-                        className={
-                            isSidebar
-                                ? 'flex shrink-0 items-center justify-center'
-                                : 'relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-slate-900 via-sky-700 to-cyan-400 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.28)]'
-                        }
+                    <div className="flex items-center">
+                        <IconPhoneCall className="shrink-0 group-hover:!text-primary" />
+                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">Gyani GPT</span>
+                    </div>
+                </button>
+            ) : (
+                <div className="group fixed bottom-6 right-4 z-[81] hidden md:block md:right-6">
+                    <button
+                        type="button"
+                        onClick={() => setIsOpen(true)}
+                        aria-label={isOpen ? 'Close Yogendra Malik assistant' : 'Open Yogendra Malik assistant'}
+                        className="flex items-center gap-3 overflow-hidden rounded-full border border-white/35 bg-white/16 px-2 py-2 text-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.24)] backdrop-blur-2xl transition duration-300 hover:-translate-y-0.5 hover:bg-white/24 dark:text-white supports-[backdrop-filter]:bg-white/10"
                     >
-                        {!isSidebar && <span className="absolute inset-[2px] rounded-full border border-white/20" />}
-                        <IconPhoneCall className={isSidebar ? 'h-5 w-5' : 'relative z-[1] h-5 w-5'} />
-                    </span>
+                        <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-slate-900 via-sky-700 to-cyan-400 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.28)]">
+                            <span className="absolute inset-[2px] rounded-full border border-white/20" />
+                            <IconPhoneCall className="relative z-[1] h-5 w-5" />
+                        </span>
 
-                    {isSidebar ? (
-                        <span className="ltr:pl-3 rtl:pr-3">Call</span>
-                    ) : (
                         <span className="max-w-0 overflow-hidden whitespace-nowrap pr-0 text-left opacity-0 transition-all duration-300 group-hover:max-w-[220px] group-hover:pr-3 group-hover:opacity-100">
                             {/* <span className="block text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-white/55">Mirror UI</span> */}
                             <span className="block text-sm font-semibold">Talk to Yogendra Malik</span>
                         </span>
-                    )}
-                </button>
-            </div>
+                    </button>
+                </div>
+            )}
         </>
     );
 };
