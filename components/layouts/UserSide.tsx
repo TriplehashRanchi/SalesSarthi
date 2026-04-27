@@ -41,6 +41,7 @@ import { IconAccessPoint, IconAccessPointOff, IconHistory } from '@tabler/icons-
 import { getAuth, signOut } from 'firebase/auth';
 import IconLogout from '../icon/icon-logout';
 import { useAuth } from '@/context/AuthContext';
+import DelphiFloatingLauncher from '@/components/common/DelphiFloatingLauncher';
 
 import axios from 'axios';
 
@@ -244,6 +245,12 @@ const UserSide = () => {
                                         )}
                                     </div>
                                 </Link>
+                            </li>
+
+                            <li className="menu nav-item block md:hidden">
+                                <div className="nav-link group w-full">
+                                    <DelphiFloatingLauncher variant="sidebar" />
+                                </div>
                             </li>
 
                             <li className="block md:hidden menu nav-item">
