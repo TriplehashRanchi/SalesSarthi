@@ -10,19 +10,18 @@ import {
     IconAlertCircle,
     IconBell,
     IconBolt,
+    IconBrandFacebook,
     IconBrandWhatsapp,
     IconCalendarStats,
     IconCash,
-    IconChartBar,
     IconChecklist,
     IconCoinRupee,
     IconFileAnalytics,
     IconForms,
+    IconLock,
     IconMail,
-    IconPercentage,
     IconPhoto,
     IconRobot,
-    IconTargetArrow,
     IconUserPlus,
     IconUsers,
     IconVideo,
@@ -121,7 +120,6 @@ const ReportingDashboard = () => {
     const [fetchError, setFetchError] = useState('');
     const [admin, setAdmin] = useState(null);
     const [subscription, setSubscription] = useState(null);
-    const [expandedShortcutGroups, setExpandedShortcutGroups] = useState({});
     const authContext = useAuth();
     const addOnSet = useMemo(() => new Set(authContext?.profile?.add_ons || []), [authContext?.profile?.add_ons]);
     const hasFinancial = addOnSet.has('FINANCIAL_KUNDLI');
@@ -475,57 +473,6 @@ const ReportingDashboard = () => {
         }).format(value || 0);
     };
 
-    const shortcutItems = useMemo(() => {
-        const items = [
-            { href: '/dashboard', label: 'Dashboard', description: 'Overview and KPIs', icon: IconChartBar, tone: 'blue' },
-            { href: '/addlead', label: 'Add Leads', description: 'Create new leads', icon: IconUserPlus, tone: 'sky' },
-            { href: '/leadtable', label: 'All Leads', description: 'Track every lead', icon: IconUsers, tone: 'indigo' },
-            { href: '/facebook-leads', label: 'Leads Source', description: 'Facebook leads', icon: IconTargetArrow, tone: 'violet' },
-            { href: '/webhook', label: 'Lead Form', description: 'Form submissions', icon: IconForms, tone: 'purple' },
-            { href: '/customers', label: 'Customers', description: 'Manage customers', icon: IconUsersGroup, tone: 'green' },
-            { href: '/fincalc', label: 'Health Calculator', description: 'Financial health calc', icon: IconWaveSine, tone: 'amber' },
-            { href: '/fhclog', label: 'Health History', description: 'Review previous runs', icon: IconChecklist, tone: 'yellow' },
-            { href: '/appointments', label: 'Appointments', description: 'Meeting schedule', icon: IconCalendarStats, tone: 'cyan' },
-            { href: '/followups', label: 'Follow Ups', description: 'Pipeline follow-up', icon: IconChecklist, tone: 'orange' },
-            { href: '/reminders', label: 'Reminders', description: 'Pending reminders', icon: IconBell, tone: 'rose' },
-            { href: '/adduser', label: 'Team Creation', description: 'Create new users', icon: IconUserPlus, tone: 'emerald' },
-            { href: '/view-user', label: 'My Team', description: 'Roster and access', icon: IconUsers, tone: 'stone' },
-            { href: '/automation', label: 'WhatsApp', description: 'Automation flows', icon: IconBrandWhatsapp, tone: 'lime' },
-            { href: '/emails', label: 'Email', description: 'Campaign automation', icon: IconMail, tone: 'pink' },
-            { href: '/ad-banner', label: 'Image Banner', description: 'Static creatives', icon: IconPhoto, tone: 'teal' },
-            { href: '/ad-banner/video', label: 'Video Banner', description: 'Motion creatives', icon: IconVideo, tone: 'blue' },
-        ];
-
-        if (hasFinancial) {
-            items.splice(
-                8,
-                0,
-                { href: '/financial-kundli', label: 'Financial Kundli', description: 'Premium insights', icon: IconCash, tone: 'yellow' },
-                { href: '/financehistory', label: 'Financial History', description: 'Previous reports', icon: IconFileAnalytics, tone: 'amber' },
-            );
-        }
-
-        if (hasBusiness) {
-            items.splice(
-                10,
-                0,
-                { href: '/business-kundli', label: 'Business Kundli', description: 'Business report', icon: IconBolt, tone: 'orange' },
-                { href: '/history', label: 'Business History', description: 'Previous records', icon: IconFileAnalytics, tone: 'red' },
-            );
-        }
-
-        if (hasRag) {
-            items.splice(
-                12,
-                0,
-                { href: '/agentDashboard', label: 'Agent Dashboard', description: 'RAG operations', icon: IconRobot, tone: 'fuchsia' },
-                { href: '/assessment', label: 'Assessment', description: 'Agent scoring', icon: IconChecklist, tone: 'violet' },
-            );
-        }
-
-        return items;
-    }, [hasBusiness, hasFinancial, hasRag]);
-
     const leadsByStatusEntries = useMemo(() => {
         return Object.entries(dashboardData.leadsByStatus || {})
             .map(([label, count]) => ({ label, count: Number(count) || 0 }))
@@ -627,65 +574,37 @@ const ReportingDashboard = () => {
         return items.sort((a, b) => b.sortValue - a.sortValue).slice(0, 5);
     }, [fetchedRawData]);
 
-    const progressTones = ['bg-blue-600', 'bg-green-600', 'bg-amber-600', 'bg-violet-600', 'bg-cyan-600'];
-    const shortcutToneClasses = {
-        blue: 'from-blue-50 to-white text-blue-700 ring-blue-100',
-        sky: 'from-sky-50 to-white text-sky-700 ring-sky-100',
-        indigo: 'from-indigo-50 to-white text-indigo-700 ring-indigo-100',
-        violet: 'from-violet-50 to-white text-violet-700 ring-violet-100',
-        purple: 'from-purple-50 to-white text-purple-700 ring-purple-100',
-        green: 'from-green-50 to-white text-green-700 ring-green-100',
-        amber: 'from-amber-50 to-white text-amber-700 ring-amber-100',
-        yellow: 'from-yellow-50 to-white text-yellow-700 ring-yellow-100',
-        cyan: 'from-cyan-50 to-white text-cyan-700 ring-cyan-100',
-        orange: 'from-orange-50 to-white text-orange-700 ring-orange-100',
-        rose: 'from-rose-50 to-white text-rose-700 ring-rose-100',
-        emerald: 'from-emerald-50 to-white text-emerald-700 ring-emerald-100',
-        stone: 'from-stone-50 to-white text-stone-700 ring-stone-100',
-        lime: 'from-lime-50 to-white text-lime-700 ring-lime-100',
-        pink: 'from-pink-50 to-white text-pink-700 ring-pink-100',
-        teal: 'from-teal-50 to-white text-teal-700 ring-teal-100',
-        red: 'from-red-50 to-white text-red-700 ring-red-100',
-        fuchsia: 'from-fuchsia-50 to-white text-fuchsia-700 ring-fuchsia-100',
-    };
+    const followUpCount = useMemo(() => {
+        if (!fetchedRawData) return 0;
+        const now = new Date();
+        return (fetchedRawData.leads || []).filter(
+            (lead) =>
+                lead.next_follow_up_date &&
+                new Date(lead.next_follow_up_date) > now &&
+                !['Converted', 'Closed', 'Lost', 'Customer'].includes(lead.lead_status || '')
+        ).length;
+    }, [fetchedRawData]);
 
-    const shortcutGroups = useMemo(() => {
-        const groups = [
-            {
-                key: 'leads',
-                title: 'Leads',
-                items: shortcutItems.filter((item) => ['/addlead', '/leadtable', '/facebook-leads', '/webhook'].includes(item.href)),
-            },
-            {
-                key: 'customers',
-                title: 'Customers & Team',
-                items: shortcutItems.filter((item) => ['/customers', '/adduser', '/view-user', '/reminders'].includes(item.href)),
-            },
-            {
-                key: 'operations',
-                title: 'Operations',
-                items: shortcutItems.filter((item) => ['/appointments', '/followups', '/automation', '/emails'].includes(item.href)),
-            },
-            {
-                key: 'tools',
-                title: 'Reports & Tools',
-                items: shortcutItems.filter((item) =>
-                    ['/fincalc', '/fhclog', '/financial-kundli', '/financehistory', '/business-kundli', '/history', '/agentDashboard', '/assessment', '/ad-banner', '/ad-banner/video'].includes(
-                        item.href,
-                    ),
-                ),
-            },
-        ];
+    const greeting = useMemo(() => {
+        const h = new Date().getHours();
+        if (h < 12) return 'Good Morning';
+        if (h < 17) return 'Good Afternoon';
+        return 'Good Evening';
+    }, []);
 
-        return groups.filter((group) => group.items.length > 0);
-    }, [shortcutItems]);
+    const displayName = useMemo(() => {
+        const raw = admin?.name || admin?.full_name || admin?.username || getAuth().currentUser?.displayName || getAuth().currentUser?.email?.split('@')[0] || 'User';
+        return raw.toUpperCase();
+    }, [admin]);
 
-    const toggleShortcutGroup = (groupKey) => {
-        setExpandedShortcutGroups((prev) => ({
-            ...prev,
-            [groupKey]: !prev[groupKey],
-        }));
-    };
+    const userInitials = useMemo(() => {
+        const raw = admin?.name || admin?.full_name || admin?.username || getAuth().currentUser?.displayName || '';
+        const parts = raw.trim().split(/\s+/);
+        if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+        return raw.slice(0, 2).toUpperCase() || 'U';
+    }, [admin]);
+
+    const userPhotoURL = useMemo(() => admin?.photo_url || admin?.profile_image || getAuth().currentUser?.photoURL || null, [admin]);
 
     return (
         <div className="min-h-screen bg-[#f5f4fb] px-3 pb-24 pt-3 md:bg-gray-50 md:px-6 md:pb-6 md:pt-6 dark:bg-gray-900 relative">
@@ -759,206 +678,340 @@ const ReportingDashboard = () => {
                     <p className="text-[10px] sm:text-xs opacity-80 leading-tight">(Completed / (Comp+Missed))</p>
                 </div>
             </div>
-            <div className="space-y-6 md:hidden">
-                <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="min-h-[102px] rounded-[14px] border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
-                            <div className="text-[#1558d6]">
-                                <IconUsersGroup className="h-8 w-8" />
+            <div className="space-y-5 md:hidden">
+                {/* Greeting Header */}
+                <div className="flex items-center justify-between pt-1">
+                    <div>
+                        <p className="text-[13px] font-medium text-slate-500">{greeting}</p>
+                        <p className="text-[1.4rem] font-extrabold leading-tight text-slate-900">{displayName}</p>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                        <Link href="/notifications" className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
+                            <IconBell className="h-5 w-5 text-slate-600" />
+                        </Link>
+                        {userPhotoURL ? (
+                            <img src={userPhotoURL} alt="avatar" className="h-10 w-10 rounded-full object-cover" />
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4f46e5] text-[13px] font-bold text-white">
+                                {userInitials}
                             </div>
-                            <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.18em] text-[#8894b7]">Leads</p>
-                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#253763]">{dashboardData.totalLeads}</p>
-                        </div>
-
-                        <div className="min-h-[102px] rounded-[14px] border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
-                            <div className="text-[#0b7a42]">
-                                <IconSquareCheck className="h-8 w-8" />
-                            </div>
-                            <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.18em] text-[#8894b7]">Conv.</p>
-                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#253763]">{dashboardData.customerConversions}</p>
-                        </div>
-
-                        <div className="min-h-[102px] rounded-[14px] border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
-                            <div className="text-[#8a6b00]">
-                                <IconCoinRupee className="h-8 w-8" />
-                            </div>
-                            <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.18em] text-[#8894b7]">Sales</p>
-                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#253763]">{formatCompactCurrency(dashboardData.totalSalesValue)}</p>
-                        </div>
-                        <div className="min-h-[102px] rounded-[14px] border border-[#d9e6ff] bg-[#0159fd] px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
-                            <div className="text-[#ffffff]">
-                                <IconPercentage className="h-8 w-8" />
-                            </div>
-                            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[#ffffff]">Conversion Rate</p>
-                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#ffffff]">{dashboardData.leadConversionRate}%</p>
-                        </div>
+                        )}
                     </div>
                 </div>
 
-                <section>
-                    <div className="mb-3 flex items-center justify-between"></div>
-                    <div className="space-y-10">
-                        {shortcutGroups.map((group) => {
-                            const isExpanded = !!expandedShortcutGroups[group.key];
-                            const visibleItems = isExpanded ? group.items : group.items.slice(0, 4);
+                {/* Subscription Banner */}
+                {subscription && (
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#00b09b] via-[#20b2c8] to-[#6c63ff] p-4 text-white">
+                        <div className="mb-2">
+                            <span className="rounded-full border border-white/40 bg-white/20 px-3 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur-sm">
+                                {subscription.plan} Plan - {subscription.status}
+                            </span>
+                        </div>
+                        <h2 className="text-[1.55rem] font-extrabold leading-tight">All Core Features</h2>
+                        <p className="mt-1 text-[11px] text-white/75">Leads, CRM, Team, Automation, Health Tools.</p>
+                        <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10" />
+                        <div className="pointer-events-none absolute -bottom-8 right-8 h-20 w-20 rounded-full bg-white/10" />
+                    </div>
+                )}
 
-                            return (
-                                <div key={group.key}>
-                                    <h3 className="mb-3 text-[1.05rem] font-bold tracking-tight text-slate-900">{group.title}</h3>
-                                    <div className="grid grid-cols-4 gap-x-3 gap-y-4">
-                                        {visibleItems.map((item) => {
-                                            const ShortcutIcon = item.icon;
-                                            return (
-                                                <Link key={item.href} href={item.href} className="flex flex-col items-center text-center">
-                                                    <div className={`flex h-[58px] w-full items-center justify-center rounded-[10px]  bg-white/80 ${shortcutToneClasses[item.tone]}`}>
-                                                        <ShortcutIcon className="h-5 w-5" />
-                                                    </div>
-                                                    <p className="mt-2 text-[11px] font-semibold leading-3.5 text-slate-900">{item.label}</p>
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                    {group.items.length > 4 && (
-                                        <div className="mt-3 grid grid-cols-[1fr_88px] gap-3">
-                                            <div className="flex min-h-[52px] items-center rounded-[12px] bg-slate-50 px-4 text-sm font-medium text-slate-700">
-                                                {isExpanded ? `Showing all ${group.items.length}` : `${group.items.length - 4} more in ${group.title}`}
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleShortcutGroup(group.key)}
-                                                className="flex min-h-[52px] items-center justify-center rounded-[12px] bg-slate-50 px-3 text-sm font-bold text-violet-700 ring-1 ring-slate-200"
-                                            >
-                                                {isExpanded ? 'Less' : 'More'}
-                                            </button>
-                                        </div>
-                                    )}
+                {/* Stats Grid 2x3 — solid-colour cards */}
+                <div className="grid grid-cols-2 gap-2.5">
+                    {[
+                        { label: 'Leads',       value: dashboardData.totalLeads,                              Icon: IconUsersGroup,  card: 'bg-[#7c3aed]' },
+                        { label: 'Conv.',        value: dashboardData.customerConversions,                     Icon: IconSquareCheck, card: 'bg-[#db2777]' },
+                        { label: 'Sales',        value: formatCompactCurrency(dashboardData.totalSalesValue),  Icon: IconCoinRupee,   card: 'bg-[#059669]' },
+                        { label: 'Rate',         value: `${dashboardData.leadConversionRate}%`,                Icon: IconTrendingUp,  card: 'bg-[#d97706]' },
+                        { label: 'Follow Up',    value: followUpCount,                                         Icon: IconBell,        card: 'bg-[#1d4ed8]' },
+                        { label: 'Appoinment',   value: dashboardData.appointmentsByStatus.scheduled,         Icon: IconChecklist,   card: 'bg-[#0d9488]' },
+                    ].map((stat) => (
+                        <div key={stat.label} className={`flex items-center gap-3 rounded-xl px-3.5 py-3 ${stat.card}`}>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
+                                <stat.Icon className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="truncate text-[1.2rem] font-extrabold leading-tight text-white">{stat.value}</p>
+                                <p className="text-[11px] font-medium text-white/80">{stat.label}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Leads */}
+                <div>
+                    <h3 className="mb-3 text-[0.95rem] font-bold text-slate-900">Leads</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                        {[
+                            { href: '/addlead', label: 'Add Leads', Icon: IconUserPlus, bg: 'bg-blue-50', color: 'text-blue-600' },
+                            { href: '/leadtable', label: 'All Leads', Icon: IconUsers, bg: 'bg-indigo-50', color: 'text-indigo-600' },
+                            { href: '/facebook-leads', label: 'FB Integration', Icon: IconBrandFacebook, bg: 'bg-blue-50', color: 'text-blue-700' },
+                            { href: '/webhook', label: 'Leads Forms', Icon: IconForms, bg: 'bg-purple-50', color: 'text-purple-600' },
+                            { href: '/reminders', label: 'Reminder', Icon: IconBell, bg: 'bg-yellow-50', color: 'text-yellow-600' },
+                            { href: '/followups', label: 'Follow Ups', Icon: IconChecklist, bg: 'bg-orange-50', color: 'text-orange-500' },
+                        ].map((item) => (
+                            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1.5">
+                                <div className={`flex h-14 w-full items-center justify-center rounded-xl ${item.bg}`}>
+                                    <item.Icon className={`h-6 w-6 ${item.color}`} />
                                 </div>
-                            );
-                        })}
+                                <span className="text-center text-[10px] font-semibold leading-tight text-slate-700">{item.label}</span>
+                            </Link>
+                        ))}
                     </div>
-                </section>
+                </div>
 
-                <section className="rounded-[12px] bg-[#efeffa] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-[1.35rem] font-bold tracking-tight text-slate-900">Lead Pipeline</h2>
-                        <Link href="/leadtable" className="text-xs font-semibold text-blue-600">
-                            View Details
-                        </Link>
+                {/* Customers */}
+                <div>
+                    <h3 className="mb-3 text-[0.95rem] font-bold text-slate-900">Customers</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                        {[
+                            { href: '/addcustomer', label: 'Add Customers', Icon: IconUserPlus, bg: 'bg-green-50', color: 'text-green-600' },
+                            { href: '/customers', label: 'All Customers', Icon: IconUsersGroup, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+                            { href: '/appointments', label: 'Appointment', Icon: IconCalendarStats, bg: 'bg-cyan-50', color: 'text-cyan-600' },
+                            { href: '/reminders', label: 'Reminder', Icon: IconBell, bg: 'bg-amber-50', color: 'text-amber-500' },
+                        ].map((item) => (
+                            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1.5">
+                                <div className={`flex h-14 w-full items-center justify-center rounded-xl ${item.bg}`}>
+                                    <item.Icon className={`h-6 w-6 ${item.color}`} />
+                                </div>
+                                <span className="text-center text-[10px] font-semibold leading-tight text-slate-700">{item.label}</span>
+                            </Link>
+                        ))}
                     </div>
-                    <div className="space-y-4 rounded-[20px]  backdrop-blur-sm">
+                </div>
+
+                {/* Operations / Automation */}
+                <div>
+                    <h3 className="mb-3 text-[0.95rem] font-bold text-slate-900">Operations / Automation</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                        {[
+                            { href: '/automation', label: 'WhatsApp', Icon: IconBrandWhatsapp, bg: 'bg-green-50', color: 'text-green-500' },
+                            { href: '/emails', label: 'Emails', Icon: IconMail, bg: 'bg-blue-50', color: 'text-blue-600' },
+                            { href: '/adduser', label: 'Add Team', Icon: IconUserPlus, bg: 'bg-violet-50', color: 'text-violet-600' },
+                            { href: '/view-user', label: 'My Team', Icon: IconUsers, bg: 'bg-slate-100', color: 'text-slate-600' },
+                        ].map((item) => (
+                            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1.5">
+                                <div className={`flex h-14 w-full items-center justify-center rounded-xl ${item.bg}`}>
+                                    <item.Icon className={`h-6 w-6 ${item.color}`} />
+                                </div>
+                                <span className="text-center text-[10px] font-semibold leading-tight text-slate-700">{item.label}</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Premium Tools — items shown depend on user's add-ons */}
+                {(() => {
+                    const hasSuperAdvance = hasFinancial && hasBusiness && hasRag;
+
+                    // Base tools always available
+                    const baseTools = [
+                        { href: '/fincalc',       label: 'Health Calculator',         description: 'Financial health score for clients', Icon: IconWaveSine,    bg: 'bg-blue-50',    color: 'text-blue-600'   },
+                        { href: '/fhclog',         label: 'Health Calculator History',  description: '',                                   Icon: IconChecklist,   bg: 'bg-blue-50',    color: 'text-blue-500'   },
+                        { href: '/ad-banner',      label: 'Banner Maker',               description: 'Banner Maker With our Name',          Icon: IconPhoto,       bg: 'bg-teal-50',    color: 'text-teal-600'   },
+                        { href: '/ad-banner/video',label: 'Video Maker',                description: 'Video Maker with our Name',            Icon: IconVideo,      bg: 'bg-slate-100',  color: 'text-slate-600'  },
+                    ];
+
+                    // Super Advance tools — shown only when user has that add-on
+                    const superAdvanceTools = [
+                        ...(hasFinancial ? [
+                            { href: '/financial-kundli', label: 'Financial Kundali',         description: 'Deep financial profiling',  Icon: IconCash,         bg: 'bg-yellow-50',  color: 'text-yellow-600' },
+                            { href: '/financehistory',   label: 'Financial Kundali History',  description: '',                          Icon: IconFileAnalytics, bg: 'bg-yellow-50', color: 'text-yellow-500' },
+                        ] : []),
+                        ...(hasBusiness ? [
+                            { href: '/business-kundli',  label: 'Business kundali',           description: 'Business health analysis',  Icon: IconBolt,         bg: 'bg-orange-50',  color: 'text-orange-500' },
+                            { href: '/history',          label: 'Business kundali History',   description: '',                          Icon: IconFileAnalytics, bg: 'bg-orange-50', color: 'text-orange-400' },
+                        ] : []),
+                        ...(hasRag ? [
+                            { href: '/agentDashboard',   label: 'RAG System',                 description: 'AI-powered knowledge base', Icon: IconRobot,        bg: 'bg-violet-50',  color: 'text-violet-600' },
+                            { href: '/assessment',       label: 'Policy Review',              description: 'AI policy analysis',        Icon: IconFileAnalytics, bg: 'bg-blue-50',   color: 'text-blue-500'   },
+                        ] : []),
+                    ];
+
+                    // Always-last tools
+                    const tailTools = [
+                        { href: '/gyani-gpt', label: 'Gyani GPT',         description: 'Talk To Yogendra Malik',       Icon: IconRobot, bg: 'bg-orange-50', color: 'text-orange-500' },
+                        { href: '/sagar',     label: 'Advisor Profiler',   description: 'Automate Growth, Scale Faster', Icon: IconBolt, bg: 'bg-blue-50',   color: 'text-blue-500'   },
+                    ];
+
+                    const allTools = [...baseTools, ...superAdvanceTools, ...tailTools];
+
+                    return (
+                        <div>
+                            <div className="mb-3 flex items-center gap-2">
+                                <h3 className="text-[0.95rem] font-bold text-slate-900">Premium Tools</h3>
+                                {hasSuperAdvance ? (
+                                    <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-[10px] font-bold text-white">Super Advance</span>
+                                ) : (
+                                    <span className="rounded-full bg-green-500 px-2.5 py-0.5 text-[10px] font-bold text-white">Advance</span>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                {allTools.map((item) => (
+                                    <Link key={item.href} href={item.href} className="flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-sm">
+                                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.bg}`}>
+                                            <item.Icon className={`h-5 w-5 ${item.color}`} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[11px] font-bold leading-tight text-slate-900">{item.label}</p>
+                                            {item.description && <p className="mt-0.5 text-[10px] leading-tight text-slate-400">{item.description}</p>}
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* Super Advance Tools Locked — only shown when user is missing at least one add-on */}
+                {(!hasFinancial || !hasBusiness || !hasRag) && (() => {
+                    const lockedTools = [
+                        { label: 'Financial Kundali',  description: 'Deep financial profiling',  Icon: IconCash,          bg: 'bg-yellow-50',  color: 'text-yellow-600', hasIt: hasFinancial },
+                        { label: 'Business kundali',   description: 'Business health analysis',  Icon: IconBolt,          bg: 'bg-orange-50',  color: 'text-orange-500', hasIt: hasBusiness  },
+                        { label: 'RAG System',         description: 'AI-powered knowledge base', Icon: IconRobot,         bg: 'bg-violet-50',  color: 'text-violet-600', hasIt: hasRag       },
+                        { label: 'Policy Review',      description: 'AI policy analysis',        Icon: IconFileAnalytics, bg: 'bg-blue-50',    color: 'text-blue-500',   hasIt: false        },
+                    ].filter((t) => !t.hasIt);
+
+                    return (
+                        <div className="rounded-2xl bg-white p-4 shadow-sm">
+                            <h3 className="text-center text-[0.95rem] font-bold text-slate-900">Super Advance Tools Locked</h3>
+                            <p className="mt-1 text-center text-[11px] text-slate-500">
+                                {lockedTools.map((t) => t.label).join(', ')}
+                            </p>
+                            <button
+                                type="button"
+                                className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 py-2.5 text-[13px] font-bold text-white"
+                            >
+                                Upgrade to Super Advance →
+                            </button>
+                            <div className="mt-3 grid grid-cols-2 gap-2.5">
+                                {lockedTools.map((item) => (
+                                    <div key={item.label} className="relative flex items-center gap-2.5 rounded-xl bg-slate-50 p-3 opacity-60">
+                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.bg}`}>
+                                            <item.Icon className={`h-4 w-4 ${item.color}`} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[11px] font-bold leading-tight text-slate-900">{item.label}</p>
+                                            <p className="text-[10px] leading-tight text-slate-500">{item.description}</p>
+                                        </div>
+                                        <IconLock className="absolute right-2 top-2 h-3.5 w-3.5 text-slate-400" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* Lead Pipeline */}
+                <div>
+                    <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-[0.95rem] font-bold text-slate-900">Lead Pipeline</h3>
+                        <Link href="/leadtable" className="text-[12px] font-semibold text-blue-600">Details →</Link>
+                    </div>
+                    <div className="space-y-3.5 rounded-xl bg-white p-4 shadow-sm">
                         {leadsByStatusEntries.slice(0, 4).map((item, index) => {
+                            const barColors = ['bg-orange-400', 'bg-blue-500', 'bg-teal-500', 'bg-pink-400'];
                             const total = leadsByStatusEntries[0]?.count || 1;
-                            const width = Math.max((item.count / total) * 100, 12);
+                            const width = Math.max((item.count / total) * 100, 10);
                             return (
                                 <div key={item.label}>
-                                    <div className="mb-1 flex items-center justify-between text-[13px]">
-                                        <span className="font-medium text-slate-700">{item.label}</span>
-                                        <span className="text-slate-500">{item.count}</span>
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="text-[12px] font-medium text-slate-700">{item.label}</span>
+                                        <span className="text-[12px] font-bold text-slate-900">{item.count}</span>
                                     </div>
-                                    <div className="h-1.5 rounded-full bg-indigo-100">
-                                        <div className={`h-1.5 rounded-full ${progressTones[index % progressTones.length]}`} style={{ width: `${width}%` }} />
+                                    <div className="h-2 rounded-full bg-slate-100">
+                                        <div className={`h-2 rounded-full ${barColors[index % barColors.length]}`} style={{ width: `${width}%` }} />
                                     </div>
                                 </div>
                             );
                         })}
-                        {leadsByStatusEntries.length === 0 && <p className="text-sm text-slate-500">No lead status data available.</p>}
+                        {leadsByStatusEntries.length === 0 && <p className="py-4 text-center text-sm text-slate-500">No lead data available.</p>}
                     </div>
-                </section>
+                </div>
 
-                <section>
-                    <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight text-slate-900">Leads by Source</h2>
-                    <div className="rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                {/* Leads by Source */}
+                <div>
+                    <h3 className="mb-3 text-[0.95rem] font-bold text-slate-900">Leads by Source</h3>
+                    <div className="rounded-xl bg-white p-4 shadow-sm">
                         {sourceEntries.length > 0 ? (
-                            <div className="grid grid-cols-[132px_1fr] items-center gap-3">
+                            <div className="grid grid-cols-[120px_1fr] items-center gap-3">
                                 <div className="flex justify-center">
-                                    <div className="w-[132px]">
-                                        <ReactApexChart options={sourceDonutOptions} series={sourceDonutSeries} type="donut" height={150} />
+                                    <div className="w-[120px]">
+                                        <ReactApexChart options={sourceDonutOptions} series={sourceDonutSeries} type="donut" height={130} />
                                     </div>
                                 </div>
-                                <div className="space-y-3">
-                                    {sourceEntries.slice(0, 3).map((item, index) => (
-                                        <div key={item.label} className="flex items-center justify-between gap-3 text-[13px] text-slate-700">
-                                            <div className="flex min-w-0 items-center gap-2">
-                                                <span className={`h-2.5 w-2.5 shrink-0 rounded-sm ${['bg-blue-600', 'bg-emerald-700', 'bg-yellow-700'][index % 3]}`} />
+                                <div className="space-y-2.5">
+                                    {sourceEntries.slice(0, 4).map((item, index) => (
+                                        <div key={item.label} className="flex items-center justify-between gap-2 text-[12px] text-slate-700">
+                                            <div className="flex min-w-0 items-center gap-1.5">
+                                                <span className={`h-2.5 w-2.5 shrink-0 rounded-sm ${['bg-blue-600', 'bg-slate-500', 'bg-orange-400', 'bg-slate-300'][index % 4]}`} />
                                                 <span className="truncate font-medium">{item.label}</span>
                                             </div>
-                                            <span className="shrink-0 font-semibold text-slate-500">{item.percent}%</span>
+                                            <span className="shrink-0 font-semibold text-slate-600">{item.percent}%</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         ) : (
-                            <p className="py-10 text-center text-sm text-slate-500">No lead source data available.</p>
+                            <p className="py-8 text-center text-sm text-slate-500">No lead source data available.</p>
                         )}
                     </div>
-                </section>
+                </div>
 
-                <section>
-                    <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight text-slate-900">Appointments</h2>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Scheduled</p>
-                            <p className="mt-2 text-[1.7rem] font-bold text-slate-900">{dashboardData.appointmentsByStatus.scheduled}</p>
-                            <p className="mt-2 text-[11px] text-blue-600">Next 7 days</p>
-                        </div>
-                        <div className="rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Completed</p>
-                            <p className="mt-2 text-[1.7rem] font-bold text-slate-900">{dashboardData.appointmentsByStatus.completed}</p>
-                            <p className="mt-2 text-[11px] text-emerald-600">This month</p>
-                        </div>
-                        <div className="col-span-2 rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Missed</p>
-                                    <p className="mt-2 text-[1.7rem] font-bold text-slate-900">{dashboardData.appointmentsByStatus.missed}</p>
-                                </div>
-                                <Link href="/appointments" className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-600">
-                                    Open Calendar
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section>
+                {/* Appointments */}
+                <div>
                     <div className="mb-3 flex items-center justify-between">
-                        <h2 className="text-[1.35rem] font-bold tracking-tight text-slate-900">Recent Activity</h2>
-                        <Link href="/followups" className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-600">
-                            View All
-                        </Link>
+                        <h3 className="text-[0.95rem] font-bold text-slate-900">Appointments</h3>
+                        <Link href="/appointments" className="text-[12px] font-semibold text-blue-600">Open calendar →</Link>
                     </div>
-                    <div className="rounded-[24px]  ">
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded-xl bg-white p-3 text-center shadow-sm">
+                            <p className="text-[1.8rem] font-bold leading-none text-blue-600">{String(dashboardData.appointmentsByStatus.scheduled).padStart(2, '0')}</p>
+                            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Scheduled</p>
+                            <p className="mt-1 text-[10px] text-blue-500">Next 7 days</p>
+                        </div>
+                        <div className="rounded-xl bg-white p-3 text-center shadow-sm">
+                            <p className="text-[1.8rem] font-bold leading-none text-emerald-600">{String(dashboardData.appointmentsByStatus.completed).padStart(2, '0')}</p>
+                            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Completed</p>
+                            <p className="mt-1 text-[10px] text-emerald-500">This month</p>
+                        </div>
+                        <div className="rounded-xl bg-white p-3 text-center shadow-sm">
+                            <p className="text-[1.8rem] font-bold leading-none text-rose-600">{String(dashboardData.appointmentsByStatus.missed).padStart(2, '0')}</p>
+                            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Missed</p>
+                            <p className="mt-1 text-[10px] text-rose-500">This month</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div>
+                    <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-[0.95rem] font-bold text-slate-900">Recent Activity</h3>
+                        <Link href="/followups" className="text-[12px] font-semibold text-blue-600">View all →</Link>
+                    </div>
+                    <div className="rounded-xl bg-white p-4 shadow-sm">
                         {mobileRecentActivity.length > 0 ? (
-                            <div className="space-y-1">
-                                {mobileRecentActivity.map((item, index) => (
-                                    <div key={item.id} className="relative flex gap-4 pb-7 last:pb-0">
-                                        <div className="relative flex w-12 shrink-0 justify-center">
-                                            {index < mobileRecentActivity.length - 1 && <div className="absolute top-12 h-[calc(100%-12px)] w-px bg-slate-200" />}
-                                            <div
-                                                className={`relative z-10 mt-0.5 flex h-11 w-11 items-center justify-center rounded-full ${item.tone === 'green' ? 'bg-emerald-100 text-emerald-700' : item.tone === 'amber' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}
-                                            >
-                                                {item.iconKey === 'mail' ? (
-                                                    <IconMail className="h-5 w-5" />
-                                                ) : item.iconKey === 'call' ? (
-                                                    <IconBell className="h-5 w-5" />
-                                                ) : (
-                                                    <IconCalendarStats className="h-5 w-5" />
-                                                )}
-                                            </div>
+                            <div className="space-y-4">
+                                {mobileRecentActivity.map((item) => (
+                                    <div key={item.id} className="flex items-start gap-3">
+                                        <div
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                                                item.tone === 'green' ? 'bg-emerald-100 text-emerald-600' : item.tone === 'amber' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
+                                            }`}
+                                        >
+                                            {item.iconKey === 'mail' ? <IconMail className="h-4 w-4" /> : item.iconKey === 'call' ? <IconBell className="h-4 w-4" /> : <IconCalendarStats className="h-4 w-4" />}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-[13px] font-bold text-slate-900">{item.title}</p>
-                                            <p className="mt-0.5 text-[12px] leading-5 text-slate-500">{item.description}</p>
-                                            <p className="mt-1 text-[11px] text-slate-400">{item.relativeTime}</p>
+                                            <p className="text-[12px] font-bold text-slate-900">{item.title}</p>
+                                            <p className="text-[11px] text-slate-500">{item.description}</p>
                                         </div>
+                                        <span className="shrink-0 whitespace-nowrap text-[10px] text-slate-400">{item.relativeTime}</span>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-sm text-slate-500">No recent activity found.</div>
+                            <p className="py-4 text-center text-sm text-slate-500">No recent activity found.</p>
                         )}
                     </div>
-                </section>
+                </div>
             </div>
             {subscription && <SubscriptionBanner subscription={subscription} />}
             {/* **** RENDER CHILD ONLY WHEN DATA IS FETCHED **** */}
