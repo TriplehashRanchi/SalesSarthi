@@ -1,14 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { getAuth } from 'firebase/auth';
 import axios from 'axios';
-import { format, isFuture, isPast, parseISO, differenceInDays, startOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, formatDistanceToNow, isFuture, isPast, parseISO, differenceInDays, startOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { Button, Select, LoadingOverlay, Alert } from '@mantine/core'; // Assuming you use Mantine based on LeadTable
-import { IconAlertCircle, IconCoinRupee } from '@tabler/icons-react';
+import {
+    IconAlertCircle,
+    IconBell,
+    IconBolt,
+    IconBrandWhatsapp,
+    IconCalendarStats,
+    IconCash,
+    IconChartBar,
+    IconChecklist,
+    IconCoinRupee,
+    IconFileAnalytics,
+    IconForms,
+    IconMail,
+    IconPercentage,
+    IconPhoto,
+    IconRobot,
+    IconTargetArrow,
+    IconUserPlus,
+    IconUsers,
+    IconVideo,
+    IconWaveSine,
+} from '@tabler/icons-react';
 import Papa from 'papaparse'; // Import papaparse
-import { over } from 'lodash';
+import Link from 'next/link';
 import ComponentsDashboardAnalytics from '@/components/dashboard/analytics';
 import IconUsersGroup from '@/components/icon/icon-users-group';
 import IconSquareCheck from '@/components/icon/icon-square-check';
@@ -17,6 +38,7 @@ import IconChecks from '@/components/icon/icon-checks';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
 import OfferPopupBanner from '@/components/OfferPopupBanner';
 import OfferStickyWidget from '@/components/OfferStickyWidget';
+import { useAuth } from '@/context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -99,6 +121,12 @@ const ReportingDashboard = () => {
     const [fetchError, setFetchError] = useState('');
     const [admin, setAdmin] = useState(null);
     const [subscription, setSubscription] = useState(null);
+    const [expandedShortcutGroups, setExpandedShortcutGroups] = useState({});
+    const authContext = useAuth();
+    const addOnSet = useMemo(() => new Set(authContext?.profile?.add_ons || []), [authContext?.profile?.add_ons]);
+    const hasFinancial = addOnSet.has('FINANCIAL_KUNDLI');
+    const hasBusiness = addOnSet.has('BUSINESS_KUNDLI');
+    const hasRag = addOnSet.has('RAG_DASHBOARD');
 
     useEffect(() => {
         let alive = true;
@@ -438,8 +466,229 @@ const ReportingDashboard = () => {
         // Adjust 'en-IN' and 'INR' based on your locale/currency
     };
 
+    const formatCompactCurrency = (value) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            notation: 'compact',
+            maximumFractionDigits: 1,
+        }).format(value || 0);
+    };
+
+    const shortcutItems = useMemo(() => {
+        const items = [
+            { href: '/dashboard', label: 'Dashboard', description: 'Overview and KPIs', icon: IconChartBar, tone: 'blue' },
+            { href: '/addlead', label: 'Add Leads', description: 'Create new leads', icon: IconUserPlus, tone: 'sky' },
+            { href: '/leadtable', label: 'All Leads', description: 'Track every lead', icon: IconUsers, tone: 'indigo' },
+            { href: '/facebook-leads', label: 'Leads Source', description: 'Facebook leads', icon: IconTargetArrow, tone: 'violet' },
+            { href: '/webhook', label: 'Lead Form', description: 'Form submissions', icon: IconForms, tone: 'purple' },
+            { href: '/customers', label: 'Customers', description: 'Manage customers', icon: IconUsersGroup, tone: 'green' },
+            { href: '/fincalc', label: 'Health Calculator', description: 'Financial health calc', icon: IconWaveSine, tone: 'amber' },
+            { href: '/fhclog', label: 'Health History', description: 'Review previous runs', icon: IconChecklist, tone: 'yellow' },
+            { href: '/appointments', label: 'Appointments', description: 'Meeting schedule', icon: IconCalendarStats, tone: 'cyan' },
+            { href: '/followups', label: 'Follow Ups', description: 'Pipeline follow-up', icon: IconChecklist, tone: 'orange' },
+            { href: '/reminders', label: 'Reminders', description: 'Pending reminders', icon: IconBell, tone: 'rose' },
+            { href: '/adduser', label: 'Team Creation', description: 'Create new users', icon: IconUserPlus, tone: 'emerald' },
+            { href: '/view-user', label: 'My Team', description: 'Roster and access', icon: IconUsers, tone: 'stone' },
+            { href: '/automation', label: 'WhatsApp', description: 'Automation flows', icon: IconBrandWhatsapp, tone: 'lime' },
+            { href: '/emails', label: 'Email', description: 'Campaign automation', icon: IconMail, tone: 'pink' },
+            { href: '/ad-banner', label: 'Image Banner', description: 'Static creatives', icon: IconPhoto, tone: 'teal' },
+            { href: '/ad-banner/video', label: 'Video Banner', description: 'Motion creatives', icon: IconVideo, tone: 'blue' },
+        ];
+
+        if (hasFinancial) {
+            items.splice(
+                8,
+                0,
+                { href: '/financial-kundli', label: 'Financial Kundli', description: 'Premium insights', icon: IconCash, tone: 'yellow' },
+                { href: '/financehistory', label: 'Financial History', description: 'Previous reports', icon: IconFileAnalytics, tone: 'amber' },
+            );
+        }
+
+        if (hasBusiness) {
+            items.splice(
+                10,
+                0,
+                { href: '/business-kundli', label: 'Business Kundli', description: 'Business report', icon: IconBolt, tone: 'orange' },
+                { href: '/history', label: 'Business History', description: 'Previous records', icon: IconFileAnalytics, tone: 'red' },
+            );
+        }
+
+        if (hasRag) {
+            items.splice(
+                12,
+                0,
+                { href: '/agentDashboard', label: 'Agent Dashboard', description: 'RAG operations', icon: IconRobot, tone: 'fuchsia' },
+                { href: '/assessment', label: 'Assessment', description: 'Agent scoring', icon: IconChecklist, tone: 'violet' },
+            );
+        }
+
+        return items;
+    }, [hasBusiness, hasFinancial, hasRag]);
+
+    const leadsByStatusEntries = useMemo(() => {
+        return Object.entries(dashboardData.leadsByStatus || {})
+            .map(([label, count]) => ({ label, count: Number(count) || 0 }))
+            .sort((a, b) => b.count - a.count);
+    }, [dashboardData.leadsByStatus]);
+
+    const sourceEntries = useMemo(() => {
+        const entries = Object.entries(dashboardData.leadsBySource || {})
+            .map(([label, value]) => ({ label, value: Number(value) || 0 }))
+            .sort((a, b) => b.value - a.value);
+        const total = entries.reduce((sum, item) => sum + item.value, 0);
+
+        return entries.map((item) => ({
+            ...item,
+            percent: total ? Math.round((item.value / total) * 100) : 0,
+        }));
+    }, [dashboardData.leadsBySource]);
+
+    const sourceDonutSeries = sourceEntries.map((item) => item.value);
+    const sourceDonutOptions = {
+        labels: sourceEntries.map((item) => item.label),
+        chart: { type: 'donut' },
+        colors: ['#1D4ED8', '#047857', '#8A6F00', '#C4B5FD', '#0EA5E9', '#E11D48'],
+        stroke: { width: 0 },
+        legend: { show: false },
+        dataLabels: { enabled: false },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '74%',
+                    labels: {
+                        show: true,
+                        name: { show: false },
+                        value: { show: false },
+                        total: {
+                            show: true,
+                            label: 'TOTAL',
+                            formatter: () => {
+                                const total = sourceEntries.reduce((sum, item) => sum + item.value, 0);
+                                return total >= 1000 ? `${(total / 1000).toFixed(1)}k` : `${total}`;
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    };
+
+    const mobileRecentActivity = useMemo(() => {
+        if (!fetchedRawData) return [];
+
+        const items = [];
+
+        (fetchedRawData.customers || []).slice(0, 4).forEach((customer) => {
+            if (customer?.created_at) {
+                items.push({
+                    id: `customer-${customer.id}`,
+                    title: `${customer.full_name || 'Customer'} converted`,
+                    description: `Policy ${customer.policy_number || 'created'}${customer.premium ? ` | ${formatCompactCurrency(customer.premium)}` : ''}`,
+                    sortValue: new Date(customer.created_at).getTime(),
+                    iconKey: 'mail',
+                    time: formatDateTime(customer.created_at),
+                    relativeTime: formatDistanceToNow(new Date(customer.created_at), { addSuffix: true }),
+                    tone: 'green',
+                });
+            }
+        });
+
+        (fetchedRawData.appointments || []).slice(0, 4).forEach((appt) => {
+            if (appt?.appointment_date) {
+                items.push({
+                    id: `appointment-${appt.id}`,
+                    title: `${appt.appointment_type || 'Appointment'} ${appt.status ? appt.status.toLowerCase() : 'updated'}`,
+                    description: appt.status ? `Status: ${appt.status}` : 'Appointment activity',
+                    sortValue: new Date(appt.appointment_date).getTime(),
+                    iconKey: 'call',
+                    time: formatDateTime(appt.appointment_date),
+                    relativeTime: formatDistanceToNow(new Date(appt.appointment_date), { addSuffix: true }),
+                    tone: appt.status?.toLowerCase() === 'completed' ? 'green' : 'blue',
+                });
+            }
+        });
+
+        (fetchedRawData.leads || []).slice(0, 4).forEach((lead) => {
+            if (lead?.created_at) {
+                items.push({
+                    id: `lead-${lead.id}`,
+                    title: `${lead.full_name || 'Lead'} added`,
+                    description: `${lead.source || 'Unknown source'} lead`,
+                    sortValue: new Date(lead.created_at).getTime(),
+                    iconKey: 'appointment',
+                    time: formatDateTime(lead.created_at),
+                    relativeTime: formatDistanceToNow(new Date(lead.created_at), { addSuffix: true }),
+                    tone: 'amber',
+                });
+            }
+        });
+
+        return items.sort((a, b) => b.sortValue - a.sortValue).slice(0, 5);
+    }, [fetchedRawData]);
+
+    const progressTones = ['bg-blue-600', 'bg-green-600', 'bg-amber-600', 'bg-violet-600', 'bg-cyan-600'];
+    const shortcutToneClasses = {
+        blue: 'from-blue-50 to-white text-blue-700 ring-blue-100',
+        sky: 'from-sky-50 to-white text-sky-700 ring-sky-100',
+        indigo: 'from-indigo-50 to-white text-indigo-700 ring-indigo-100',
+        violet: 'from-violet-50 to-white text-violet-700 ring-violet-100',
+        purple: 'from-purple-50 to-white text-purple-700 ring-purple-100',
+        green: 'from-green-50 to-white text-green-700 ring-green-100',
+        amber: 'from-amber-50 to-white text-amber-700 ring-amber-100',
+        yellow: 'from-yellow-50 to-white text-yellow-700 ring-yellow-100',
+        cyan: 'from-cyan-50 to-white text-cyan-700 ring-cyan-100',
+        orange: 'from-orange-50 to-white text-orange-700 ring-orange-100',
+        rose: 'from-rose-50 to-white text-rose-700 ring-rose-100',
+        emerald: 'from-emerald-50 to-white text-emerald-700 ring-emerald-100',
+        stone: 'from-stone-50 to-white text-stone-700 ring-stone-100',
+        lime: 'from-lime-50 to-white text-lime-700 ring-lime-100',
+        pink: 'from-pink-50 to-white text-pink-700 ring-pink-100',
+        teal: 'from-teal-50 to-white text-teal-700 ring-teal-100',
+        red: 'from-red-50 to-white text-red-700 ring-red-100',
+        fuchsia: 'from-fuchsia-50 to-white text-fuchsia-700 ring-fuchsia-100',
+    };
+
+    const shortcutGroups = useMemo(() => {
+        const groups = [
+            {
+                key: 'leads',
+                title: 'Leads',
+                items: shortcutItems.filter((item) => ['/addlead', '/leadtable', '/facebook-leads', '/webhook'].includes(item.href)),
+            },
+            {
+                key: 'customers',
+                title: 'Customers & Team',
+                items: shortcutItems.filter((item) => ['/customers', '/adduser', '/view-user', '/reminders'].includes(item.href)),
+            },
+            {
+                key: 'operations',
+                title: 'Operations',
+                items: shortcutItems.filter((item) => ['/appointments', '/followups', '/automation', '/emails'].includes(item.href)),
+            },
+            {
+                key: 'tools',
+                title: 'Reports & Tools',
+                items: shortcutItems.filter((item) =>
+                    ['/fincalc', '/fhclog', '/financial-kundli', '/financehistory', '/business-kundli', '/history', '/agentDashboard', '/assessment', '/ad-banner', '/ad-banner/video'].includes(
+                        item.href,
+                    ),
+                ),
+            },
+        ];
+
+        return groups.filter((group) => group.items.length > 0);
+    }, [shortcutItems]);
+
+    const toggleShortcutGroup = (groupKey) => {
+        setExpandedShortcutGroups((prev) => ({
+            ...prev,
+            [groupKey]: !prev[groupKey],
+        }));
+    };
+
     return (
-        <div className="p-2 md:p-6 bg-gray-50 dark:bg-gray-900 min-h-screen relative">
+        <div className="min-h-screen bg-[#f5f4fb] px-3 pb-24 pt-3 md:bg-gray-50 md:px-6 md:pb-6 md:pt-6 dark:bg-gray-900 relative">
             {/* <OfferPopupBanner />  */}
             {/* <OfferStickyWidget /> */}
             <LoadingOverlay visible={loading} overlayBlur={2} />
@@ -510,47 +759,206 @@ const ReportingDashboard = () => {
                     <p className="text-[10px] sm:text-xs opacity-80 leading-tight">(Completed / (Comp+Missed))</p>
                 </div>
             </div>
-            {/* --- KPI Cards (Mobile) --- */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6 md:hidden">
-                {/* Leads */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-                    <IconUsersGroup className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-bold">
-                        {dashboardData.totalLeads} <span className="text-[11px] opacity-90">Leads</span>
-                    </p>
+            <div className="space-y-6 md:hidden">
+                <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="min-h-[102px] rounded-[14px] border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
+                            <div className="text-[#1558d6]">
+                                <IconUsersGroup className="h-8 w-8" />
+                            </div>
+                            <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.18em] text-[#8894b7]">Leads</p>
+                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#253763]">{dashboardData.totalLeads}</p>
+                        </div>
+
+                        <div className="min-h-[102px] rounded-[14px] border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
+                            <div className="text-[#0b7a42]">
+                                <IconSquareCheck className="h-8 w-8" />
+                            </div>
+                            <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.18em] text-[#8894b7]">Conv.</p>
+                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#253763]">{dashboardData.customerConversions}</p>
+                        </div>
+
+                        <div className="min-h-[102px] rounded-[14px] border border-white/80 bg-white px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
+                            <div className="text-[#8a6b00]">
+                                <IconCoinRupee className="h-8 w-8" />
+                            </div>
+                            <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.18em] text-[#8894b7]">Sales</p>
+                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#253763]">{formatCompactCurrency(dashboardData.totalSalesValue)}</p>
+                        </div>
+                        <div className="min-h-[102px] rounded-[14px] border border-[#d9e6ff] bg-[#0159fd] px-5 py-6 shadow-[0_16px_40px_rgba(79,70,229,0.06)]">
+                            <div className="text-[#ffffff]">
+                                <IconPercentage className="h-8 w-8" />
+                            </div>
+                            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[#ffffff]">Conversion Rate</p>
+                            <p className="mt-4 text-[2rem] font-bold leading-none tracking-tight text-[#ffffff]">{dashboardData.leadConversionRate}%</p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Conversions */}
-                <div className="bg-gradient-to-r from-violet-500 to-violet-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-                    <IconChecks className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-bold">
-                        {dashboardData.customerConversions} <span className="text-[11px] opacity-90">Conv.</span>
-                    </p>
-                </div>
+                <section>
+                    <div className="mb-3 flex items-center justify-between"></div>
+                    <div className="space-y-10">
+                        {shortcutGroups.map((group) => {
+                            const isExpanded = !!expandedShortcutGroups[group.key];
+                            const visibleItems = isExpanded ? group.items : group.items.slice(0, 4);
 
-                {/* Sales */}
-                <div className="bg-gradient-to-r from-lime-500 to-lime-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-                    <IconCoinRupee className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-bold truncate">
-                        {formatCurrency(dashboardData.totalSalesValue)} <span className="text-[11px] opacity-90">Sales</span>
-                    </p>
-                </div>
+                            return (
+                                <div key={group.key}>
+                                    <h3 className="mb-3 text-[1.05rem] font-bold tracking-tight text-slate-900">{group.title}</h3>
+                                    <div className="grid grid-cols-4 gap-x-3 gap-y-4">
+                                        {visibleItems.map((item) => {
+                                            const ShortcutIcon = item.icon;
+                                            return (
+                                                <Link key={item.href} href={item.href} className="flex flex-col items-center text-center">
+                                                    <div className={`flex h-[58px] w-full items-center justify-center rounded-[10px]  bg-white/80 ${shortcutToneClasses[item.tone]}`}>
+                                                        <ShortcutIcon className="h-5 w-5" />
+                                                    </div>
+                                                    <p className="mt-2 text-[11px] font-semibold leading-3.5 text-slate-900">{item.label}</p>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                    {group.items.length > 4 && (
+                                        <div className="mt-3 grid grid-cols-[1fr_88px] gap-3">
+                                            <div className="flex min-h-[52px] items-center rounded-[12px] bg-slate-50 px-4 text-sm font-medium text-slate-700">
+                                                {isExpanded ? `Showing all ${group.items.length}` : `${group.items.length - 4} more in ${group.title}`}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleShortcutGroup(group.key)}
+                                                className="flex min-h-[52px] items-center justify-center rounded-[12px] bg-slate-50 px-3 text-sm font-bold text-violet-700 ring-1 ring-slate-200"
+                                            >
+                                                {isExpanded ? 'Less' : 'More'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
 
-                {/* Conversion Rate */}
-                <div className="bg-gradient-to-r from-fuchsia-500 to-fuchsia-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2">
-                    <IconTrendingUp className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-bold">
-                        {dashboardData.leadConversionRate}% <span className="text-[11px] opacity-90">Rate</span>
-                    </p>
-                </div>
+                <section className="rounded-[12px] bg-[#efeffa] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-[1.35rem] font-bold tracking-tight text-slate-900">Lead Pipeline</h2>
+                        <Link href="/leadtable" className="text-xs font-semibold text-blue-600">
+                            View Details
+                        </Link>
+                    </div>
+                    <div className="space-y-4 rounded-[20px]  backdrop-blur-sm">
+                        {leadsByStatusEntries.slice(0, 4).map((item, index) => {
+                            const total = leadsByStatusEntries[0]?.count || 1;
+                            const width = Math.max((item.count / total) * 100, 12);
+                            return (
+                                <div key={item.label}>
+                                    <div className="mb-1 flex items-center justify-between text-[13px]">
+                                        <span className="font-medium text-slate-700">{item.label}</span>
+                                        <span className="text-slate-500">{item.count}</span>
+                                    </div>
+                                    <div className="h-1.5 rounded-full bg-indigo-100">
+                                        <div className={`h-1.5 rounded-full ${progressTones[index % progressTones.length]}`} style={{ width: `${width}%` }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {leadsByStatusEntries.length === 0 && <p className="text-sm text-slate-500">No lead status data available.</p>}
+                    </div>
+                </section>
 
-                {/* Appt. Success */}
-                <div className="bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-lg shadow text-white flex items-center gap-2 min-h-[50px] px-2 col-span-2 sm:col-span-1">
-                    <IconSquareCheck className="h-4 w-4 shrink-0" />
-                    <p className="text-sm font-bold truncate">
-                        {dashboardData.appointmentSuccessRate}% <span className="text-[11px] opacity-90">Appt.</span>
-                    </p>
-                </div>
+                <section>
+                    <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight text-slate-900">Leads by Source</h2>
+                    <div className="rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                        {sourceEntries.length > 0 ? (
+                            <div className="grid grid-cols-[132px_1fr] items-center gap-3">
+                                <div className="flex justify-center">
+                                    <div className="w-[132px]">
+                                        <ReactApexChart options={sourceDonutOptions} series={sourceDonutSeries} type="donut" height={150} />
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    {sourceEntries.slice(0, 3).map((item, index) => (
+                                        <div key={item.label} className="flex items-center justify-between gap-3 text-[13px] text-slate-700">
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <span className={`h-2.5 w-2.5 shrink-0 rounded-sm ${['bg-blue-600', 'bg-emerald-700', 'bg-yellow-700'][index % 3]}`} />
+                                                <span className="truncate font-medium">{item.label}</span>
+                                            </div>
+                                            <span className="shrink-0 font-semibold text-slate-500">{item.percent}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="py-10 text-center text-sm text-slate-500">No lead source data available.</p>
+                        )}
+                    </div>
+                </section>
+
+                <section>
+                    <h2 className="mb-3 text-[1.35rem] font-bold tracking-tight text-slate-900">Appointments</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Scheduled</p>
+                            <p className="mt-2 text-[1.7rem] font-bold text-slate-900">{dashboardData.appointmentsByStatus.scheduled}</p>
+                            <p className="mt-2 text-[11px] text-blue-600">Next 7 days</p>
+                        </div>
+                        <div className="rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Completed</p>
+                            <p className="mt-2 text-[1.7rem] font-bold text-slate-900">{dashboardData.appointmentsByStatus.completed}</p>
+                            <p className="mt-2 text-[11px] text-emerald-600">This month</p>
+                        </div>
+                        <div className="col-span-2 rounded-[12px] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Missed</p>
+                                    <p className="mt-2 text-[1.7rem] font-bold text-slate-900">{dashboardData.appointmentsByStatus.missed}</p>
+                                </div>
+                                <Link href="/appointments" className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-600">
+                                    Open Calendar
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="text-[1.35rem] font-bold tracking-tight text-slate-900">Recent Activity</h2>
+                        <Link href="/followups" className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-600">
+                            View All
+                        </Link>
+                    </div>
+                    <div className="rounded-[24px]  ">
+                        {mobileRecentActivity.length > 0 ? (
+                            <div className="space-y-1">
+                                {mobileRecentActivity.map((item, index) => (
+                                    <div key={item.id} className="relative flex gap-4 pb-7 last:pb-0">
+                                        <div className="relative flex w-12 shrink-0 justify-center">
+                                            {index < mobileRecentActivity.length - 1 && <div className="absolute top-12 h-[calc(100%-12px)] w-px bg-slate-200" />}
+                                            <div
+                                                className={`relative z-10 mt-0.5 flex h-11 w-11 items-center justify-center rounded-full ${item.tone === 'green' ? 'bg-emerald-100 text-emerald-700' : item.tone === 'amber' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}
+                                            >
+                                                {item.iconKey === 'mail' ? (
+                                                    <IconMail className="h-5 w-5" />
+                                                ) : item.iconKey === 'call' ? (
+                                                    <IconBell className="h-5 w-5" />
+                                                ) : (
+                                                    <IconCalendarStats className="h-5 w-5" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-[13px] font-bold text-slate-900">{item.title}</p>
+                                            <p className="mt-0.5 text-[12px] leading-5 text-slate-500">{item.description}</p>
+                                            <p className="mt-1 text-[11px] text-slate-400">{item.relativeTime}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-sm text-slate-500">No recent activity found.</div>
+                        )}
+                    </div>
+                </section>
             </div>
             {subscription && <SubscriptionBanner subscription={subscription} />}
             {/* **** RENDER CHILD ONLY WHEN DATA IS FETCHED **** */}
@@ -566,7 +974,7 @@ const ReportingDashboard = () => {
                 </div>
             )}
             {/* --- Charts Row --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {/* Lead Status Pipeline */}
                 <div className="p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg lg:col-span-1">
                     <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-4">Lead Pipeline Status</h3>
@@ -597,7 +1005,7 @@ const ReportingDashboard = () => {
                 </div>
             </div>
             {/* --- Actionable Task Lists --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {/* Upcoming Appointments */}
                 <div className="bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold text-gray-700  dark:text-gray-200 mb-3 border-b pb-2">Upcoming Appointments (Next 7 Days)</h3>
@@ -656,7 +1064,7 @@ const ReportingDashboard = () => {
                 </div>
             </div>
             {/* --- Data Export Section --- */}
-            <div className="mt-6 bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
+            <div className="hidden md:block mt-6 bg-white  dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 border-b pb-2">Data Export (CSV)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     {/* Export Leads by Date */}
