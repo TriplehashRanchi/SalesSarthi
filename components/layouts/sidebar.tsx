@@ -53,6 +53,7 @@ import IconLogout from '../icon/icon-logout';
 import { getAuth, signOut } from 'firebase/auth';
 import axios from 'axios';
 import { Building2, CalculatorIcon, ChartCandlestick } from 'lucide-react';
+import DelphiFloatingLauncher from '@/components/common/DelphiFloatingLauncher';
 
 interface Banner {
     created_at: string;
@@ -496,6 +497,10 @@ const Sidebar = () => {
                                         </li>
                                     </ul>
                                 </AnimateHeight>
+                            </li>
+
+                            <li className="menu nav-item block md:hidden">
+                                <DelphiFloatingLauncher variant="sidebar" />
                             </li>
 
                             {/* <li className="menu nav-item">

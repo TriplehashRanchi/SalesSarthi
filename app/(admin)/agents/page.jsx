@@ -55,17 +55,22 @@ export default function AgentRagBoard() {
                 body: JSON.stringify(agentData),
             });
 
-            const data = await res.json();
-
-            if (res.ok) {
-                setIsModalOpen(false);
-                fetchAgents();
-            } else {
-                alert(data.message || 'Failed to create agent');
+            let data = null;
+            try {
+                data = await res.json();
+            } catch {
+                data = null;
             }
+
+            if (!res.ok || data?.success === false) {
+                throw new Error(data?.message || `Failed to create agent (HTTP ${res.status})`);
+            }
+
+            setIsModalOpen(false);
+            fetchAgents();
         } catch (error) {
             console.error('Failed to create agent:', error);
-            alert('An error occurred while creating the agent.');
+            throw error;
         }
     };
 

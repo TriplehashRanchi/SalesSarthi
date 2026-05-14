@@ -8,6 +8,7 @@
   import Setting from '@/components/layouts/setting';
   import Sidebar from '@/components/layouts/sidebar';
   import Portals from '@/components/portals';
+  import DelphiFloatingLauncher from '@/components/common/DelphiFloatingLauncher';
   import { useEffect } from "react";
   import { useRouter } from "next/navigation";
   import { useAuth } from "@/context/AuthContext";
@@ -64,6 +65,8 @@
                           <Portals />
                       </div>
                   </MainContainer>
+
+                  <DelphiFloatingLauncher />
               </div>
           </>
       );

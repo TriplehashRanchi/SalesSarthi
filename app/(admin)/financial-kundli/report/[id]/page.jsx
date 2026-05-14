@@ -1,6 +1,9 @@
   'use client';
 
   import { useEffect, useMemo, useState } from 'react';
+  import { Capacitor } from '@capacitor/core';
+  import { Directory, Filesystem } from '@capacitor/filesystem';
+  import { Share } from '@capacitor/share';
   import { useParams, useRouter } from 'next/navigation';
   import { getAuth } from 'firebase/auth';
    import { useAuth } from "@/context/AuthContext";
@@ -35,6 +38,33 @@ import { AlertCircle, CheckCircle2, Loader } from 'lucide-react';
     if (absVal >= 100000) return `${isNegative ? '-' : ''}₹${(absVal / 100000).toFixed(2)} L`;
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
   };
+
+  /* =========================================================
+    SAFE FALLBACK HELPERS
+  ========================================================= */
+  const toNumber = (value, fallback = 0) => {
+    const num = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  };
+
+  const toPlainObject = (value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return value;
+  };
+
+  const toArray = (value) => (Array.isArray(value) ? value : []);
+
+  const safeJsonParse = (value) => {
+    if (typeof value !== 'string') return null;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  };
+
+  const parseJsonIfNeeded = (value) =>
+    typeof value === 'string' ? safeJsonParse(value) : value;
 
   /* =========================================================
     SUB-COMPONENTS
@@ -116,11 +146,11 @@ import { AlertCircle, CheckCircle2, Loader } from 'lucide-react';
           />
           <MiniStat
             label="Financial Independence Ratio"
-            value={`${snapshot.financial_independence_ratio.toFixed(2)}%`}
+            value={`${snapshot.financial_independence_ratio ? snapshot.financial_independence_ratio.toFixed(2) : 'N/A'}%`}
           />
         </div>
       </div>
-
+      
     </section>
   );
 };
@@ -409,6 +439,7 @@ function DownloadModal({ status, error, action = 'download' }) {
   const isError = status === 'error';
   const isProcessing = status === 'processing';
   const isShare = action === 'share';
+  const isNative = Capacitor.isNativePlatform();
 
   return (
     <motion.div
@@ -477,7 +508,13 @@ function DownloadModal({ status, error, action = 'download' }) {
           {/* Description */}
           <p className="text-slate-400 text-sm mb-6 leading-relaxed">
             {isProcessing && (isShare ? 'Your Financial Kundli PDF is being prepared for sharing. This may take a moment...' : 'Your Financial Kundli report is being generated. This may take a moment...')}
-            {isSuccess && (isShare ? 'Your Financial Kundli PDF is ready to share.' : 'Your Financial Kundli PDF has been downloaded successfully. Check your downloads folder.')}
+            {isSuccess && (
+              isShare
+                ? 'Your Financial Kundli PDF is ready to share.'
+                : isNative
+                ? 'Your Financial Kundli PDF has been saved to your device documents.'
+                : 'Your Financial Kundli PDF has been downloaded successfully. Check your downloads folder.'
+            )}
             {isError && error && `${error}. Please try again.`}
           </p>
 
@@ -516,7 +553,7 @@ function DownloadModal({ status, error, action = 'download' }) {
                   : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}
             >
-              {isSuccess ? (isShare ? '✓ Ready to share' : '✓ Ready in your downloads') : '✗ Please try again'}
+              {isSuccess ? (isShare ? '✓ Ready to share' : isNative ? '✓ Saved on your device' : '✓ Ready in your downloads') : '✗ Please try again'}
             </motion.div>
           )}
         </div>
@@ -537,25 +574,6 @@ function DownloadModal({ status, error, action = 'download' }) {
     const router = useRouter();
     const { profile, loading: authLoading } = useAuth();
     const hasAccess = profile?.add_ons?.includes('FINANCIAL_KUNDLI');
-
-    if (authLoading) {
-        return <div className="p-6 text-sm text-slate-500">Loading...</div>;
-    }
-
-    if (!hasAccess) {
-        return (
-            <PremiumGate
-                title="Financial Kundli Report Locked"
-                subtitle="This report is available only for admins with the Financial Kundli add-on enabled."
-                features={[
-                    'Full report access & download',
-                    'AI summary with action plan',
-                    'Client-ready PDF delivery',
-                ]}
-                ctaLabel="Request Access"
-            />
-        );
-    }
     const auth = getAuth();
     const [loading, setLoading] = useState(true);
     const [report, setReport] = useState(null);
@@ -567,6 +585,11 @@ function DownloadModal({ status, error, action = 'download' }) {
     
 
     useEffect(() => {
+      if (authLoading || !hasAccess || !id) {
+        setLoading(false);
+        return;
+      }
+
       const load = async () => {
         try {
           const token = await auth.currentUser?.getIdToken();
@@ -579,7 +602,7 @@ function DownloadModal({ status, error, action = 'download' }) {
         finally { setLoading(false); }
       };
       load();
-    }, [id, auth]);
+    }, [auth, authLoading, hasAccess, id]);
 
     const finishPdfAction = (status, error = null, delay = status === 'success' ? 2000 : 3000) => {
       setDownloadStatus(status);
@@ -597,6 +620,14 @@ function DownloadModal({ status, error, action = 'download' }) {
     };
 
     const getReportFileName = () => `${report?.identity?.name || 'Report'}_Financial_Kundli.pdf`;
+
+    const blobToBase64 = (blob) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result || ''));
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
 
     const fetchReportPdfBlob = async () => {
       const token = await auth.currentUser?.getIdToken();
@@ -626,6 +657,40 @@ function DownloadModal({ status, error, action = 'download' }) {
       document.body.removeChild(link);
     };
 
+    const savePdfForNativeDownload = async (blob) => {
+      const base64Data = await blobToBase64(blob);
+      const filename = getReportFileName();
+
+      await Filesystem.writeFile({
+        path: filename,
+        data: base64Data.split(',')[1],
+        directory: Directory.Documents,
+      });
+    };
+
+    const sharePdfFromNativeDevice = async (blob) => {
+      const base64Data = await blobToBase64(blob);
+      const filename = getReportFileName();
+
+      await Filesystem.writeFile({
+        path: filename,
+        data: base64Data.split(',')[1],
+        directory: Directory.Cache,
+      });
+
+      const { uri } = await Filesystem.getUri({
+        directory: Directory.Cache,
+        path: filename,
+      });
+
+      await Share.share({
+        title: 'Financial Kundli Report',
+        text: 'Sharing Financial Kundli PDF',
+        files: [uri],
+        dialogTitle: 'Share Financial Kundli',
+      });
+    };
+
     const startPdfAction = (action) => {
       if (!id) {
         setPdfAction(action);
@@ -645,7 +710,11 @@ function DownloadModal({ status, error, action = 'download' }) {
 
       try {
         const blob = await fetchReportPdfBlob();
-        triggerPdfDownload(blob);
+        if (Capacitor.isNativePlatform()) {
+          await savePdfForNativeDownload(blob);
+        } else {
+          triggerPdfDownload(blob);
+        }
         finishPdfAction('success');
       } catch (err) {
         console.error('Download error:', err);
@@ -658,16 +727,34 @@ function DownloadModal({ status, error, action = 'download' }) {
 
       try {
         const blob = await fetchReportPdfBlob();
+
+        if (Capacitor.isNativePlatform()) {
+          await sharePdfFromNativeDevice(blob);
+          finishPdfAction('success');
+          return;
+        }
+
         const file = new File([blob], getReportFileName(), { type: 'application/pdf' });
 
         if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            title: 'Financial Kundli Report',
-            text: 'Sharing Financial Kundli PDF',
-            files: [file],
-          });
-          finishPdfAction('success');
-          return;
+          try {
+            await navigator.share({
+              title: 'Financial Kundli Report',
+              text: 'Sharing Financial Kundli PDF',
+              files: [file],
+            });
+            finishPdfAction('success');
+            return;
+          } catch (shareErr) {
+            if (shareErr?.name === 'AbortError') {
+              finishPdfAction('idle', null, 0);
+              return;
+            }
+
+            if (shareErr?.name !== 'NotAllowedError') {
+              throw shareErr;
+            }
+          }
         }
 
         triggerPdfDownload(blob);
@@ -685,20 +772,120 @@ function DownloadModal({ status, error, action = 'download' }) {
 
     const ui = useMemo(() => {
       if (!report?.output) return null;
-      const out = typeof report.output === 'string' ? JSON.parse(report.output) : report.output;
-      
+
+      const out = toPlainObject(parseJsonIfNeeded(report.output));
+
+      const identityRaw = toPlainObject(parseJsonIfNeeded(report.identity));
+      const identity = {
+        name: identityRaw?.name ?? '—',
+        phone: identityRaw?.phone ?? '—',
+        age: identityRaw?.age ?? '—',
+        city: identityRaw?.city ?? '—',
+      };
+
+      const cashflowRaw = toPlainObject(out.cashflow);
+      const cashflow = {
+        savings_rate: toNumber(cashflowRaw.savings_rate),
+        emi_ratio_total: toNumber(cashflowRaw.emi_ratio_total),
+      };
+
+      const netWorthRaw = toPlainObject(out.net_worth);
+      const netWorth = {
+        net_worth: toNumber(netWorthRaw.net_worth),
+        total_assets: toNumber(netWorthRaw.total_assets),
+      };
+
+      const loansRaw = toPlainObject(out.loans);
+      const loans = {
+        total_loan_amount: toNumber(loansRaw.total_loan_amount),
+        total_monthly_emi: toNumber(loansRaw.total_monthly_emi),
+      };
+
+      const emergencyRaw = toPlainObject(out.emergency);
+      const emergency = {
+        months_covered: toNumber(emergencyRaw.months_covered),
+        status:
+          typeof emergencyRaw.status === 'string' && emergencyRaw.status
+            ? emergencyRaw.status
+            : 'UNKNOWN',
+        current: toNumber(emergencyRaw.current),
+        gap: toNumber(emergencyRaw.gap),
+      };
+
+      const scoresRaw = toPlainObject(out.scores);
+      const scores = {
+        emergency: toNumber(scoresRaw.emergency),
+        protection: toNumber(scoresRaw.protection),
+        goals: toNumber(scoresRaw.goals),
+      };
+
+      const protectionRaw = toPlainObject(out.protection);
+      const recommendedRaw = toPlainObject(protectionRaw.recommended);
+      const actualRaw = toPlainObject(protectionRaw.actual);
+      const protection = {
+        recommended: {
+          life: toNumber(recommendedRaw.life),
+          health: toNumber(recommendedRaw.health),
+          critical: toNumber(recommendedRaw.critical),
+          accident: toNumber(recommendedRaw.accident),
+        },
+        actual: {
+          life: toNumber(actualRaw.life),
+          health: toNumber(actualRaw.health),
+          critical: toNumber(actualRaw.critical),
+          accident: toNumber(actualRaw.accident),
+        },
+      };
+
+      const fireRaw = toPlainObject(out.fire);
+      const fire = {
+        fire_number: toNumber(fireRaw.fire_number),
+        future_annual_expense: toNumber(fireRaw.future_annual_expense),
+        fi_ratio: toNumber(fireRaw.fi_ratio),
+      };
+
+      const snapshotRaw = toPlainObject(out.financial_snapshot);
+      const snapshot = {
+        total_loan_amount: toNumber(snapshotRaw.total_loan_amount),
+        average_interest_rate: toNumber(snapshotRaw.average_interest_rate),
+        total_emi_amount: toNumber(snapshotRaw.total_emi_amount),
+        emi_ratio_total: toNumber(snapshotRaw.emi_ratio_total),
+        emi_warning_total:
+          typeof snapshotRaw.emi_warning_total === 'string' &&
+          snapshotRaw.emi_warning_total
+            ? snapshotRaw.emi_warning_total
+            : '—',
+        yearly_expenses: toNumber(snapshotRaw.yearly_expenses),
+        yearly_savings: toNumber(snapshotRaw.yearly_savings),
+        avg_monthly_emi: toNumber(snapshotRaw.avg_monthly_emi),
+        emi_ratio_avg: toNumber(snapshotRaw.emi_ratio_avg),
+        emi_warning_avg:
+          typeof snapshotRaw.emi_warning_avg === 'string' && snapshotRaw.emi_warning_avg
+            ? snapshotRaw.emi_warning_avg
+            : '—',
+        savings_rate: toNumber(snapshotRaw.savings_rate),
+        financial_independence_ratio:
+          snapshotRaw.financial_independence_ratio === null ||
+          typeof snapshotRaw.financial_independence_ratio === 'undefined'
+            ? null
+            : toNumber(snapshotRaw.financial_independence_ratio),
+      };
+
+      const goals = toArray(out.goals).filter((g) => g && typeof g === 'object');
+
       return {
-        identity: report.identity,
-        score: out.overall_score || 0,
-        cashflow: out.cashflow,
-        netWorth: out.net_worth,
-        loans: out.loans || {},
-        emergency: out.emergency,
-        scores: out.scores || {},
-        protection: out.protection,
-        goals: out.goals || [],
-        fire: out.fire || {},
-        snapshot: out.financial_snapshot || {}
+        identity,
+        score: toNumber(out.overall_score),
+        fi_ratio: toNumber(out.fi_ratio),
+        cashflow,
+        netWorth,
+        loans,
+        emergency,
+        scores,
+        protection,
+        goals,
+        fire,
+        snapshot,
       };
     }, [report]);
 
@@ -740,6 +927,25 @@ const reportData = useMemo(() => {
     return report;
   }
 }, [report]);
+
+    if (authLoading) {
+      return <div className="p-6 text-sm text-slate-500">Loading...</div>;
+    }
+
+    if (!hasAccess) {
+      return (
+        <PremiumGate
+          title="Financial Kundli Report Locked"
+          subtitle="This report is available only for admins with the Financial Kundli add-on enabled."
+          features={[
+            'Full report access & download',
+            'AI summary with action plan',
+            'Client-ready PDF delivery',
+          ]}
+          ctaLabel="Request Access"
+        />
+      );
+    }
 
 
     if (loading || !ui) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center text-stone-400">Loading Analysis...</div>;
@@ -797,7 +1003,7 @@ const reportData = useMemo(() => {
                 </div>
                 <div className="w-full lg:w-auto grid grid-cols-2 gap-3 min-w-[320px]">
                   <VitalCard label="Savings Rate" value={`${ui.cashflow.savings_rate.toFixed(1)}%`} sub="Target: 25%+" status={ui.cashflow.savings_rate < 20 ? 'warning' : 'good'} />
-                  <VitalCard label="FI Ratio" value={ui.fire.fi_ratio.toFixed(2)} sub="Asset Multiplier" status="good" />
+                  <VitalCard label="FI Ratio" value={ui.fi_ratio ? ui.fi_ratio.toFixed(2) : 'N/A'} sub="Asset Multiplier" status="good" />
                   <div className="col-span-2">
                       <VitalCard label="Net Worth" value={formatCurrency(ui.netWorth.net_worth)} sub={`Assets: ${formatCurrency(ui.netWorth.total_assets)} | Liabilities: ${formatCurrency(ui.loans.total_loan_amount)}`} status="neutral" />
                   </div>
@@ -911,7 +1117,7 @@ const reportData = useMemo(() => {
                   <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Financial Diagnosis</h3>
                   <div className="space-y-4 text-sm text-stone-600 leading-relaxed">
                     <p>Based on the current trajectory, you have a <strong>{Math.round(ui.score)}%</strong> alignment with your financial objectives. The most significant drag on your score is the <strong>{ui.snapshot.average_interest_rate.toFixed(1)}%</strong> average cost of debt.</p>
-                    <p>Action Plan: Prioritize filling the <strong>{formatCurrency(ui.emergency.gap)}</strong> emergency fund gap and review Term Life cover to protect your family's lifestyle from the total liabilities of {formatCurrency(ui.loans.total_loan_amount)}.</p>
+                    <p>Action Plan: Prioritize filling the <strong>{formatCurrency(ui.emergency.gap)}</strong> emergency fund gap and review Term Life cover to protect your family&apos;s lifestyle from the total liabilities of {formatCurrency(ui.loans.total_loan_amount)}.</p>
                   </div>
                 </section>
             </div>

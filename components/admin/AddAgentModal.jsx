@@ -65,7 +65,7 @@ export default function AddAgentModal({ isOpen, onClose, onSave }) {
 
             onClose();
         } catch (error) {
-            toast.error('Failed to create agent. Please try again.');
+            toast.error(error?.message || 'Failed to create agent. Please try again.');
         } finally {
             setLoading(false);
         }

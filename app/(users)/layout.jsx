@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import UserSide from '@/components/layouts/UserSide';
 import { Toaster } from "react-hot-toast";
+import DelphiFloatingLauncher from '@/components/common/DelphiFloatingLauncher';
 
 const DefaultLayout = ({ children }) => {
     const { user, loading } = useAuth();
@@ -70,6 +71,7 @@ const DefaultLayout = ({ children }) => {
                         <Portals />
                     </div>
                 </MainContainer>
+                <DelphiFloatingLauncher />
             </div>
         </>
     );
