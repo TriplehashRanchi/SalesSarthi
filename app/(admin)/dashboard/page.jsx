@@ -763,7 +763,7 @@ const ReportingDashboard = () => {
                     <h3 className="mb-3 text-[0.95rem] font-bold text-slate-900">Customers</h3>
                     <div className="grid grid-cols-4 gap-2">
                         {[
-                            { href: '/addcustomer', label: 'Add Customers', Icon: IconUserPlus, bg: 'bg-green-50', color: 'text-green-600' },
+                            // { href: '/addcustomer', label: 'Add Customers', Icon: IconUserPlus, bg: 'bg-green-50', color: 'text-green-600' },
                             { href: '/customers', label: 'All Customers', Icon: IconUsersGroup, bg: 'bg-emerald-50', color: 'text-emerald-600' },
                             { href: '/appointments', label: 'Appointment', Icon: IconCalendarStats, bg: 'bg-cyan-50', color: 'text-cyan-600' },
                             { href: '/reminders', label: 'Reminder', Icon: IconBell, bg: 'bg-amber-50', color: 'text-amber-500' },
@@ -822,14 +822,14 @@ const ReportingDashboard = () => {
                         ] : []),
                         ...(hasRag ? [
                             { href: '/agentDashboard',   label: 'RAG System',                 description: 'AI-powered knowledge base', Icon: IconRobot,        bg: 'bg-violet-50',  color: 'text-violet-600' },
-                            { href: '/assessment',       label: 'Policy Review',              description: 'AI policy analysis',        Icon: IconFileAnalytics, bg: 'bg-blue-50',   color: 'text-blue-500'   },
+                            { href: '/policy-review',       label: 'Policy Review',              description: 'AI policy analysis',        Icon: IconFileAnalytics, bg: 'bg-blue-50',   color: 'text-blue-500', disabled: true },
                         ] : []),
                     ];
 
                     // Always-last tools
                     const tailTools = [
                         { href: '/gyani-gpt', label: 'Gyani GPT',         description: 'Talk To Yogendra Malik',       Icon: IconRobot, bg: 'bg-orange-50', color: 'text-orange-500' },
-                        { href: '/sagar',     label: 'Advisor Profiler',   description: 'Automate Growth, Scale Faster', Icon: IconBolt, bg: 'bg-blue-50',   color: 'text-blue-500'   },
+                        { href: '/assessment',     label: 'Advisor Profiler',   description: 'Automate Growth, Scale Faster', Icon: IconBolt, bg: 'bg-blue-50',   color: 'text-blue-500'   },
                     ];
 
                     const allTools = [...baseTools, ...superAdvanceTools, ...tailTools];
