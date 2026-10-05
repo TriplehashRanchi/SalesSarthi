@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Button } from '@mantine/core';
 import html2canvas from 'html2canvas';
@@ -55,6 +55,7 @@ const ProfessionalBannerMaker = () => {
     const [logoPreview, setLogoPreview] = useState('');
     const [templates, setTemplates] = useState([]);
     const [selectedTemplate, setSelectedTemplate] = useState(null);
+    const [mainCategories, setMainCategories] = useState(MAIN_CATEGORIES);
     const [category, setCategory] = useState(null);
     const [subcategory, setSubcategory] = useState(null);
     const [exportBlobUrl, setExportBlobUrl] = useState(null);
@@ -69,6 +70,18 @@ const ProfessionalBannerMaker = () => {
 
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    const fetchCategories = useCallback(async () => {
+        try {
+            const { data } = await axios.get(`${API_URL}/api/banner-categories`, {
+                params: { type: 'image' },
+            });
+            const names = (data || []).map((item) => item.name).filter(Boolean);
+            if (names.length) setMainCategories(names);
+        } catch (err) {
+            console.error('Error loading banner categories:', err);
+        }
+    }, [API_URL]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -102,7 +115,8 @@ const ProfessionalBannerMaker = () => {
             }
         };
         loadData();
-    }, []);
+        fetchCategories();
+    }, [API_URL, fetchCategories]);
 
 
     // --- FIX #1: Added missing helper functions ---
@@ -237,13 +251,13 @@ const ProfessionalBannerMaker = () => {
             <div className="container mx-auto p-4 sm:p-6">
                 <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-center">Choose a Category</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                {MAIN_CATEGORIES.map((cat) => (
+                {mainCategories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setCategory(cat)}
                     className="bg-white p-4 sm:p-6 shadow rounded text-center hover:bg-gray-100 text-xs sm:text-sm font-medium min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center"
                   >
-                    <div className="text-2xl sm:text-3xl mb-1">{CATEGORY_ICONS[cat]}</div>
+                    <div className="text-2xl sm:text-3xl mb-1">{CATEGORY_ICONS[cat] || 'IMG'}</div>
                     <span className="text-center">{cat}</span>
                   </button>
                 ))}

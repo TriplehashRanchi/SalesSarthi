@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
   Button, FileInput, TextInput, Select, Notification, Switch, Textarea,
-  Badge, Card, Text, Group, ActionIcon, SimpleGrid, Progress
+  Badge, Card, Text, Group, ActionIcon, SimpleGrid, Progress, Modal
 } from '@mantine/core';
-import { IconVideo, IconCheck, IconX, IconTrash, IconPlayerPlay } from '@tabler/icons-react';
+import { IconVideo, IconCheck, IconX, IconTrash, IconPlayerPlay, IconPlus } from '@tabler/icons-react';
 // 1. Import the new dedicated video hook
 import { useVideoCloudinaryUpload } from '@/utils/useVideoCloudinaryUpload';
 import { useR2Upload } from '../../utils/useR2Upload';
@@ -18,14 +18,13 @@ const SuperAdminVideoManager = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [categoryModalOpened, setCategoryModalOpened] = useState(false);
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const [subcategory, setSubcategory] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [message, setMessage] = useState('');
-
-  const categories = [
-    'Facebook Ads', 'Daily Motivation', 'Recruitment', 'Life Insurance',
-    'Health Insurance', 'Motor Insurance', 'Mutual Fund', 'Greetings',
-  ];
 
   const greetingsSubcategories = [
     'Good Morning', 'Good Night', 'Congratulations', 'Birthday', 
@@ -38,18 +37,61 @@ const SuperAdminVideoManager = () => {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  const fetchVideos = async () => {
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/banner-categories`, {
+        params: { type: 'video' },
+      });
+      setCategories((response.data || []).map((item) => item.name));
+    } catch (error) {
+      console.error('Error fetching video categories:', error);
+    }
+  }, [API_URL]);
+
+  const fetchVideos = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/banners/video`);
       setVideos(response.data);
     } catch (error) {
       console.error('Error fetching videos:', error);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     fetchVideos();
-  }, []);
+    fetchCategories();
+  }, [fetchVideos, fetchCategories]);
+
+  const handleCreateCategory = async () => {
+    const trimmedName = newCategory.trim();
+
+    if (!trimmedName) {
+      setMessage('Please enter a category name.');
+      return;
+    }
+
+    setCategoryLoading(true);
+    setMessage('');
+
+    try {
+      const response = await axios.post(`${API_URL}/api/banner-categories`, {
+        name: trimmedName,
+        type: 'video',
+      });
+
+      const createdName = response.data?.name || trimmedName;
+      await fetchCategories();
+      setCategory(createdName);
+      setNewCategory('');
+      setCategoryModalOpened(false);
+      setMessage('Category created successfully!');
+    } catch (error) {
+      console.error('Category creation failed:', error);
+      setMessage(error.response?.data?.message || 'Category creation failed.');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (!file || !category) {
@@ -86,6 +128,8 @@ const SuperAdminVideoManager = () => {
     setDescription('');
     setCategory('');
     setSubcategory('');
+    setNewCategory('');
+    setCategoryModalOpened(false);
     setIsActive(true);
   };
 
@@ -102,6 +146,47 @@ const SuperAdminVideoManager = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Superadmin Video Manager</h1>
+
+      <Modal
+        opened={categoryModalOpened}
+        onClose={() => {
+          if (!categoryLoading) {
+            setCategoryModalOpened(false);
+            setNewCategory('');
+          }
+        }}
+        title="Create Video Category"
+        centered
+      >
+        <div className="space-y-4">
+          <TextInput
+            data-autofocus
+            label="Category Name"
+            placeholder="e.g. Festival Campaign"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateCategory();
+            }}
+            disabled={categoryLoading}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              disabled={categoryLoading}
+              onClick={() => {
+                setCategoryModalOpened(false);
+                setNewCategory('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button loading={categoryLoading} onClick={handleCreateCategory}>
+              Create
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Card shadow="sm" p="lg" radius="md" withBorder className="mb-8">
         <h2 className="text-lg font-semibold mb-4 text-blue-600">Upload New Video Banner</h2>
@@ -149,15 +234,25 @@ const SuperAdminVideoManager = () => {
                     onChange={(e) => setTitle(e.target.value)}
                     disabled={uploading}
                 />
-                <Select
-                    label="Category"
-                    placeholder="Select category"
-                    data={categories}
-                    value={category}
-                    onChange={setCategory}
-                    required
-                    disabled={uploading}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                    <Select
+                        label="Category"
+                        placeholder="Select category"
+                        data={categories}
+                        value={category}
+                        onChange={setCategory}
+                        required
+                        disabled={uploading}
+                    />
+                    <Button
+                        variant="light"
+                        leftIcon={<IconPlus size={16} />}
+                        disabled={uploading}
+                        onClick={() => setCategoryModalOpened(true)}
+                    >
+                        New category
+                    </Button>
+                </div>
             </div>
 
             {category === 'Greetings' && (

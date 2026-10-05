@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
   Button, FileInput, TextInput, Select, Notification, Switch, Textarea,
-  Badge
+  Badge, Modal
 } from '@mantine/core';
-import { IconUpload, IconCheck, IconX, IconTrash } from '@tabler/icons-react';
+import { IconUpload, IconCheck, IconX, IconTrash, IconPlus } from '@tabler/icons-react';
 import { useCloudinaryUpload } from '@/utils/useCloudinaryUpload';
 
 const SuperAdminBannerManager = () => {
@@ -15,20 +15,13 @@ const SuperAdminBannerManager = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [categoryModalOpened, setCategoryModalOpened] = useState(false);
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const [subcategory, setSubcategory] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [message, setMessage] = useState('');
-
-  const categories = [
-    'Facebook Ads',
-    'Daily Motivation',
-    'Concepts',
-    'Life Insurance',
-    'Health Insurance',
-    'Motor Insurance',
-    'Mutual Fund',
-    'Greetings',
-  ];
 
   const greetingsSubcategories = [
     'Good Morning',
@@ -48,19 +41,62 @@ const SuperAdminBannerManager = () => {
   const { upload, uploading } = useCloudinaryUpload();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/banner-categories`, {
+        params: { type: 'image' },
+      });
+      setCategories((response.data || []).map((item) => item.name));
+    } catch (error) {
+      console.error('Error fetching image categories:', error);
+    }
+  }, [API_URL]);
+
   // Fetch existing banners
-  const fetchBanners = async () => {
+  const fetchBanners = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/banners`);
       setBanners(response.data);
     } catch (error) {
       console.error('Error fetching banners:', error);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     fetchBanners();
-  }, []);
+    fetchCategories();
+  }, [fetchBanners, fetchCategories]);
+
+  const handleCreateCategory = async () => {
+    const trimmedName = newCategory.trim();
+
+    if (!trimmedName) {
+      setMessage('Please enter a category name.');
+      return;
+    }
+
+    setCategoryLoading(true);
+    setMessage('');
+
+    try {
+      const response = await axios.post(`${API_URL}/api/banner-categories`, {
+        name: trimmedName,
+        type: 'image',
+      });
+
+      const createdName = response.data?.name || trimmedName;
+      await fetchCategories();
+      setCategory(createdName);
+      setNewCategory('');
+      setCategoryModalOpened(false);
+      setMessage('Category created successfully!');
+    } catch (error) {
+      console.error('Category creation failed:', error);
+      setMessage(error.response?.data?.message || 'Category creation failed.');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
 
   // Upload banner to Cloudinary and save metadata
   const handleUpload = async () => {
@@ -93,6 +129,8 @@ const SuperAdminBannerManager = () => {
     setDescription('');
     setCategory('');
     setSubcategory('');
+    setNewCategory('');
+    setCategoryModalOpened(false);
     setIsActive(true);
   };
 
@@ -108,6 +146,47 @@ const SuperAdminBannerManager = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Superadmin Banner Manager</h1>
+
+      <Modal
+        opened={categoryModalOpened}
+        onClose={() => {
+          if (!categoryLoading) {
+            setCategoryModalOpened(false);
+            setNewCategory('');
+          }
+        }}
+        title="Create Image Category"
+        centered
+      >
+        <div className="space-y-4">
+          <TextInput
+            data-autofocus
+            label="Category Name"
+            placeholder="e.g. Festival Campaign"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateCategory();
+            }}
+            disabled={categoryLoading}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              disabled={categoryLoading}
+              onClick={() => {
+                setCategoryModalOpened(false);
+                setNewCategory('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button loading={categoryLoading} onClick={handleCreateCategory}>
+              Create
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Upload Section */}
       <div className="bg-white p-4 rounded shadow mb-8 space-y-4">
@@ -134,14 +213,24 @@ const SuperAdminBannerManager = () => {
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <Select
-          label="Category"
-          placeholder="Select category"
-          data={categories}
-          value={category}
-          onChange={setCategory}
-          required
-        />
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+          <Select
+            label="Category"
+            placeholder="Select category"
+            data={categories}
+            value={category}
+            onChange={setCategory}
+            required
+          />
+          <Button
+            variant="light"
+            leftIcon={<IconPlus size={16} />}
+            disabled={uploading}
+            onClick={() => setCategoryModalOpened(true)}
+          >
+            New category
+          </Button>
+        </div>
 
         {category === 'Greetings' && (
           <Select

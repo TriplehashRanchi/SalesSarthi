@@ -1,6 +1,6 @@
     'use client';
 
-    import React, { useEffect, useState } from 'react';
+    import React, { useCallback, useEffect, useState } from 'react';
     import axios from 'axios';
     import { Button, Card, Text, Badge } from '@mantine/core';
     import { Capacitor } from '@capacitor/core';
@@ -70,13 +70,14 @@ import VideoThumbnail from './VideoThumbnail';
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     const [videos, setVideos] = useState([]);
+    const [mainCategories, setMainCategories] = useState(MAIN_CATEGORIES);
     const [category, setCategory] = useState(null);
     const [subcategory, setSubcategory] = useState(null);
     const [loading, setLoading] = useState(true);
 
     /* ------------------ FETCH ------------------ */
 
-    const fetchVideos = async () => {
+    const fetchVideos = useCallback(async () => {
         try {
         const res = await axios.get(`${API_URL}/api/banners/video`);
         setVideos(res.data || []);
@@ -85,11 +86,24 @@ import VideoThumbnail from './VideoThumbnail';
         } finally {
         setLoading(false);
         }
-    };
+    }, [API_URL]);
+
+    const fetchCategories = useCallback(async () => {
+        try {
+        const res = await axios.get(`${API_URL}/api/banner-categories`, {
+            params: { type: 'video' },
+        });
+        const names = (res.data || []).map((item) => item.name).filter(Boolean);
+        if (names.length) setMainCategories(names);
+        } catch (err) {
+        console.error('Failed to fetch video categories', err);
+        }
+    }, [API_URL]);
 
     useEffect(() => {
         fetchVideos();
-    }, []);
+        fetchCategories();
+    }, [fetchVideos, fetchCategories]);
 
     /* ------------------ FILTER ------------------ */
 
@@ -118,13 +132,13 @@ import VideoThumbnail from './VideoThumbnail';
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {MAIN_CATEGORIES.map((cat) => (
+            {mainCategories.map((cat) => (
                 <button
                 key={cat}
                 onClick={() => setCategory(cat)}
                 className="bg-white p-5 shadow rounded text-center hover:bg-gray-100 flex flex-col items-center justify-center"
                 >
-                <div className="text-3xl mb-1">{CATEGORY_ICONS[cat]}</div>
+                <div className="text-3xl mb-1">{CATEGORY_ICONS[cat] || 'Video'}</div>
                 <span className="text-sm font-medium">{cat}</span>
                 </button>
             ))}
