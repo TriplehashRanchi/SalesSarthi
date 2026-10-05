@@ -20,23 +20,12 @@ const SuperAdminBannerManager = () => {
   const [categoryModalOpened, setCategoryModalOpened] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [subcategory, setSubcategory] = useState('');
+  const [subcategories, setSubcategories] = useState([]);
+  const [newSubcategory, setNewSubcategory] = useState('');
+  const [subcategoryModalOpened, setSubcategoryModalOpened] = useState(false);
+  const [subcategoryLoading, setSubcategoryLoading] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [message, setMessage] = useState('');
-
-  const greetingsSubcategories = [
-    'Good Morning',
-    'Good Night',
-    'Congratulations',
-    'Birthday',
-    'Anniversary',
-    'Thank You',
-    'Reminder',
-    'Special Days',
-    'Quote',
-    'Sorry',
-    'RIP',
-    'General',
-  ];
 
   const { upload, uploading } = useCloudinaryUpload();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -49,6 +38,23 @@ const SuperAdminBannerManager = () => {
       setCategories((response.data || []).map((item) => item.name));
     } catch (error) {
       console.error('Error fetching image categories:', error);
+    }
+  }, [API_URL]);
+
+  const fetchSubcategories = useCallback(async (categoryName) => {
+    if (!categoryName) {
+      setSubcategories([]);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/api/banner-subcategories`, {
+        params: { type: 'image', category: categoryName },
+      });
+      setSubcategories((response.data || []).map((item) => item.name));
+    } catch (error) {
+      console.error('Error fetching image subcategories:', error);
+      setSubcategories([]);
     }
   }, [API_URL]);
 
@@ -66,6 +72,11 @@ const SuperAdminBannerManager = () => {
     fetchBanners();
     fetchCategories();
   }, [fetchBanners, fetchCategories]);
+
+  useEffect(() => {
+    setSubcategory('');
+    fetchSubcategories(category);
+  }, [category, fetchSubcategories]);
 
   const handleCreateCategory = async () => {
     const trimmedName = newCategory.trim();
@@ -98,6 +109,43 @@ const SuperAdminBannerManager = () => {
     }
   };
 
+  const handleCreateSubcategory = async () => {
+    const trimmedName = newSubcategory.trim();
+
+    if (!category) {
+      setMessage('Please select a category first.');
+      return;
+    }
+
+    if (!trimmedName) {
+      setMessage('Please enter a subcategory name.');
+      return;
+    }
+
+    setSubcategoryLoading(true);
+    setMessage('');
+
+    try {
+      const response = await axios.post(`${API_URL}/api/banner-subcategories`, {
+        name: trimmedName,
+        type: 'image',
+        category,
+      });
+
+      const createdName = response.data?.name || trimmedName;
+      await fetchSubcategories(category);
+      setSubcategory(createdName);
+      setNewSubcategory('');
+      setSubcategoryModalOpened(false);
+      setMessage('Subcategory created successfully!');
+    } catch (error) {
+      console.error('Subcategory creation failed:', error);
+      setMessage(error.response?.data?.message || 'Subcategory creation failed.');
+    } finally {
+      setSubcategoryLoading(false);
+    }
+  };
+
   // Upload banner to Cloudinary and save metadata
   const handleUpload = async () => {
     if (!file || !category) return;
@@ -110,7 +158,7 @@ const SuperAdminBannerManager = () => {
         title,
         description,
         category,
-        subcategory: category === 'Greetings' ? subcategory : null,
+        subcategory: subcategory || null,
         is_active: isActive,
       });
 
@@ -130,7 +178,9 @@ const SuperAdminBannerManager = () => {
     setCategory('');
     setSubcategory('');
     setNewCategory('');
+    setNewSubcategory('');
     setCategoryModalOpened(false);
+    setSubcategoryModalOpened(false);
     setIsActive(true);
   };
 
@@ -188,6 +238,52 @@ const SuperAdminBannerManager = () => {
         </div>
       </Modal>
 
+      <Modal
+        opened={subcategoryModalOpened}
+        onClose={() => {
+          if (!subcategoryLoading) {
+            setSubcategoryModalOpened(false);
+            setNewSubcategory('');
+          }
+        }}
+        title="Create Image Subcategory"
+        centered
+      >
+        <div className="space-y-4">
+          <TextInput
+            label="Category"
+            value={category}
+            disabled
+          />
+          <TextInput
+            data-autofocus
+            label="Subcategory Name"
+            placeholder="e.g. Monsoon Campaign"
+            value={newSubcategory}
+            onChange={(e) => setNewSubcategory(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateSubcategory();
+            }}
+            disabled={subcategoryLoading}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              disabled={subcategoryLoading}
+              onClick={() => {
+                setSubcategoryModalOpened(false);
+                setNewSubcategory('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button loading={subcategoryLoading} onClick={handleCreateSubcategory}>
+              Create
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Upload Section */}
       <div className="bg-white p-4 rounded shadow mb-8 space-y-4">
         <h2 className="text-lg font-semibold">Upload New Banner</h2>
@@ -232,15 +328,25 @@ const SuperAdminBannerManager = () => {
           </Button>
         </div>
 
-        {category === 'Greetings' && (
+        {category && (
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
           <Select
             label="Subcategory"
-            placeholder="Select subcategory"
-            data={greetingsSubcategories}
+            placeholder={subcategories.length ? 'Select subcategory' : 'No subcategories yet'}
+            data={subcategories}
             value={subcategory}
             onChange={setSubcategory}
-            required
+            clearable
           />
+          <Button
+            variant="light"
+            leftIcon={<IconPlus size={16} />}
+            disabled={uploading}
+            onClick={() => setSubcategoryModalOpened(true)}
+          >
+            New subcategory
+          </Button>
+          </div>
         )}
 
         <Switch

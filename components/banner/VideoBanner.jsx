@@ -73,6 +73,8 @@ import VideoThumbnail from './VideoThumbnail';
     const [mainCategories, setMainCategories] = useState(MAIN_CATEGORIES);
     const [category, setCategory] = useState(null);
     const [subcategory, setSubcategory] = useState(null);
+    const [subcategories, setSubcategories] = useState([]);
+    const [loadingSubcategories, setLoadingSubcategories] = useState(false);
     const [loading, setLoading] = useState(true);
 
     /* ------------------ FETCH ------------------ */
@@ -100,10 +102,35 @@ import VideoThumbnail from './VideoThumbnail';
         }
     }, [API_URL]);
 
+    const fetchSubcategories = useCallback(async (categoryName) => {
+        if (!categoryName) {
+        setSubcategories([]);
+        return;
+        }
+
+        setLoadingSubcategories(true);
+        try {
+        const res = await axios.get(`${API_URL}/api/banner-subcategories`, {
+            params: { type: 'video', category: categoryName },
+        });
+        setSubcategories((res.data || []).map((item) => item.name).filter(Boolean));
+        } catch (err) {
+        console.error('Failed to fetch video subcategories', err);
+        setSubcategories(categoryName === 'Greetings' ? GREETINGS_SUBCATEGORIES : []);
+        } finally {
+        setLoadingSubcategories(false);
+        }
+    }, [API_URL]);
+
     useEffect(() => {
         fetchVideos();
         fetchCategories();
     }, [fetchVideos, fetchCategories]);
+
+    useEffect(() => {
+        setSubcategory(null);
+        fetchSubcategories(category);
+    }, [category, fetchSubcategories]);
 
     /* ------------------ FILTER ------------------ */
 
@@ -113,11 +140,8 @@ import VideoThumbnail from './VideoThumbnail';
 
 
     const filteredVideos = videos.filter((v) => {
-        if (category === 'Greetings') {
-        return (
-            v.category === 'Greetings' &&
-            (!subcategory || v.subcategory === subcategory)
-        );
+        if (subcategory) {
+        return v.category === category && v.subcategory === subcategory;
         }
         return v.category === category;
     });
@@ -149,7 +173,15 @@ import VideoThumbnail from './VideoThumbnail';
 
     /* ------------------ STEP 2: GREETINGS SUBCATEGORY ------------------ */
 
-    if (category === 'Greetings' && !subcategory) {
+    if (category && loadingSubcategories) {
+        return (
+        <div className="container mx-auto p-4 sm:p-6">
+            <p className="text-center text-gray-500">Loading subcategories...</p>
+        </div>
+        );
+    }
+
+    if (category && subcategories.length > 0 && !subcategory) {
         return (
         <div className="container mx-auto p-4 sm:p-6">
             <div className="flex justify-between items-center mb-6">
@@ -161,13 +193,13 @@ import VideoThumbnail from './VideoThumbnail';
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {GREETINGS_SUBCATEGORIES.map((sub) => (
+            {subcategories.map((sub) => (
                 <button
                 key={sub}
                 onClick={() => setSubcategory(sub)}
                 className="bg-white p-5 shadow rounded text-center hover:bg-gray-100 flex flex-col items-center justify-center"
                 >
-                <div className="text-3xl mb-1">{GREETINGS_ICONS[sub]}</div>
+                <div className="text-3xl mb-1">{GREETINGS_ICONS[sub] || 'SUB'}</div>
                 <span className="text-sm font-medium">{sub}</span>
                 </button>
             ))}

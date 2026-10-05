@@ -58,6 +58,8 @@ const ProfessionalBannerMaker = () => {
     const [mainCategories, setMainCategories] = useState(MAIN_CATEGORIES);
     const [category, setCategory] = useState(null);
     const [subcategory, setSubcategory] = useState(null);
+    const [subcategories, setSubcategories] = useState([]);
+    const [loadingSubcategories, setLoadingSubcategories] = useState(false);
     const [exportBlobUrl, setExportBlobUrl] = useState(null);
 
     useEffect(() => {
@@ -80,6 +82,26 @@ const ProfessionalBannerMaker = () => {
             if (names.length) setMainCategories(names);
         } catch (err) {
             console.error('Error loading banner categories:', err);
+        }
+    }, [API_URL]);
+
+    const fetchSubcategories = useCallback(async (categoryName) => {
+        if (!categoryName) {
+            setSubcategories([]);
+            return;
+        }
+
+        setLoadingSubcategories(true);
+        try {
+            const { data } = await axios.get(`${API_URL}/api/banner-subcategories`, {
+                params: { type: 'image', category: categoryName },
+            });
+            setSubcategories((data || []).map((item) => item.name).filter(Boolean));
+        } catch (err) {
+            console.error('Error loading banner subcategories:', err);
+            setSubcategories(categoryName === 'Greetings' ? GREETINGS_SUBCATEGORIES : []);
+        } finally {
+            setLoadingSubcategories(false);
         }
     }, [API_URL]);
 
@@ -117,6 +139,11 @@ const ProfessionalBannerMaker = () => {
         loadData();
         fetchCategories();
     }, [API_URL, fetchCategories]);
+
+    useEffect(() => {
+        setSubcategory(null);
+        fetchSubcategories(category);
+    }, [category, fetchSubcategories]);
 
 
     // --- FIX #1: Added missing helper functions ---
@@ -239,8 +266,8 @@ const ProfessionalBannerMaker = () => {
     };
 
     const filteredTemplates = templates.filter((t) => {
-        if (category === 'Greetings') {
-            return t.category === 'Greetings' && (!subcategory || t.subcategory === subcategory);
+        if (subcategory) {
+            return t.category === category && t.subcategory === subcategory;
         }
         return t.category === category;
     });
@@ -267,7 +294,15 @@ const ProfessionalBannerMaker = () => {
     }
 
     // 2️⃣ Show Greetings Subcategories
-    if (category === 'Greetings' && !subcategory && !selectedTemplate) {
+    if (category && loadingSubcategories && !selectedTemplate) {
+        return (
+            <div className="container mx-auto p-4 sm:p-6">
+                <p className="text-center text-gray-500">Loading subcategories...</p>
+            </div>
+        );
+    }
+
+    if (category && subcategories.length > 0 && !subcategory && !selectedTemplate) {
         return (
             <div className="container mx-auto p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
@@ -278,13 +313,13 @@ const ProfessionalBannerMaker = () => {
                     <div />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                {GREETINGS_SUBCATEGORIES.map((subcat) => (
+                {subcategories.map((subcat) => (
                   <button
                     key={subcat}
                     onClick={() => setSubcategory(subcat)}
                     className="bg-white p-4 sm:p-6 shadow rounded text-center hover:bg-gray-100 text-xs sm:text-sm font-medium min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center"
                   >
-                    <div className="text-2xl sm:text-3xl mb-1">{GREETINGS_ICONS[subcat]}</div>
+                    <div className="text-2xl sm:text-3xl mb-1">{GREETINGS_ICONS[subcat] || 'SUB'}</div>
                     <span className="text-center">{subcat}</span>
                   </button>
                 ))}
