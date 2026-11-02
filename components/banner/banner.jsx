@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Button } from '@mantine/core';
+import { Button, ActionIcon } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import { getAuth } from 'firebase/auth';
 
@@ -13,6 +15,17 @@ import { Capacitor } from '@capacitor/core';
 
 
 const MAIN_CATEGORIES = ['Facebook Ads', 'Daily Motivation', 'Concepts', 'Life Insurance', 'Health Insurance', 'Motor Insurance', 'Mutual Fund', 'Greetings'];
+// Soft tint per category.
+const CATEGORY_TINTS = {
+  'Facebook Ads': 'bg-blue-50 border-blue-100 hover:bg-blue-100 hover:border-blue-300',
+  'Daily Motivation': 'bg-amber-50 border-amber-100 hover:bg-amber-100 hover:border-amber-300',
+  Concepts: 'bg-violet-50 border-violet-100 hover:bg-violet-100 hover:border-violet-300',
+  'Life Insurance': 'bg-pink-50 border-pink-100 hover:bg-pink-100 hover:border-pink-300',
+  'Health Insurance': 'bg-teal-50 border-teal-100 hover:bg-teal-100 hover:border-teal-300',
+  'Motor Insurance': 'bg-orange-50 border-orange-100 hover:bg-orange-100 hover:border-orange-300',
+  'Mutual Fund': 'bg-green-50 border-green-100 hover:bg-green-100 hover:border-green-300',
+  Greetings: 'bg-rose-50 border-rose-100 hover:bg-rose-100 hover:border-rose-300',
+};
 const CATEGORY_ICONS = {
   'Facebook Ads': '📢',
   'Daily Motivation': '💡',
@@ -41,6 +54,7 @@ const GREETINGS_ICONS = {
 };
 
 const ProfessionalBannerMaker = () => {
+    const router = useRouter();
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     const exportRef = useRef(null);
     const [isMobile, setIsMobile] = useState(false);
@@ -261,15 +275,23 @@ const handleShare = async () => {
     if (!category && !selectedTemplate) {
         return (
             <div className="container mx-auto p-4 sm:p-6">
-                <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-center">Choose a Category</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className="mb-5 flex items-center gap-2 sm:mb-8">
+                    <ActionIcon className="md:hidden" variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+                        <IconArrowLeft size={22} />
+                    </ActionIcon>
+                    <div className="flex-1">
+                        <h2 className="text-xl font-bold sm:text-2xl">Choose a Category</h2>
+                        <p className="text-sm text-gray-500">Pick a type to create your banner</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4">
                 {MAIN_CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setCategory(cat)}
-                    className="bg-white p-4 sm:p-6 shadow rounded text-center hover:bg-gray-100 text-xs sm:text-sm font-medium min-h-[80px] sm:min-h-[100px] flex flex-col items-center justify-center"
+                    className={`flex min-h-[116px] flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl border p-4 text-center text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 active:translate-y-0 active:scale-95 sm:min-h-[140px] sm:p-6 ${CATEGORY_TINTS[cat] || 'bg-gray-50 border-gray-200'}`}
                   >
-                    <div className="text-2xl sm:text-3xl mb-1">{CATEGORY_ICONS[cat]}</div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl sm:h-14 sm:w-14 sm:text-3xl">{CATEGORY_ICONS[cat]}</div>
                     <span className="text-center">{cat}</span>
                   </button>
                 ))}

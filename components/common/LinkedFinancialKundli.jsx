@@ -71,7 +71,7 @@ const LinkedFinancialKundli = ({ type, entity }) => {
                     <IconFileAnalytics size={18} />
                     <Text weight={600}>Financial Kundli</Text>
                 </Group>
-                <Button size="xs" variant="light" leftIcon={<IconPlus size={14} />} onClick={createNew}>
+                <Button size="xs" variant="light" color="violet" leftIcon={<IconPlus size={14} />} onClick={createNew}>
                     Create
                 </Button>
             </Group>
@@ -90,7 +90,7 @@ const LinkedFinancialKundli = ({ type, entity }) => {
                 <>
                     {reports.slice(0, PREVIEW).map(row)}
                     {reports.length > PREVIEW && (
-                        <Button fullWidth mt="xs" size="xs" variant="light" onClick={() => setShowAll(true)}>
+                        <Button fullWidth mt="xs" size="xs" variant="light" color="violet" onClick={() => setShowAll(true)}>
                             View all ({reports.length})
                         </Button>
                     )}

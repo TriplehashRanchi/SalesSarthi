@@ -275,13 +275,27 @@ const FinancialHealthReport = ({ data, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900 bg-opacity-75 p-4">
-            <div className="relative my-8 w-full max-w-5xl rounded-lg bg-gray-50 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900 bg-opacity-75 px-0 py-0 sm:px-4">
+            <div className="relative my-0 w-full max-w-5xl bg-gray-50 shadow-2xl sm:my-8 sm:rounded-lg">
+                {/* Top bar with close (X): stays visible while scrolling, outside the captured report */}
+                <div className="sticky top-0 z-20 flex items-center justify-between rounded-t-lg border-b border-gray-200 bg-gray-50 px-4 py-2 md:px-8">
+                    <span className="text-sm font-semibold text-gray-700">Financial Health Report</span>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close report"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-200 hover:text-gray-900"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                    </button>
+                </div>
                 {/* --- Report Content to be Captured for Charts --- */}
-                <div ref={reportRef} className="space-y-10 p-6 font-sans md:p-8">
-                    <div className="flex flex-col items-center justify-between rounded-lg border border-gray-200 bg-white p-6 shadow-md md:flex-row">
+                <div ref={reportRef} className="space-y-6 p-4 font-sans md:space-y-10 md:p-8">
+                    <div className="flex flex-col items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-md md:flex-row md:p-6">
                         <div className="mb-4 text-center md:mb-0 md:text-left">
-                            <h1 className="mb-2 text-3xl font-bold text-gray-800">{data.clientName || 'N/A'}</h1>
+                            <h1 className="mb-2 text-2xl font-bold text-gray-800 md:text-3xl">{data.clientName || 'N/A'}</h1>
                             <p className="text-sm text-gray-600">Planner: <span className="font-medium">{data.financialDoctorName || 'N/A'}</span></p>
                             <p className="text-sm text-gray-600">Date: <span className="font-medium">{data.date || 'N/A'}</span></p>
                         </div>
@@ -291,14 +305,14 @@ const FinancialHealthReport = ({ data, onClose }) => {
                         </div>
                     </div>
 
-                    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-md">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md md:p-6">
                         <h2 className="mb-3 border-b pb-2 text-xl font-semibold text-gray-800">Key Insights & Recommendations</h2>
                         <ul className="list-inside list-disc space-y-2 text-sm text-gray-700 md:text-base">{summaryInsights.map((insight, index) => <li key={index}>{insight}</li>)}</ul>
                     </div>
 
-                    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-md">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md md:p-6">
                         <h2 className="mb-4 border-b pb-2 text-xl font-semibold text-gray-800">Category Performance</h2>
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
                             {categoryScores.map((cat) => (
                                 <div key={cat.name} className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-4 transition-shadow hover:shadow-sm">
                                     <cat.icon className={`mr-3 h-6 w-6 flex-shrink-0 ${cat.color}`} />
@@ -313,8 +327,8 @@ const FinancialHealthReport = ({ data, onClose }) => {
                     </div>
 
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                        <div id="report-radar-chart" className="h-[450px] rounded-lg border bg-white p-4 shadow-md"><ResponsiveContainer width="100%" height="95%"><RadarChart data={radarData}><PolarGrid /><PolarAngleAxis dataKey="category" tick={{ fontSize: 11 }} /><PolarRadiusAxis angle={30} domain={[0, 5]} /><Radar name="Avg Score" dataKey="score" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.6} /><Tooltip /></RadarChart></ResponsiveContainer></div>
-                        <div id="report-bar-chart" className="h-[450px] rounded-lg border bg-white p-4 shadow-md"><ResponsiveContainer width="100%" height="95%"><BarChart data={barChartData} layout="vertical" margin={{ left: 110 }}><XAxis type="number" domain={[0, 5]} /><YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 9.5 }} interval={0} /><Bar dataKey="score" fill="#6366f1" barSize={12} radius={[0, 5, 5, 0]}><LabelList dataKey="score" position="right" offset={5} fontSize={9} /></Bar></BarChart></ResponsiveContainer></div>
+                        <div id="report-radar-chart" className="h-[360px] rounded-lg border bg-white p-2 shadow-md md:h-[450px] md:p-4"><ResponsiveContainer width="100%" height="95%"><RadarChart data={radarData}><PolarGrid /><PolarAngleAxis dataKey="category" tick={{ fontSize: 11 }} /><PolarRadiusAxis angle={30} domain={[0, 5]} /><Radar name="Avg Score" dataKey="score" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.6} /><Tooltip /></RadarChart></ResponsiveContainer></div>
+                        <div id="report-bar-chart" className="h-[450px] rounded-lg border bg-white p-2 shadow-md md:p-4"><ResponsiveContainer width="100%" height="95%"><BarChart data={barChartData} layout="vertical" margin={{ left: isMobile ? 0 : 110, right: 16 }}><XAxis type="number" domain={[0, 5]} /><YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 9.5 }} interval={0} /><Bar dataKey="score" fill="#6366f1" barSize={12} radius={[0, 5, 5, 0]}><LabelList dataKey="score" position="right" offset={5} fontSize={9} /></Bar></BarChart></ResponsiveContainer></div>
                     </div>
 
                     {/* --- Detailed Table: Hidden on mobile, visible on desktop --- */}
@@ -339,10 +353,41 @@ const FinancialHealthReport = ({ data, onClose }) => {
                             </tbody>
                          </table>
                     </div>
+
+                    {/* --- Detailed Checklist: mobile list (the table above is desktop only) --- */}
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md md:hidden">
+                        <h2 className="mb-2 border-b pb-2 text-xl font-semibold text-gray-800">Detailed Checklist Analysis</h2>
+                        {data.checklist.map((item) => {
+                            const itemGrade = calculateGrade((item.score / 5) * 100);
+                            const gapValue = calculateGap(item);
+                            return (
+                                <div key={item.item} className="border-b border-gray-200 py-3 last:border-b-0">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <span className="min-w-0 text-sm font-medium text-gray-800">{item.item}</span>
+                                        <span className="inline-flex flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ backgroundColor: itemGrade.color + '20', color: itemGrade.color }}>{item.score}/5</span>
+                                    </div>
+                                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                                        <div>
+                                            <div className="text-gray-500">Target</div>
+                                            <div className="font-medium text-gray-700">{formatValue(item.target)}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-gray-500">Current</div>
+                                            <div className="font-medium text-gray-700">{formatValue(item.currentStatus)}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-gray-500">Gap</div>
+                                            <div className={`font-medium ${gapValue > 0 ? 'text-red-600' : 'text-gray-700'}`}>{gapValue !== null ? `₹ ${gapValue.toLocaleString('en-IN')}` : 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* --- Action Buttons (Outside the captured ref) --- */}
-                <div className="export-buttons  flex flex-wrap items-center justify-center gap-2 px-6 pb-6 text-center md:px-8 md:gap-4">
+                <div className="export-buttons flex flex-wrap items-center justify-center gap-2 px-4 pb-6 text-center md:px-8 md:gap-4">
                     <button onClick={handleExportPDF} className="rounded-lg hidden md:block bg-indigo-600 px-5 py-2 font-semibold text-white shadow-md transition hover:bg-indigo-700">
                         Export PDF
                     </button>

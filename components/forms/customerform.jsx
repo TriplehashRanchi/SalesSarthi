@@ -3,29 +3,47 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 
+// DB values can be null, a short code ("F"), or a zero date; the inputs need clean strings.
+const normalizeGender = (v) => {
+  const g = String(v ?? '').trim().toLowerCase();
+  if (g === 'm' || g === 'male') return 'Male';
+  if (g === 'f' || g === 'female') return 'Female';
+  return '';
+};
+
+const normalizeStatus = (v) => {
+  const found = ['Active', 'Inactive', 'Lapsed'].find((o) => o.toLowerCase() === String(v ?? '').trim().toLowerCase());
+  return found || 'Active';
+};
+
+const toDateInput = (v) => {
+  if (!v) return '';
+  const d = new Date(v);
+  if (isNaN(d.getTime()) || d.getFullYear() < 1900) return '';
+  return d.toLocaleDateString('en-CA');
+};
+
 const CustomerForm = ({ customerData, onSubmit }) => {
   const [formData, setFormData] = useState({
     id: customerData ? customerData.id : Math.floor(Math.random() * 100000000),
-    full_name: customerData ? customerData.full_name : '',
-    email: customerData ? customerData.email : '',
-    phone_number: customerData ? customerData.phone_number : '',
-    gender: customerData ? customerData.gender : '',
-    date_of_birth: customerData ? new Date(customerData.date_of_birth).toLocaleDateString('en-CA') : '',
-    anniversary: customerData ?new Date(customerData.anniversary).toLocaleDateString('en-CA') : '',
-    address: customerData ? customerData.address : '',
-    company_name: customerData ? customerData.company_name : '',
-    product_name: customerData ? customerData.product_name : '',
-    policy_number: customerData ? customerData.policy_number : '',
-    premium: customerData ? customerData.premium : '',
-    coverage_amount: customerData ? customerData.coverage_amount : '',
-    renewal_date: customerData ? customerData.renewal_date : '',
-    status: customerData ? customerData.status : 'Active',
-    source: customerData ? customerData.source : '',
-    referrer: customerData ? customerData.referrer : '',
-    notes: customerData ? customerData.notes : '',
+    full_name: customerData?.full_name ?? '',
+    email: customerData?.email ?? '',
+    phone_number: customerData?.phone_number ?? '',
+    gender: normalizeGender(customerData?.gender),
+    date_of_birth: toDateInput(customerData?.date_of_birth),
+    anniversary: toDateInput(customerData?.anniversary),
+    address: customerData?.address ?? '',
+    company_name: customerData?.company_name ?? '',
+    product_name: customerData?.product_name ?? '',
+    policy_number: customerData?.policy_number ?? '',
+    premium: customerData?.premium ?? '',
+    coverage_amount: customerData?.coverage_amount ?? '',
+    renewal_date: toDateInput(customerData?.renewal_date),
+    status: normalizeStatus(customerData?.status),
+    source: customerData?.source ?? '',
+    referrer: customerData?.referrer ?? '',
+    notes: customerData?.notes ?? '',
   });
-
-  console.log(customerData)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,13 +82,11 @@ const CustomerForm = ({ customerData, onSubmit }) => {
   };
 
   return (
-    <div className="form-container p-6 bg-white rounded shadow-md">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">
-        {customerData ? 'Edit Customer' : 'Add New Customer'}
-      </h2>
+    <div className="form-container">
+      {!customerData && <h2 className="mb-6 text-xl font-semibold text-gray-800 dark:text-white-light">Add New Customer</h2>}
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div>
+      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-6 lg:grid-cols-3 max-sm:[&_.form-input]:!bg-transparent max-sm:[&_.form-select]:!bg-transparent max-sm:[&_.form-textarea]:!bg-transparent">
+        <div className="min-w-0 max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
           <input
             type="text"
@@ -83,7 +99,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
             type="email"
@@ -96,7 +112,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
           <input
             type="tel"
@@ -109,7 +125,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
           <select
             name="gender"
@@ -123,7 +139,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           </select>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
           <input
             type="date"
@@ -134,7 +150,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-gray-700 mb-1">Anniversary</label>
           <input
             type="date"
@@ -145,7 +161,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:order-1 max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
           <textarea
             name="address"
@@ -156,7 +172,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           ></textarea>
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:order-1 max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
           <input
             type="text"
@@ -167,7 +183,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:order-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
           <input
             type="text"
@@ -178,7 +194,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:order-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Policy Number</label>
           <input
             type="text"
@@ -189,7 +205,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:order-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Premium</label>
           <input
             type="number"
@@ -200,7 +216,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:order-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Coverage Amount</label>
           <input
             type="number"
@@ -211,7 +227,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-gray-700 mb-1">Renewal Date</label>
           <input
             type="date"
@@ -222,7 +238,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           />
         </div>
 
-        <div>
+        <div className="min-w-0 max-sm:order-1 max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
           <select
             name="status"
@@ -236,8 +252,8 @@ const CustomerForm = ({ customerData, onSubmit }) => {
           </select>
         </div>
 
-        <div className="col-span-1 lg:col-span-3 flex justify-end space-x-3">
-          <button type="submit" className="btn btn-primary">
+        <div className="col-span-2 lg:col-span-3 flex justify-end order-2 space-x-3 pt-2">
+          <button type="submit" className="btn btn-primary w-full sm:w-auto">
             {customerData ? 'Update Customer' : 'Add Customer'}
           </button>
         </div>

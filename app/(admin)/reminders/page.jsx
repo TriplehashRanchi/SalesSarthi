@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { Box, Tabs, Loader, Title, Text, Button, Group, TextInput, Paper, ScrollArea, Stack, Divider } from '@mantine/core';
+import { Box, Tabs, Loader, Text, Button, TextInput, Stack, Avatar, Badge } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { getAuth } from 'firebase/auth';
-import { IconBrandWhatsapp, IconCake, IconGift, IconCalendarEvent, IconUserPlus, IconSearch, IconBell, IconSettings } from '@tabler/icons-react';
+import { IconBrandWhatsapp, IconCake, IconGift, IconCalendarEvent, IconUserPlus, IconSearch, IconBell, IconSettings, IconArrowLeft } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import calendar from 'dayjs/plugin/calendar';
@@ -56,16 +56,24 @@ const formatReminderDate = (record, type, mode) => {
   return shown.calendar(dayjs(), { sameDay: '[Today]', nextDay: '[Tomorrow]', nextWeek: 'dddd', lastDay: '[Yesterday]', lastWeek: '[Last] dddd', sameElse: 'MMMM D, YYYY' });
 };
 
-const iconFor = (type) => {
-  const style = { marginRight: '8px' };
+const iconFor = (type, style = { marginRight: '8px' }, size = 18) => {
   switch (type.date_field) {
-    case 'created_at': return <IconUserPlus size={18} style={style} />;
-    case 'date_of_birth': return <IconCake size={18} style={style} />;
-    case 'anniversary': return <IconGift size={18} style={style} />;
-    case 'renewal_date': return <IconCalendarEvent size={18} style={style} />;
-    default: return <IconBell size={18} style={style} />;
+    case 'created_at': return <IconUserPlus size={size} style={style} />;
+    case 'date_of_birth': return <IconCake size={size} style={style} />;
+    case 'anniversary': return <IconGift size={size} style={style} />;
+    case 'renewal_date': return <IconCalendarEvent size={size} style={style} />;
+    default: return <IconBell size={size} style={style} />;
   }
 };
+
+const ActionIconBack = ({ onClick }) => (
+  <button type="button" onClick={onClick} aria-label="Back" className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-gray-700 md:hidden transition hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700">
+    <IconArrowLeft size={22} />
+  </button>
+);
+
+const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+const colorFor = (name) => AVATAR_COLORS[((name || '?').trim().charCodeAt(0) || 0) % AVATAR_COLORS.length];
 
 const authHeaders = async () => {
   const user = getAuth().currentUser;
@@ -83,6 +91,7 @@ const RemindersPage = () => {
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [logs, setLogs] = useState([]);
   const [search, setSearch] = useState('');
+  const [counts, setCounts] = useState({}); // pending count per reminder type id
 
   const activeType = useMemo(() => types.find((t) => String(t.id) === activeTab) || null, [types, activeTab]);
   const mode = activeType ? modeOf(activeType, dateFields) : 'manual';
@@ -134,6 +143,39 @@ const RemindersPage = () => {
     load();
     return () => { cancelled = true; };
   }, [activeType]);
+
+  // 3) Pending count for every tab, so empty tabs can stay badge-free.
+  useEffect(() => {
+    if (!types.length) return;
+    let cancelled = false;
+    const loadCounts = async () => {
+      try {
+        const headers = await authHeaders();
+        if (!headers) return;
+        const entries = await Promise.all(
+          types.map(async (t) => {
+            try {
+              const [recipients, sent] = await Promise.all([
+                axios.get(`${API_URL}/api/reminder-types/${t.id}/recipients`, { headers }),
+                axios.get(`${API_URL}/api/reminders/reminder_logs?category=${encodeURIComponent(t.type_key)}`, { headers }),
+              ]);
+              return [t.id, recipients.data.filter((r) => !sent.data.some((log) => log.source_id === r.id)).length];
+            } catch {
+              return [t.id, null];
+            }
+          })
+        );
+        if (!cancelled) setCounts(Object.fromEntries(entries));
+      } catch (error) {
+        console.error('Error fetching reminder counts:', error);
+      }
+    };
+    loadCounts();
+    return () => { cancelled = true; };
+  }, [types]);
+
+  // Live count for the open tab (drops as reminders are sent).
+  const pendingActive = useMemo(() => records.filter((r) => !logs.some((log) => log.source_id === r.id)).length, [records, logs]);
 
   const shownRecords = useMemo(() => {
     if (!activeType) return [];
@@ -190,48 +232,101 @@ const RemindersPage = () => {
 
   const loading = typesLoading || recordsLoading;
 
+  const sendButton = (record, compact) => (
+    <Button
+      size={compact ? 'xs' : 'sm'}
+      color="green"
+      variant="light"
+      radius="xl"
+      leftIcon={<IconBrandWhatsapp size={16} />}
+      onClick={() => handleSendReminder(record)}
+    >
+      Send
+    </Button>
+  );
+
+  const dateChip = (record) => (
+    <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+      {iconFor(activeType, { marginRight: 0, flexShrink: 0 }, 14)}
+      <span className="truncate">{formatReminderDate(record, activeType, mode)}</span>
+    </span>
+  );
+
+  const emptyState = (
+    <Stack align="center" spacing={6} mt={56} px="md">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-violet-50 text-4xl dark:bg-gray-700">{search ? '🔍' : '🎉'}</div>
+      <Text weight={600} align="center" className="mt-2 text-base text-gray-800 dark:text-gray-100 sm:text-lg">
+        {search ? 'No matches found' : 'All caught up!'}
+      </Text>
+      <Text size="sm" align="center" className="max-w-sm text-gray-500 dark:text-gray-400">
+        {search ? `No pending reminders match “${search}” in “${activeType?.name}”.` : `No pending reminders for “${activeType?.name}”. New ones will show up here.`}
+      </Text>
+    </Stack>
+  );
+
   return (
-    <Box className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-      <Group position="apart" mb="md" noWrap spacing="xs">
-        <Title order={2} className="text-xl sm:text-2xl">Reminders</Title>
-        <Button variant="default" radius="xl" size="xs" leftIcon={<IconSettings size={14} />} onClick={() => router.push('/template')}>
+    <Box className="px-1 py-2 text-gray-900 dark:text-gray-100 md:p-4">
+      {/* Header */}
+      <div className="mb-5 flex items-center gap-2">
+        <ActionIconBack onClick={() => router.back()} />
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold leading-tight sm:text-2xl">Reminders</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {activeType && !loading ? `${shownRecords.length} pending in ${activeType.name}` : 'Send timely WhatsApp follow-ups'}
+          </p>
+        </div>
+        <Button variant="light" color="violet" radius="xl" size="xs" leftIcon={<IconSettings size={14} />} onClick={() => router.push('/template')}>
           <span className="sm:hidden">Manage</span>
           <span className="hidden sm:inline">Manage reminder types</span>
         </Button>
-      </Group>
+      </div>
 
-      <Group className="mb-4 flex justify-between">
-        <TextInput
-          placeholder="Search by name..."
-          icon={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-          className="flex-1 rounded-md dark:bg-gray-700 dark:text-white"
-        />
-      </Group>
+      <TextInput
+        placeholder="Search by name..."
+        icon={<IconSearch size={18} />}
+        radius="xl"
+        size="md"
+        value={search}
+        onChange={(e) => setSearch(e.currentTarget.value)}
+        className="mb-4 w-full md:max-w-md"
+      />
 
       {typesLoading ? (
-        <Group className="justify-center mt-10"><Loader /></Group>
+        <div className="mt-10 flex justify-center"><Loader /></div>
       ) : types.length === 0 ? (
         <Stack align="center" mt="xl" spacing="xs">
-          <Text className="text-gray-500 dark:text-gray-400 text-lg">You have no reminder types yet.</Text>
-          <Button onClick={() => router.push('/template')}>Add a reminder type</Button>
+          <Text className="text-lg text-gray-500 dark:text-gray-400">You have no reminder types yet.</Text>
+          <Button color="violet" onClick={() => router.push('/template')}>Add a reminder type</Button>
         </Stack>
       ) : (
-        <Tabs value={activeTab} onTabChange={setActiveTab}>
+        <Tabs value={activeTab} onTabChange={setActiveTab} variant="pills" radius="xl" color="violet">
           {/* Scrolls sideways when there are more types than fit, so tabs never squash or wrap on phones. */}
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }} className="-mx-4 px-4">
-            <Tabs.List grow sx={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
-              {types.map((t) => (
-                <Tabs.Tab
-                  key={t.id}
-                  value={String(t.id)}
-                  className="dark:text-white"
-                  sx={{ whiteSpace: 'nowrap', fontSize: 14, padding: '10px 14px' }}
-                >
-                  {t.name}
-                </Tabs.Tab>
-              ))}
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }} className="-mx-1 px-1 pb-1">
+            <Tabs.List sx={{ flexWrap: 'nowrap', minWidth: 'max-content', gap: 8 }}>
+              {types.map((t) => {
+                const isActive = String(t.id) === activeTab;
+                const count = isActive && !recordsLoading ? pendingActive : counts[t.id];
+                return (
+                  <Tabs.Tab
+                    key={t.id}
+                    value={String(t.id)}
+                    sx={{ whiteSpace: 'nowrap', fontSize: 14, padding: '8px 16px' }}
+                    rightSection={
+                      count > 0 ? (
+                        <Badge
+                          size="xs"
+                          variant="filled"
+                          sx={{ backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : '#ede9fe', color: isActive ? 'inherit' : '#6d28d9' }}
+                        >
+                          {count}
+                        </Badge>
+                      ) : null
+                    }
+                  >
+                    {t.name}
+                  </Tabs.Tab>
+                );
+              })}
             </Tabs.List>
           </div>
           {types.length > 1 && (
@@ -239,82 +334,64 @@ const RemindersPage = () => {
               Swipe for more types →
             </Text>
           )}
+
           <Tabs.Panel value={activeTab || ''} className="pt-4">
             {loading ? (
-              <Group className="justify-center mt-10"><Loader /></Group>
+              <div className="mt-10 flex justify-center"><Loader /></div>
             ) : shownRecords.length > 0 ? (
               <>
-                <div className="hidden md:block">
-                  <Paper className="shadow-md p-4 rounded-md border dark:bg-gray-700 dark:border-gray-600">
-                    <table className="w-full text-sm table-auto">
-                      <thead className="bg-gray-100 dark:bg-gray-600 dark:text-white">
-                        <tr>
-                          <th className="text-left p-2">Name</th>
-                          <th>{mode === 'manual' ? 'Phone' : 'Date Info'}</th>
-                          <th className="text-center">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {shownRecords.map((record) => (
-                          <tr key={record.id} className="hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">
-                            <td className="p-2">{record.full_name || 'N/A'}</td>
-                            <td className="flex items-center">
-                              {iconFor(activeType)}
+                {/* Desktop table */}
+                <div className="hidden overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 md:block">
+                  <table className="w-full table-auto text-sm">
+                    <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold">Name</th>
+                        <th className="px-4 py-3 text-left font-semibold">{mode === 'manual' ? 'Phone' : 'Date Info'}</th>
+                        <th className="px-4 py-3 text-right font-semibold">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shownRecords.map((record) => (
+                        <tr key={record.id} className="border-b border-gray-100 last:border-b-0 hover:bg-violet-50/40 dark:border-gray-700 dark:hover:bg-gray-700">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <Avatar color={colorFor(record.full_name)} variant="light" radius="xl">
+                                {(record.full_name || '?').trim().charAt(0).toUpperCase()}
+                              </Avatar>
+                              <span className="font-medium">{record.full_name || 'N/A'}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-200">
+                              {iconFor(activeType, { marginRight: 0, flexShrink: 0 }, 14)}
                               {formatReminderDate(record, activeType, mode)}
-                            </td>
-                            <td className="text-center p-2">
-                              <Button
-                                size="xs"
-                                className="bg-gradient-to-r from-teal-400 to-lime-400 text-white dark:from-teal-500 dark:to-lime-500"
-                                leftIcon={<IconBrandWhatsapp size={16} />}
-                                onClick={() => handleSendReminder(record)}
-                              >
-                                Send
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </Paper>
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">{sendButton(record, false)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
-                {/* Mobile cards */}
-                <div className="block md:hidden">
-                  <Text size="xs" color="dimmed" mb="xs">
-                    {shownRecords.length} pending {shownRecords.length === 1 ? 'reminder' : 'reminders'}
-                  </Text>
-                  <ScrollArea style={{ height: '60vh' }} mx="0" px="0">
-                    <Stack spacing="sm">
-                      {shownRecords.map((record) => (
-                        <Paper key={record.id} p="sm" withBorder radius="md" className="flex flex-col gap-2">
-                          <Group position="apart" noWrap>
-                            <Text weight={500} lineClamp={1}>{record.full_name}</Text>
-                          </Group>
-                          <Group spacing="xs" align="center">
-                            {iconFor(activeType)}
-                            <Text size="xs">{formatReminderDate(record, activeType, mode)}</Text>
-                          </Group>
-                          <Divider my="xs" />
-                          <Button size="xs" fullWidth leftIcon={<IconBrandWhatsapp size={16} />} onClick={() => handleSendReminder(record)}>
-                            Send
-                          </Button>
-                        </Paper>
-                      ))}
-                    </Stack>
-                  </ScrollArea>
+                {/* Mobile list */}
+                <div className="md:hidden">
+                  {shownRecords.map((record) => (
+                    <div key={record.id} className="flex items-center gap-3 border-b border-gray-200 py-3 last:border-b-0 dark:border-gray-700">
+                      <Avatar color={colorFor(record.full_name)} variant="light" radius="xl" size="lg">
+                        {(record.full_name || '?').trim().charAt(0).toUpperCase()}
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <Text weight={500} lineClamp={1}>{record.full_name || 'N/A'}</Text>
+                        {dateChip(record)}
+                      </div>
+                      {sendButton(record, true)}
+                    </div>
+                  ))}
                 </div>
               </>
             ) : (
-              <Stack align="center" spacing={6} mt={40} px="md">
-                <Text style={{ fontSize: 40, lineHeight: 1 }}>🎉</Text>
-                <Text weight={600} align="center" className="text-gray-800 dark:text-gray-100 text-base sm:text-lg">
-                  All caught up!
-                </Text>
-                <Text size="sm" align="center" className="text-gray-500 dark:text-gray-400">
-                  No pending reminders for “{activeType?.name}”.
-                </Text>
-              </Stack>
+              emptyState
             )}
           </Tabs.Panel>
         </Tabs>

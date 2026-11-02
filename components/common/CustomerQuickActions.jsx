@@ -11,7 +11,7 @@ const toTenDigitMobile = (raw) => {
     return /^[6-9]\d{9}$/.test(ten) ? ten : null;
 };
 
-const CustomerQuickActions = ({ customer, onAppointment, size = 'md' }) => {
+const CustomerQuickActions = ({ customer, onAppointment, size = 'md', hideAppointment = false, plain = false }) => {
     const warn = (message) => showNotification({ title: 'Cannot continue', message, color: 'red' });
 
     const handleCall = () => {
@@ -28,15 +28,17 @@ const CustomerQuickActions = ({ customer, onAppointment, size = 'md' }) => {
 
     return (
         <Group spacing={6} noWrap onClick={(e) => e.stopPropagation()}>
-            <ActionIcon title="Call" size={size} variant="light" color="blue" aria-label="Call customer" onClick={handleCall}>
-                <IconPhoneCall size={16} />
+            <ActionIcon title="Call" size={size} variant={plain ? 'subtle' : 'light'} color={plain ? 'violet' : 'blue'} aria-label="Call customer" onClick={handleCall}>
+                <IconPhoneCall size={plain ? 24 : 16} />
             </ActionIcon>
-            <ActionIcon title="WhatsApp message" size={size} variant="light" color="green" aria-label="Message customer on WhatsApp" onClick={handleMessage}>
-                <IconBrandWhatsapp size={16} />
+            <ActionIcon title="WhatsApp message" size={size} variant={plain ? 'subtle' : 'light'} color="green" aria-label="Message customer on WhatsApp" onClick={handleMessage}>
+                <IconBrandWhatsapp size={plain ? 24 : 16} />
             </ActionIcon>
-            <ActionIcon title="Appointments" size={size} variant="light" color="violet" aria-label="Manage appointments" onClick={() => onAppointment(customer)}>
-                <IconCalendarPlus size={16} />
+            {!hideAppointment && (
+            <ActionIcon title="Appointments" size={size} variant={plain ? 'subtle' : 'light'} color="violet" aria-label="Manage appointments" onClick={() => onAppointment(customer)}>
+                <IconCalendarPlus size={plain ? 24 : 16} />
             </ActionIcon>
+            )}
         </Group>
     );
 };

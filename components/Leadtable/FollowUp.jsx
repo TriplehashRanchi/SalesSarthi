@@ -6,7 +6,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Box, Paper, LoadingOverlay, Alert, Title, Modal, Group, Button, Select, Grid, Text, Stack, Avatar, Badge, Blockquote, SegmentedControl } from '@mantine/core';
+import { Box, Paper, LoadingOverlay, Alert, Title, Modal, Group, Button, Select, Grid, Text, Stack, Avatar, Badge, Blockquote, SegmentedControl, ThemeIcon } from '@mantine/core';
 import { IconAlertCircle, IconPlus, IconCalendarEvent, IconClock, IconCircleCheck, IconListCheck, IconPencil, IconCalendar, IconList } from '@tabler/icons-react';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
@@ -82,19 +82,24 @@ const useFollowupData = (events) => {
     }, [events]);
 };
 
-function StatCard({ title, value, icon }) {
+const STAT_TINTS = {
+    violet: { card: 'bg-violet-50 border-violet-300', icon: 'text-violet-600', value: 'text-violet-700' },
+    orange: { card: 'bg-orange-50 border-orange-300', icon: 'text-orange-500', value: 'text-orange-600' },
+    green: { card: 'bg-green-50 border-green-300', icon: 'text-green-600', value: 'text-green-700' },
+    blue: { card: 'bg-blue-50 border-blue-300', icon: 'text-blue-600', value: 'text-blue-700' },
+};
+
+function StatCard({ title, value, icon, color = 'violet', hint }) {
+    const t = STAT_TINTS[color] || STAT_TINTS.violet;
     return (
-        <Paper withBorder p="md" radius="md">
-            <Group position="apart">
-                <Text size="xs" color="dimmed" tt="uppercase" fw={700}>
-                    {title}
-                </Text>
-                {icon}
-            </Group>
-            <Text fz={32} fw={700} mt="md">
-                {value}
-            </Text>
-        </Paper>
+        <div className={`flex items-center gap-4 rounded-2xl border p-5 max-md:gap-3 max-md:p-3 ${t.card}`}>
+            <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white shadow-sm max-md:h-9 max-md:w-9 ${t.icon}`}>{icon}</div>
+            <div className="min-w-0">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{title}</div>
+                <div className={`text-3xl font-bold leading-tight max-md:text-2xl ${t.value}`}>{value}</div>
+                {hint && <div className="truncate text-xs text-gray-500 max-md:hidden">{hint}</div>}
+            </div>
+        </div>
     );
 }
 
@@ -111,6 +116,7 @@ export default function FollowupsCalendar() {
     const [targetType, setTargetType] = useState('lead'); // who a new follow-up is for: 'lead' | 'customer'
     const [selectedLeadForNewFollowup, setSelectedLeadForNewFollowup] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [selectedDay, setSelectedDay] = useState(() => new Date().toLocaleDateString('en-CA')); // phones: the day shown under the calendar
 
     const { stats, upcoming } = useFollowupData(events);
 
@@ -193,19 +199,33 @@ export default function FollowupsCalendar() {
         fetchData();
     }, []);
 
-    const handleEventClick = (clickInfo) => {
-        const eventData = {
-            id: clickInfo.event.id,
-            ...clickInfo.event.extendedProps,
-            title: clickInfo.event.title,
-            follow_up_date: clickInfo.event.startStr,
-        };
+    const openEventDetails = (eventData) => {
         setSelectedEvent(eventData);
         setIsEditing(false);
         setModalOpen(true);
     };
 
+    const handleEventClick = (clickInfo) => {
+        openEventDetails({
+            id: clickInfo.event.id,
+            ...clickInfo.event.extendedProps,
+            title: clickInfo.event.title,
+            follow_up_date: clickInfo.event.startStr,
+        });
+    };
+
+    // Follow-ups on the day picked in the phone calendar.
+    const dayEvents = useMemo(
+        () => events.filter((e) => new Date(e.start).toLocaleDateString('en-CA') === selectedDay).sort((a, b) => new Date(a.start) - new Date(b.start)),
+        [events, selectedDay]
+    );
+
     const handleDateClick = (arg) => {
+        // On a phone's month view, tapping a day shows its follow-ups below the calendar instead of opening the form.
+        if (narrow && arg.view.type === 'dayGridMonth') {
+            setSelectedDay(arg.dateStr.slice(0, 10));
+            return;
+        }
         setSelectedDate(arg.dateStr);
         setSelectedEvent(null);
         setIsEditing(false);
@@ -234,16 +254,23 @@ export default function FollowupsCalendar() {
     };
 
     return (
-        <Box p="lg">
-            <Group position="apart" mb="xl">
-                <Title order={2}>Follow-ups Dashboard</Title>
-                <Group spacing="sm" align="center" grow={narrow} sx={narrow ? { width: '100%' } : undefined}>
+        <Box p="lg" className="max-md:!px-1 max-md:!py-2">
+            <Group position="apart" mb="xl" className="max-md:!mb-4">
+                <Title order={2} className="max-md:!text-xl">Follow-ups Dashboard</Title>
+                {narrow && (
+                    <Button color="violet" radius="xl" size="xs" leftIcon={<IconPlus size={14} />} onClick={handleAddNewClick}>
+                        Add
+                    </Button>
+                )}
+                <Group spacing="sm" align="center" sx={narrow ? { width: '100%' } : undefined}>
                     <SegmentedControl
-                        color="blue"
-                        radius="md"
+                        color="violet"
+                        radius="xl"
+                        fullWidth={narrow}
+                        sx={narrow ? { width: '100%' } : undefined}
                         styles={{
-                            root: { height: HEADER_CONTROL_HEIGHT, padding: 3 },
-                            label: { height: HEADER_CONTROL_HEIGHT - 6, padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+                            root: { height: narrow ? 38 : HEADER_CONTROL_HEIGHT, padding: 3 },
+                            label: { height: (narrow ? 38 : HEADER_CONTROL_HEIGHT) - 6, padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
                         }}
                         value={currentView === 'listWeek' ? 'list' : 'calendar'}
                         onChange={handleViewToggle}
@@ -268,39 +295,86 @@ export default function FollowupsCalendar() {
                             },
                         ]}
                     />
-                    <Button radius="md" style={{ height: HEADER_CONTROL_HEIGHT }} leftIcon={<IconPlus size={16} />} onClick={handleAddNewClick}>
-                        Add Follow-up
-                    </Button>
+                    {!narrow && (
+                        <Button color="violet" radius="xl" style={{ height: HEADER_CONTROL_HEIGHT }} leftIcon={<IconPlus size={16} />} onClick={handleAddNewClick}>
+                            Add Follow-up
+                        </Button>
+                    )}
                 </Group>
             </Group>
 
-            <Grid gutter="xl" mb="xl">
-                <Grid.Col md={6} lg={3}>
-                    <StatCard title="Due Today" value={stats.dueToday} icon={<IconCalendarEvent size={24} />} />
+            <Grid gutter={narrow ? 'xs' : 'xl'} mb={narrow ? 'md' : 'xl'}>
+                <Grid.Col span={6} md={6} lg={3}>
+                    <StatCard hint="follow-ups for today" title="Due Today" value={stats.dueToday} icon={<IconCalendarEvent size={narrow ? 18 : 24} />} color="violet" />
                 </Grid.Col>
-                <Grid.Col md={6} lg={3}>
-                    <StatCard title="Pending" value={stats.pending} icon={<IconClock size={24} />} />
+                <Grid.Col span={6} md={6} lg={3}>
+                    <StatCard hint="waiting to be done" title="Pending" value={stats.pending} icon={<IconClock size={narrow ? 18 : 24} />} color="orange" />
                 </Grid.Col>
-                <Grid.Col md={6} lg={3}>
-                    <StatCard title="Completed" value={stats.completed} icon={<IconCircleCheck size={24} />} />
+                <Grid.Col span={6} md={6} lg={3}>
+                    <StatCard hint="done so far" title="Completed" value={stats.completed} icon={<IconCircleCheck size={narrow ? 18 : 24} />} color="green" />
                 </Grid.Col>
-                <Grid.Col md={6} lg={3}>
-                    <StatCard title="Total" value={stats.total} icon={<IconListCheck size={24} />} />
+                <Grid.Col span={6} md={6} lg={3}>
+                    <StatCard hint="all follow-ups" title="Total" value={stats.total} icon={<IconListCheck size={narrow ? 18 : 24} />} color="blue" />
                 </Grid.Col>
             </Grid>
 
-            <Grid gutter="xl">
+            <Grid gutter={narrow ? 0 : 'xl'}>
                 <Grid.Col lg={8}>
                     <Paper
-                        shadow="md"
-                        radius="md"
-                        p="md"
-                        style={{ position: 'relative', height: '100%' }}
+                        shadow={narrow ? undefined : 'sm'}
+                        radius="lg"
+                        p={narrow ? 0 : 'md'}
+                        style={{ position: 'relative', height: '100%', ...(narrow ? { background: 'transparent' } : {}) }}
                         // Everything clickable in the calendar shows a pointer: days (add), events (open), toolbar buttons.
                         sx={{
                             '& .fc-daygrid-day, & .fc-timegrid-col, & .fc-timegrid-slot, & .fc-event, & .fc-list-event, & .fc-button, & .fc-daygrid-more-link': {
                                 cursor: 'pointer',
                             },
+                            // Calendar look, all sizes: soft grid, violet buttons, today highlighted, tidy event pills.
+                            '& .fc .fc-toolbar-title': { fontWeight: 700 },
+                            // Toolbar: round arrows, a soft "Today", and Month/Week as one switch.
+                            '& .fc .fc-toolbar-chunk': { display: 'flex', alignItems: 'center', gap: 8 },
+                            '& .fc .fc-button-group': { gap: 6 },
+                            '& .fc .fc-button-primary': { background: '#fff', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 999, textTransform: 'none', fontWeight: 600, boxShadow: 'none !important', padding: '6px 14px', transition: 'all .15s' },
+                            '& .fc .fc-button-group > .fc-button': { marginLeft: '0 !important', borderRadius: 999, width: 36, height: 36, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+                            '& .fc .fc-button-primary:hover': { background: '#f5f3ff', borderColor: '#c4b5fd', color: '#6d28d9' },
+                            '& .fc .fc-today-button': { background: '#f5f3ff', color: '#6d28d9', borderColor: '#ddd6fe' },
+                            '& .fc .fc-today-button:disabled': { opacity: 0.6, background: '#f5f3ff', color: '#6d28d9', borderColor: '#ddd6fe' },
+                            ...(!narrow
+                                ? {
+                                      '& .fc .fc-header-toolbar .fc-toolbar-chunk:last-child': { background: '#f3f4f6', padding: 3, borderRadius: 999, gap: 0 },
+                                      '& .fc .fc-button-group > .fc-dayGridMonth-button, & .fc .fc-button-group > .fc-timeGridWeek-button': { background: 'transparent', border: 'none', color: '#4b5563', width: 'auto', height: 32, padding: '0 16px', margin: 0 },
+                                      '& .fc .fc-button-group > .fc-dayGridMonth-button:hover, & .fc .fc-button-group > .fc-timeGridWeek-button:hover': { background: '#e5e7eb', color: '#111827' },
+                                      '& .fc .fc-button-group > .fc-dayGridMonth-button.fc-button-active, & .fc .fc-button-group > .fc-timeGridWeek-button.fc-button-active': { background: '#7c3aed !important', color: '#fff !important' },
+                                  }
+                                : {}),
+                            '& .fc-theme-standard td, & .fc-theme-standard th, & .fc-theme-standard .fc-scrollgrid': { borderColor: '#eceef3' },
+                            '& .fc .fc-col-header-cell': { background: 'transparent', padding: '6px 0' },
+                            '& .fc .fc-col-header-cell-cushion': { fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.4, textDecoration: 'none' },
+                            '& .fc .fc-daygrid-day-number': { fontSize: 13, fontWeight: 500, padding: '6px 8px', textDecoration: 'none' },
+                            '& .fc .fc-day-today': { background: '#f5f3ff !important' },
+                            '& .fc .fc-day-today .fc-daygrid-day-number': { color: '#6d28d9', fontWeight: 700 },
+                            '& .fc .fc-daygrid-day:hover': { background: '#faf9ff' },
+                            '& .fc .fc-daygrid-event': { borderRadius: 6, padding: '1px 4px', fontSize: 12, fontWeight: 500 },
+                            // Phone calendar: a clean grid, one coloured dot per follow-up, today and the picked day highlighted.
+                            ...(narrow
+                                ? {
+                                      '& .fc-theme-standard td, & .fc-theme-standard th, & .fc-theme-standard .fc-scrollgrid': { borderColor: '#eceef3' },
+                                      '& .fc .fc-col-header-cell-cushion': { fontSize: 12, fontWeight: 600, color: '#6b7280', padding: '6px 0', textDecoration: 'none' },
+                                      '& .fc .fc-daygrid-day-frame': { minHeight: 54 },
+                                      '& .fc .fc-daygrid-day-top': { justifyContent: 'center' },
+                                      '& .fc .fc-daygrid-day-number': { fontSize: 13, padding: '4px 0', textDecoration: 'none' },
+                                      '& .fc .fc-daygrid-day-events': { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2, minHeight: 0, margin: 0 },
+                                      '& .fc .fc-daygrid-event-harness': { display: 'inline-block' },
+                                      '& .fc .fc-daygrid-dot-event': { padding: 0, minHeight: 0 },
+                                      '& .fc .fc-daygrid-dot-event .fc-event-title, & .fc .fc-daygrid-dot-event .fc-event-time': { display: 'none' },
+                                      '& .fc .fc-daygrid-event-dot': { margin: 0, borderWidth: 4 },
+                                      '& .fc .fc-day-today': { background: '#f5f3ff !important' },
+                                      '& .fc .fc-selected-day': { background: '#ede9fe !important' },
+                                      '& .fc .fc-toolbar': { marginBottom: 8 },
+                                      '& .fc .fc-button': { fontSize: 13 },
+                                  }
+                                : {}),
                         }}
                     >
                         <LoadingOverlay visible={loading} overlayBlur={2} />
@@ -317,15 +391,24 @@ export default function FollowupsCalendar() {
                                 initialView={readSavedView(userId)}
                                 datesSet={(info) => rememberView(info.view.type)}
                                 headerToolbar={{
-                                    left: 'prev,next',
+                                    left: 'prev,next today',
                                     center: 'title',
                                     right: narrow ? '' : 'dayGridMonth,timeGridWeek',
                                 }}
+                                buttonText={{ today: 'Today', month: 'Month', week: 'Week', list: 'List' }}
                                 events={events}
                                 eventClick={handleEventClick}
                                 dateClick={handleDateClick}
-                                height="70vh"
+                                height={narrow ? 'auto' : '70vh'}
+                                dayHeaderFormat={narrow ? { weekday: 'narrow' } : undefined}
+                                eventDisplay={narrow ? 'list-item' : 'auto'}
+                                dayMaxEvents={narrow ? false : undefined}
+                                dayCellClassNames={(arg) => (narrow && arg.date.toLocaleDateString('en-CA') === selectedDay ? ['fc-selected-day'] : [])}
                                 eventDidMount={(info) => {
+                                    if (narrow) {
+                                        const dot = info.el.querySelector('.fc-daygrid-event-dot');
+                                        if (dot && info.event.backgroundColor) dot.style.borderColor = info.event.backgroundColor;
+                                    }
                                     const creatorName = info.event.extendedProps.creatorName;
                                     if (creatorName) {
                                         const creatorEl = document.createElement('div');
@@ -347,9 +430,9 @@ export default function FollowupsCalendar() {
                                         const titleEl = document.querySelector('.fc-toolbar-title');
                                         if (titleEl) {
                                             if (window.innerWidth < 640) { // Same breakpoint as your toolbar buttons
-                                                titleEl.style.fontSize = '0.8rem'; // Smaller font size for mobile
+                                                titleEl.style.fontSize = '1rem'; // Smaller font size for mobile
                                             } else {
-                                                titleEl.style.fontSize = '1.75rem'; // Default font size for larger screens
+                                                titleEl.style.fontSize = '1.25rem'; // Default font size for larger screens
                                             }
                                         }
                                     };
@@ -367,54 +450,100 @@ export default function FollowupsCalendar() {
                                 }}
                         
                             />
+                            {narrow && currentView === 'dayGridMonth' && (
+                                <div className="mt-3">
+                                    <div className="mb-1 flex items-center justify-between">
+                                        <div>
+                                            <div className="font-semibold">{new Date(`${selectedDay}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}</div>
+                                            <div className="text-xs text-gray-500">{dayEvents.length} {dayEvents.length === 1 ? 'follow-up' : 'follow-ups'}</div>
+                                        </div>
+                                        <Button
+                                            size="xs"
+                                            radius="xl"
+                                            variant="light"
+                                            color="violet"
+                                            leftIcon={<IconPlus size={14} />}
+                                            onClick={() => {
+                                                setSelectedDate(`${selectedDay}T09:00:00`);
+                                                setSelectedEvent(null);
+                                                setIsEditing(false);
+                                                setModalOpen(true);
+                                            }}
+                                        >
+                                            Add
+                                        </Button>
+                                    </div>
+                                    {dayEvents.length === 0 ? (
+                                        <Text color="dimmed" size="sm" py="md">Nothing planned for this day.</Text>
+                                    ) : (
+                                        dayEvents.map((e) => (
+                                            <div
+                                                key={e.id}
+                                                className="flex cursor-pointer items-center gap-3 border-b border-gray-200 py-3 last:border-b-0"
+                                                onClick={() => openEventDetails({ id: e.id, ...e.extendedProps, title: e.title, follow_up_date: e.start })}
+                                            >
+                                                <span className="h-3 w-3 flex-shrink-0 rounded-full" style={{ background: e.backgroundColor || '#7c3aed' }} />
+                                                <div className="min-w-0 flex-1">
+                                                    <Text weight={500} size="sm" lineClamp={1}>{e.title}</Text>
+                                                    <Text size="xs" color="dimmed">
+                                                        {new Date(e.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {e.extendedProps?.creatorName ? ` · by ${e.extendedProps.creatorName}` : ''}
+                                                    </Text>
+                                                </div>
+                                                <Badge size="xs" color={e.extendedProps?.status === 'Completed' ? 'green' : 'orange'}>{e.extendedProps?.status}</Badge>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
                             </>
                         )}
                     </Paper>
                 </Grid.Col>
 
                 <Grid.Col lg={4}>
-                    <Paper withBorder p="md" radius="md" style={{ height: '100%' }}>
-                        <Title order={4} mb="md">
-                            Upcoming Follow-ups
-                        </Title>
-                        <div style={{ height: 'calc(70vh - 60px)', overflowY: 'auto' }}>
-                            <Stack spacing="sm">
-                                {upcoming.length > 0 ? (
-                                    upcoming.map((event) => (
-                                        <Paper key={event.id} withBorder p="xs" radius="sm">
-                                            <Group noWrap>
-                                                <Avatar color={event.backgroundColor} radius="xl" size="md">
-                                                    <IconClock size={18} />
-                                                </Avatar>
-                                                <Box sx={{ flex: 1 }}>
-                                                    <Text size="sm" weight={500} lineClamp={1}>
-                                                        {event.title}
-                                                    </Text>
-                                                    <Text color="dimmed" size="xs">
-                                                        {new Date(event.start).toLocaleString()}
-                                                    </Text>
-                                                    <Text color="dimmed" size="xs">
-                                                        by <strong>{event.creatorName}</strong>
-                                                    </Text>
-                                                </Box>
-                                            </Group>
-                                        </Paper>
-                                    ))
-                                ) : (
-                                    <Text color="dimmed" size="sm" align="center" mt="lg">
-                                        No upcoming follow-ups.
-                                    </Text>
-                                )}
-                            </Stack>
+                    <Paper withBorder={!narrow} p={narrow ? 0 : 'md'} radius="lg" style={{ height: '100%', ...(narrow ? { background: 'transparent', marginTop: 20 } : {}) }}>
+                        <div className="mb-3 flex items-center justify-between">
+                            <Title order={4}>Upcoming Follow-ups</Title>
+                            {upcoming.length > 0 && <Badge color="violet" variant="light">{upcoming.length}</Badge>}
+                        </div>
+                        <div style={narrow ? undefined : { height: 'calc(70vh - 60px)', overflowY: 'auto' }}>
+                            {upcoming.length > 0 ? (
+                                upcoming.map((event) => (
+                                    <div
+                                        key={event.id}
+                                        className="flex cursor-pointer items-start gap-3 rounded-lg border-b border-gray-100 px-2 py-3 transition last:border-b-0 hover:bg-violet-50/60 dark:border-gray-700 dark:hover:bg-gray-700"
+                                        onClick={() => {
+                                            const e = events.find((x) => String(x.id) === String(event.id));
+                                            if (e) openEventDetails({ id: e.id, ...e.extendedProps, title: e.title, follow_up_date: e.start });
+                                        }}
+                                    >
+                                        <span className="mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: event.backgroundColor || '#7c3aed' }} />
+                                        <div className="min-w-0 flex-1">
+                                            <Text size="sm" weight={600} lineClamp={1}>{event.title}</Text>
+                                            <Text color="dimmed" size="xs">
+                                                {new Date(event.start).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })} · {new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </Text>
+                                            {event.creatorName && <Text color="dimmed" size="xs">by {event.creatorName}</Text>}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <Stack align="center" spacing={6} mt={40}>
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-50 text-3xl dark:bg-gray-700">🗓️</div>
+                                    <Text weight={600} size="sm">Nothing coming up</Text>
+                                    <Text color="dimmed" size="xs" align="center">New follow-ups will appear here.</Text>
+                                </Stack>
+                            )}
                         </div>
                     </Paper>
                 </Grid.Col>
             </Grid>
 
-            <Modal opened={modalOpen} onClose={handleModalClose} title={selectedEvent ? (isEditing ? 'Edit Follow-up' : 'Follow-up Details') : 'Create New Follow-up'} centered size="md">
+            <Modal opened={modalOpen} onClose={handleModalClose} title={<Text weight={700} size="lg">{selectedEvent ? (isEditing ? 'Edit Follow-up' : 'Follow-up Details') : 'New Follow-up'}</Text>} centered={!narrow || (!!selectedEvent && !isEditing)} fullScreen={narrow && (isEditing || !selectedEvent)} radius="lg" size="md">
                 {selectedEvent ? (
                     isEditing ? (
-                        <FollowupForm leadId={selectedEvent.leadId} customerId={selectedEvent.customerId} existingFollowUp={selectedEvent} onFollowupChange={handleFormSuccess} onCancel={() => setIsEditing(false)} />
+                        <FollowupForm leadId={selectedEvent.leadId} customerId={selectedEvent.customerId} existingFollowUp={selectedEvent} onFollowupChange={handleFormSuccess} onCancel={() => setIsEditing(false)} hideTitle />
                     ) : (
                         <Stack spacing="md">
                             <Text size="lg" weight={700}>
@@ -444,19 +573,29 @@ export default function FollowupsCalendar() {
                     )
                 ) : (
                     <Box>
-                        <SegmentedControl
-                            fullWidth
-                            mb="md"
-                            value={targetType}
-                            onChange={(v) => {
-                                setTargetType(v);
-                                setSelectedLeadForNewFollowup(null);
-                            }}
-                            data={[
+                        <div className="mb-5 flex rounded-full bg-gray-100 p-1 dark:bg-gray-800" role="radiogroup" aria-label="Follow-up is for">
+                            {[
                                 { label: 'Lead', value: 'lead' },
                                 { label: 'Customer', value: 'customer' },
-                            ]}
-                        />
+                            ].map((o) => {
+                                const active = targetType === o.value;
+                                return (
+                                    <button
+                                        key={o.value}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={active}
+                                        onClick={() => {
+                                            setTargetType(o.value);
+                                            setSelectedLeadForNewFollowup(null);
+                                        }}
+                                        className={`h-8 flex-1 rounded-full text-sm font-semibold transition ${active ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300'}`}
+                                    >
+                                        {o.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                         <Select
                             label={targetType === 'customer' ? 'Select a Customer' : 'Select a Lead'}
                             placeholder={targetType === 'customer' ? 'Choose which customer this follow-up is for' : 'Choose which lead this follow-up is for'}
@@ -465,7 +604,7 @@ export default function FollowupsCalendar() {
                             onChange={setSelectedLeadForNewFollowup}
                             searchable
                             required
-                            mb="md"
+                            mb="lg"
                             nothingFound={targetType === 'customer' ? 'No customers found' : 'No leads found'}
                         />
                         {selectedLeadForNewFollowup && (
@@ -477,6 +616,7 @@ export default function FollowupsCalendar() {
                 initialDate={selectedDate} // Pass the selected date via the new prop
                 onFollowupChange={handleFormSuccess}
                 onCancel={handleModalClose}
+                hideTitle
             />
                         )}
                     </Box>

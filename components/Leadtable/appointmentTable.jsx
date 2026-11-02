@@ -5,8 +5,9 @@ import { DataTable } from 'mantine-datatable';
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
-import { Menu, Button, Badge, Text, Tabs, LoadingOverlay, Alert } from '@mantine/core';
-import { IconPencil, IconAlertCircle, IconCalendarDue, IconCalendarCheck, IconCalendarCancel } from '@tabler/icons-react';
+import { Menu, Button, Badge, Text, Tabs, LoadingOverlay, Alert, ActionIcon, Avatar } from '@mantine/core';
+import { useRouter } from 'next/navigation';
+import { IconArrowLeft, IconPencil, IconAlertCircle, IconCalendarDue, IconCalendarCheck, IconCalendarCancel } from '@tabler/icons-react';
 import AppointmentEditDrawer from './AppointmentEditDrawer';
 import { getAuth } from 'firebase/auth';
 import { isFuture, isPast, parseISO, format, isValid } from 'date-fns';
@@ -15,6 +16,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const PAGE_SIZES = [10, 20, 30, 50, 100];
 
 const AppointmentTable = () => {
+    const router = useRouter();
     const [allAppointments, setAllAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -125,24 +127,29 @@ const AppointmentTable = () => {
 
     const getStatusBadge = (status) => {
         switch (status?.toLowerCase()) {
-            case 'scheduled': return <Badge color="blue">Scheduled</Badge>;
-            case 'completed': return <Badge color="green">Completed</Badge>;
-            case 'missed': return <Badge color="red">Missed</Badge>;
-            case 'cancelled': return <Badge color="gray">Cancelled</Badge>;
-            default: return <Badge color="orange">{status || 'Unknown'}</Badge>;
+            case 'scheduled': return <Badge color="blue" variant="light">Scheduled</Badge>;
+            case 'completed': return <Badge color="green" variant="light">Completed</Badge>;
+            case 'missed': return <Badge color="red" variant="light">Missed</Badge>;
+            case 'cancelled': return <Badge color="gray" variant="light">Cancelled</Badge>;
+            default: return <Badge color="orange" variant="light">{status || 'Unknown'}</Badge>;
         }
     };
 
     // --- Columns Definition (No changes needed) ---
     const commonColumns = [
         { accessor: 'appointment_date', title: 'Date & Time', render: (r) => <Text size="sm">{formatDate(r.appointment_date)}</Text>, sortable: true, width: 200 },
-        { accessor: 'appointment_type', title: 'Type', sortable: true, width: 150 },
-        { accessor: 'full_name', title: 'Customer/Lead', sortable: true, render: (r) => r.full_name || 'N/A', width: 200 },
+        { accessor: 'appointment_type', title: 'Type', sortable: true, width: 150, render: (r) => <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{r.appointment_type || '-'}</span> },
+        { accessor: 'full_name', title: 'Customer/Lead', sortable: true, width: 220, render: (r) => (
+            <div className="flex items-center gap-2">
+                <Avatar color="violet" variant="light" radius="xl" size="sm">{(r.full_name || '?').trim().charAt(0).toUpperCase()}</Avatar>
+                <span className="font-medium">{r.full_name || 'N/A'}</span>
+            </div>
+        ) },
         { accessor: 'status', title: 'Status', render: (r) => getStatusBadge(r.status), sortable: true, width: 120 },
         { accessor: 'notes', title: 'Notes', render: (r) => <Text truncate>{r.notes || '-'}</Text>, width: 'auto' },
         { accessor: 'actions', title: 'Actions', textAlign: 'right', width: 100, render: (r) => (
             <Menu withinPortal shadow="md" width={200} position="bottom-end">
-                <Menu.Target><Button variant="light" size="xs" compact><IconPencil size={16} /></Button></Menu.Target>
+                <Menu.Target><ActionIcon variant="subtle" color="gray" aria-label="Manage appointment"><IconPencil size={18} /></ActionIcon></Menu.Target>
                 <Menu.Dropdown>
                     <Menu.Item onClick={() => handleManageAppointment(r)} icon={<IconPencil size={14} />}>Manage Appointment</Menu.Item>
                 </Menu.Dropdown>
@@ -150,49 +157,42 @@ const AppointmentTable = () => {
         )},
     ];
 
-    // --- Card Component for Mobile View ---
-    const AppointmentCard = ({ appointment }) => (
-        <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            {/* Card Header */}
-            <div className="flex items-start justify-between">
-                <Text weight={600} size="md" className="dark:text-white">{appointment.full_name || 'N/A'}</Text>
-                {/* Actions Menu */}
+    // --- Row for Mobile View ---
+    const AppointmentCard = ({ appointment }) => {
+        const when = formatDate(appointment.appointment_date);
+        const name = appointment.full_name || appointment.appointment_type || 'Appointment';
+        return (
+            <div className="flex items-start gap-3 border-b border-gray-200 py-3 last:border-b-0 dark:border-gray-700">
+                <Avatar color="violet" variant="light" radius="xl" size="lg">{name.trim().charAt(0).toUpperCase()}</Avatar>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                        <Text weight={500} lineClamp={1} className="dark:text-white">{name}</Text>
+                        {getStatusBadge(appointment.status)}
+                    </div>
+                    <Text size="xs" color="dimmed">{appointment.full_name && appointment.appointment_type ? `${when} · ${appointment.appointment_type}` : when}</Text>
+                    {appointment.notes && <Text size="sm" lineClamp={2} mt={4} className="text-gray-600 dark:text-gray-300">{appointment.notes}</Text>}
+                </div>
                 <Menu withinPortal shadow="md" width={200} position="bottom-end">
-                    <Menu.Target><Button variant="light" size="xs" compact><IconPencil size={16} /></Button></Menu.Target>
+                    <Menu.Target><ActionIcon variant="subtle" color="gray" aria-label="Manage appointment"><IconPencil size={18} /></ActionIcon></Menu.Target>
                     <Menu.Dropdown>
                         <Menu.Item onClick={() => handleManageAppointment(appointment)} icon={<IconPencil size={14} />}>Manage Appointment</Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
             </div>
-
-            {/* Card Body */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div>
-                    <Text color="dimmed" size="xs">Date & Time</Text>
-                    <Text size="sm" className="dark:text-gray-200">{formatDate(appointment.appointment_date)}</Text>
-                </div>
-                <div>
-                    <Text color="dimmed" size="xs">Type</Text>
-                    <Text size="sm" className="dark:text-gray-200">{appointment.appointment_type}</Text>
-                </div>
-                <div>
-                    <Text color="dimmed" size="xs">Status</Text>
-                    <div>{getStatusBadge(appointment.status)}</div>
-                </div>
-            </div>
-
-            {/* Card Footer for Notes */}
-            {appointment.notes && (
-                <div className="border-t border-gray-200 pt-2 dark:border-gray-700">
-                    <Text color="dimmed" size="xs">Notes</Text>
-                    <Text size="sm" truncate className="dark:text-gray-200">{appointment.notes}</Text>
-                </div>
-            )}
-        </div>
-    );
+        );
+    };
 
     return (
-        <div className="panel relative mt-6">
+        <div className="panel relative mt-0 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent md:mt-6">
+            <div className="mb-4 flex items-center gap-2">
+                <ActionIcon className="md:hidden" variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+                    <IconArrowLeft size={22} />
+                </ActionIcon>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-xl font-bold leading-tight sm:text-2xl">Appointments</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{upcomingAppointments.length} upcoming · {allAppointments.length} total</p>
+                </div>
+            </div>
             <LoadingOverlay visible={loading} overlayBlur={2} />
             {error && (
                 <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red" withCloseButton onClose={() => setError(null)} mb="md">
@@ -200,49 +200,72 @@ const AppointmentTable = () => {
                 </Alert>
             )}
 
-            <Tabs value={activeTab} onTabChange={handleTabChange}>
-                <Tabs.List grow>
-                    <Tabs.Tab value="upcoming" icon={<IconCalendarDue size="1rem" />}>Upcoming ({upcomingAppointments.length})</Tabs.Tab>
-                    <Tabs.Tab value="completed" icon={<IconCalendarCheck size="1rem" />}>Completed ({completedAppointments.length})</Tabs.Tab>
-                    <Tabs.Tab value="past_missed" icon={<IconCalendarCancel size="1rem" />}>Past/Missed ({pastMissedAppointments.length})</Tabs.Tab>
-                </Tabs.List>
+            <Tabs value={activeTab} onTabChange={handleTabChange} variant="pills" radius="xl" color="violet">
+                <div className="pb-1">
+                    <Tabs.List
+                        sx={{
+                            flexWrap: 'nowrap',
+                            gap: 6,
+                            // On phones the three tabs share the row equally: no icons, tighter text, no sideways scroll.
+                            '@media (max-width: 640px)': { '& .mantine-Tabs-tab': { flex: 1 }, '& .mantine-Tabs-tabIcon': { display: 'none' }, '& .mantine-Tabs-tabLabel': { fontSize: 13 } },
+                        }}
+                    >
+                        {[
+                            { value: 'upcoming', label: 'Upcoming', icon: <IconCalendarDue size="1rem" />, count: upcomingAppointments.length },
+                            { value: 'completed', label: 'Completed', icon: <IconCalendarCheck size="1rem" />, count: completedAppointments.length },
+                            { value: 'past_missed', label: 'Past / Missed', icon: <IconCalendarCancel size="1rem" />, count: pastMissedAppointments.length },
+                        ].map((t) => (
+                            <Tabs.Tab
+                                key={t.value}
+                                value={t.value}
+                                icon={t.icon}
+                                sx={{ whiteSpace: 'nowrap', padding: '8px 16px', '@media (max-width: 640px)': { padding: '8px 6px', minWidth: 0 } }}
+                                rightSection={t.count > 0 ? (
+                                    <Badge size="xs" variant="filled" sx={{ backgroundColor: activeTab === t.value ? 'rgba(255,255,255,0.3)' : '#ede9fe', color: activeTab === t.value ? 'inherit' : '#6d28d9' }}>{t.count}</Badge>
+                                ) : null}
+                            >
+                                {t.label}
+                            </Tabs.Tab>
+                        ))}
+                    </Tabs.List>
+                </div>
 
                 {/* --- Upcoming Appointments Panel --- */}
-                <Tabs.Panel value="upcoming" pt="xs">
+                <Tabs.Panel value="upcoming" pt="md">
                     {/* Mobile View - Cards */}
-                    <div className="md:hidden space-y-4">
+                    <div className="md:hidden">
                         {upcomingAppointments.map(appt => <AppointmentCard key={appt.id || appt.appointment_date} appointment={appt} />)}
-                        {upcomingAppointments.length === 0 && !loading && <Text align="center" p="md">No upcoming appointments found</Text>}
+                        {upcomingAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No upcoming appointments found</Text>}
                     </div>
                     {/* Desktop View - Table */}
                     <div className="hidden md:block">
-                        <DataTable highlightOnHover className="table-hover whitespace-nowrap" records={paginatedUpcoming} columns={commonColumns} totalRecords={upcomingAppointments.length} recordsPerPage={upcomingPageSize} page={upcomingPage} onPageChange={setUpcomingPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setUpcomingPageSize, setUpcomingPage)} sortStatus={upcomingSortStatus} onSortStatusChange={setUpcomingSortStatus} minHeight={200} noRecordsText="No upcoming appointments found" fetching={loading} />
+                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedUpcoming} columns={commonColumns} totalRecords={upcomingAppointments.length} recordsPerPage={upcomingPageSize} page={upcomingPage} onPageChange={setUpcomingPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setUpcomingPageSize, setUpcomingPage)} sortStatus={upcomingSortStatus} onSortStatusChange={setUpcomingSortStatus} minHeight={120} paginationColor="violet" noRecordsText="No upcoming appointments found" fetching={loading} />
                     </div>
                 </Tabs.Panel>
 
                 {/* --- Completed Appointments Panel --- */}
-                <Tabs.Panel value="completed" pt="xs">
+                <Tabs.Panel value="completed" pt="md">
                     {/* Mobile View - Cards */}
-                    <div className="md:hidden space-y-4">
+                    <div className="md:hidden">
                         {completedAppointments.map(appt => <AppointmentCard key={appt.id || appt.appointment_date} appointment={appt} />)}
-                         {completedAppointments.length === 0 && !loading && <Text align="center" p="md">No completed appointments found</Text>}
+                         {completedAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No completed appointments found</Text>}
                     </div>
                     {/* Desktop View - Table */}
                     <div className="hidden md:block">
-                        <DataTable highlightOnHover className="table-hover whitespace-nowrap" records={paginatedCompleted} columns={commonColumns} totalRecords={completedAppointments.length} recordsPerPage={completedPageSize} page={completedPage} onPageChange={setCompletedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setCompletedPageSize, setCompletedPage)} sortStatus={completedSortStatus} onSortStatusChange={setCompletedSortStatus} minHeight={200} noRecordsText="No completed appointments found" fetching={loading} />
+                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedCompleted} columns={commonColumns} totalRecords={completedAppointments.length} recordsPerPage={completedPageSize} page={completedPage} onPageChange={setCompletedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setCompletedPageSize, setCompletedPage)} sortStatus={completedSortStatus} onSortStatusChange={setCompletedSortStatus} minHeight={120} paginationColor="violet" noRecordsText="No completed appointments found" fetching={loading} />
                     </div>
                 </Tabs.Panel>
 
                 {/* --- Past & Missed Appointments Panel --- */}
-                <Tabs.Panel value="past_missed" pt="xs">
+                <Tabs.Panel value="past_missed" pt="md">
                     {/* Mobile View - Cards */}
-                    <div className="md:hidden space-y-4">
+                    <div className="md:hidden">
                         {pastMissedAppointments.map(appt => <AppointmentCard key={appt.id || appt.appointment_date} appointment={appt} />)}
-                         {pastMissedAppointments.length === 0 && !loading && <Text align="center" p="md">No past due or missed appointments found</Text>}
+                         {pastMissedAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No past due or missed appointments found</Text>}
                     </div>
                     {/* Desktop View - Table */}
                     <div className="hidden md:block">
-                        <DataTable highlightOnHover className="table-hover whitespace-nowrap" records={paginatedPastMissed} columns={commonColumns} totalRecords={pastMissedAppointments.length} recordsPerPage={pastMissedPageSize} page={pastMissedPage} onPageChange={setPastMissedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setPastMissedPageSize, setPastMissedPage)} sortStatus={pastMissedSortStatus} onSortStatusChange={setPastMissedSortStatus} minHeight={200} noRecordsText="No past due or missed appointments found" fetching={loading} />
+                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedPastMissed} columns={commonColumns} totalRecords={pastMissedAppointments.length} recordsPerPage={pastMissedPageSize} page={pastMissedPage} onPageChange={setPastMissedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setPastMissedPageSize, setPastMissedPage)} sortStatus={pastMissedSortStatus} onSortStatusChange={setPastMissedSortStatus} minHeight={120} paginationColor="violet" noRecordsText="No past due or missed appointments found" fetching={loading} />
                     </div>
                 </Tabs.Panel>
             </Tabs>

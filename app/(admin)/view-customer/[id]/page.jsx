@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader, Notification } from '@mantine/core';
+import { Loader, Notification, Avatar, ActionIcon, Button } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
 import axios from 'axios';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
 import LinkedFinancialKundli from '@/components/common/LinkedFinancialKundli';
@@ -67,39 +68,61 @@ const ViewCustomer = () => {
         { label: 'Notes', value: customer.notes, textarea: true },
     ];
 
+    const visibleFields = fields.filter((f) => f.value !== null && f.value !== undefined && f.value !== '');
+
     return (
-        <div className="panel">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="min-w-0 break-words text-lg sm:text-xl">View Customer: {customer.full_name}</h2>
-                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                    <CustomerQuickActions customer={customer} onAppointment={() => setOpenDrawer(true)} size="lg" />
-                    <button type="button" className="btn btn-outline-primary flex-1 sm:flex-none" onClick={() => router.push('/customers')}>
-                        Back
-                    </button>
-                    <button type="button" className="btn btn-outline-success flex-1 sm:flex-none" onClick={openFinCheckup}>
+        <div className="panel max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
+            {/* Header */}
+            <div className="flex flex-wrap items-center gap-3 pb-4">
+                <ActionIcon variant="subtle" color="dark" onClick={() => router.push('/customers')} aria-label="Back">
+                    <IconArrowLeft size={22} />
+                </ActionIcon>
+                <Avatar color="violet" variant="light" radius="xl" size="lg">
+                    {(customer.full_name || '?').trim().charAt(0).toUpperCase()}
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                    <div className="truncate text-lg font-semibold leading-tight dark:text-white-light md:text-xl">{customer.full_name}</div>
+                    <div className="text-sm text-gray-500">{customer.phone_number}</div>
+                </div>
+                <CustomerQuickActions customer={customer} onAppointment={() => setOpenDrawer(true)} size="xl" plain />
+                <div className="hidden items-center gap-2 md:flex">
+                    <Button variant="light" color="violet" onClick={openFinCheckup}>
                         Fin-Health Checkup
-                    </button>
-                    <button type="button" className="btn btn-primary flex-1 sm:flex-none" onClick={() => router.push(`/edit-customer/${customer.id}`)}>
+                    </Button>
+                    <Button color="violet" onClick={() => router.push(`/edit-customer/${customer.id}`)}>
                         Edit Customer
-                    </button>
+                    </Button>
                 </div>
             </div>
+            <div className="flex gap-2 pb-4 md:hidden">
+                <Button className="flex-1" variant="light" color="violet" onClick={openFinCheckup}>
+                    Fin-Health Checkup
+                </Button>
+                <Button className="flex-1" color="violet" onClick={() => router.push(`/edit-customer/${customer.id}`)}>
+                    Edit Customer
+                </Button>
+            </div>
 
-            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Linked reports: no boxes, just a divider under each */}
+            <div className="mb-4 grid grid-cols-1 gap-x-10 gap-y-2 md:grid-cols-2 [&_.mantine-Paper-root]:!rounded-none [&_.mantine-Paper-root]:!border-0 [&_.mantine-Paper-root]:!border-b [&_.mantine-Paper-root]:!bg-transparent [&_.mantine-Paper-root]:!px-0 [&_.mantine-Paper-root]:!shadow-none">
                 <LinkedFinHealthCheckups type="customer" entity={customer} />
                 <LinkedFinancialKundli type="customer" entity={customer} />
             </div>
 
-            <div className="form-container p-4 sm:p-6 bg-white rounded shadow-md">
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">Customer Details</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {fields.map(({ label, value, textarea }) => (
-                        <div key={label}>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                            {textarea ? <textarea readOnly value={value ?? ''} className="form-textarea w-full" /> : <input type="text" readOnly value={value ?? ''} className="form-input w-full" />}
+            {/* Details */}
+            <div className="pb-1 pt-2 text-base font-semibold dark:text-white-light">Customer Details</div>
+            <div className="grid grid-flow-dense grid-cols-2 gap-x-6 md:grid-cols-3">
+                {visibleFields.map(({ label, value, textarea }) => {
+                    const text = String(value);
+                    // Short values pair up; long or multi-line ones take a full row on phones.
+                    const span = textarea ? 'col-span-2 md:col-span-3' : text.length > 18 ? 'col-span-2 md:col-span-1' : '';
+                    return (
+                        <div key={label} className={`min-w-0 border-b border-gray-200 py-3 dark:border-gray-700 ${span}`}>
+                            <div className="text-xs text-gray-500">{label}</div>
+                            <div className="mt-0.5 whitespace-pre-wrap break-words text-sm font-medium dark:text-white-light">{text}</div>
                         </div>
-                    ))}
-                </div>
+                    );
+                })}
             </div>
             <AppointmentDrawer customer={customer} opened={openDrawer} onClose={() => setOpenDrawer(false)} />
         </div>

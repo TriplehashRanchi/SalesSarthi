@@ -14,12 +14,14 @@ import AppointmentDrawer from './AppointmentDrawer';
 import { getAuth } from 'firebase/auth';
 import { IconDotsVertical, IconFileExport, IconUpload } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
-import { Loader } from '@mantine/core';
+import { Loader, Avatar, TextInput } from '@mantine/core';
 import IconCashBanknotes from '../icon/icon-cash-banknotes';
 import IconListCheck from '../icon/icon-list-check';
 import IconHeart from '../icon/icon-heart';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
-import { IconEye, IconPlus } from '@tabler/icons-react';
+import { IconEye, IconPlus, IconCalendarPlus, IconArrowLeft, IconSearch, IconDownload } from '@tabler/icons-react';
+
+const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
 
 const CustomerTable = ({ profile }) => {
   /* ─────────── existing state ─────────── */
@@ -319,6 +321,41 @@ const CustomerTable = ({ profile }) => {
     return () => observer.disconnect();
   }, [hasMore, mobileCount]);
 
+  /* ─────────── mobile long-press selection ─────────── */
+  const [selectionMode, setSelectionMode] = useState(false);
+  const pressTimer = useRef(null);
+  const longPressed = useRef(false);
+
+  const cancelLongPress = () => clearTimeout(pressTimer.current);
+
+  const startLongPress = (id) => {
+    longPressed.current = false;
+    cancelLongPress();
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      if (navigator.vibrate) navigator.vibrate(30);
+      setSelectionMode(true);
+      setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    }, 500);
+  };
+
+  const handleCardClick = (id) => {
+    if (longPressed.current) {
+      longPressed.current = false; // the click that ends a long press
+      return;
+    }
+    if (selectionMode) toggleSelect(id);
+  };
+
+  const exitSelection = () => {
+    setSelectionMode(false);
+    setSelectedIds([]);
+  };
+
+  useEffect(() => {
+    if (selectionMode && selectedIds.length === 0) setSelectionMode(false);
+  }, [selectionMode, selectedIds]);
+
   const getNextAppointment = (appointments) => {
     if (!appointments || appointments.length === 0) return null;
     const upcoming = appointments.filter((appt) => new Date(appt.appointment_date) > new Date()).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date));
@@ -327,33 +364,38 @@ const CustomerTable = ({ profile }) => {
 
   /* ─────────── JSX ─────────── */
   return (
-    <div className="panel mt-6">
+    <div className="panel mt-0 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
       {/* ⬇︎ Header / toolbar */}
-      <div className="mb-5 flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
-        <h5 className="text-lg font-semibold dark:text-white-light">Customer Table</h5>
+      <div className="mb-5 hidden flex-wrap items-center gap-4 md:flex">
+        <div className="mr-2">
+          <h5 className="text-xl font-semibold leading-tight dark:text-white-light">Customers</h5>
+          <div className="text-sm text-gray-500">{customers.length} {customers.length === 1 ? 'Customer' : 'Customers'}</div>
+        </div>
 
-        <input type="text" className="form-input w-full md:w-auto md:ml-4" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <TextInput
+          icon={<IconSearch size={16} />}
+          placeholder="Search by name, email or phone"
+          radius="xl"
+          className="w-full max-w-xs flex-1"
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+        />
 
-        <div className="hidden md:flex md:flex-wrap md:justify-end ml-auto gap-2">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {selectedIds.length > 0 && (
-            <ActionIcon size={36} variant="filled" color="red" title={`Delete ${selectedIds.length} selected`} aria-label="Delete selected customers" onClick={deleteSelected}>
-              <IconTrash />
-            </ActionIcon>
+            <Button color="red" variant="light" leftIcon={<IconTrash size={16} />} onClick={deleteSelected}>
+              Delete ({selectedIds.length})
+            </Button>
           )}
-
-          <Button color="green" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/create-customer')}>
+          <Button variant="light" color="violet" leftIcon={<IconUpload size={16} />} onClick={() => setCsvModalOpen(true)}>
+            Upload CSV
+          </Button>
+          <Button variant="light" color="violet" leftIcon={<IconDownload size={16} />} onClick={handleExportData}>
+            Export
+          </Button>
+          <Button color="violet" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/create-customer')}>
             Add Customer
           </Button>
-
-          <Button onClick={() => setCsvModalOpen(true)}>
-            <IconUpload size={16} />
-            CSV Bulk Upload
-          </Button>
-          {/* ⬇︎⬇︎⬇︎ ADD THIS BUTTON ⬇︎⬇︎⬇︎ */}
-          <Button onClick={handleExportData}>
-            Export Data  <IconFileExport size={16} />
-          </Button>
-          {/* ⬆︎⬆︎⬆︎ END OF ADDED BUTTON ⬆︎⬆︎⬆︎ */}
         </div>
       </div>
 
@@ -361,6 +403,7 @@ const CustomerTable = ({ profile }) => {
       <div className="datatables hidden md:block">
         <DataTable
           highlightOnHover
+          verticalSpacing="sm"
           className="table-hover whitespace-nowrap"
           records={recordsData}
           columns={[
@@ -377,7 +420,25 @@ const CustomerTable = ({ profile }) => {
               render: (record) => <Checkbox checked={selectedIds.includes(record.id)} onChange={() => toggleSelect(record.id)} />,
               width: 48,
             },
-            { accessor: 'full_name', title: 'Name', sortable: true },
+            {
+              accessor: 'full_name',
+              title: 'Name',
+              sortable: true,
+              render: (record) => {
+                const initial = (record.full_name || '?').trim().charAt(0).toUpperCase();
+                return (
+                  <div className="flex items-center gap-3">
+                    <Avatar color={AVATAR_COLORS[(initial.charCodeAt(0) || 0) % AVATAR_COLORS.length]} variant="light" radius="xl" size="md" src={record.avatar_url || record.image_url || record.photo_url || null}>
+                      {initial}
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="font-medium">{record.full_name || 'N/A'}</div>
+                      <div className="text-xs text-gray-500">{record.phone_number}</div>
+                    </div>
+                  </div>
+                );
+              },
+            },
             { accessor: 'email', title: 'Email', sortable: true },
             {
               accessor: 'next_appointment',
@@ -385,18 +446,18 @@ const CustomerTable = ({ profile }) => {
               render: (record) => {
                 const nextAppt = getNextAppointment(record.appointments);
                 return nextAppt ? (
-                  <Badge color="blue">
+                  <Badge color="violet" variant="light">
                     {new Date(nextAppt.appointment_date).toLocaleString()} - {nextAppt.appointment_type}
                   </Badge>
                 ) : (
-                  <Text>No Upcoming Appointment</Text>
+                  <Text color="dimmed" size="sm">—</Text>
                 );
               },
             },
             {
               accessor: 'quick_actions',
               title: 'Quick Actions',
-              render: (record) => <CustomerQuickActions customer={record} onAppointment={handleManageAppointments} />,
+              render: (record) => <CustomerQuickActions customer={record} onAppointment={handleManageAppointments} size="lg" plain />,
             },
             {
               accessor: 'actions',
@@ -449,105 +510,144 @@ const CustomerTable = ({ profile }) => {
       </div>
       {/* ─── Mobile Customer List ─── */}
       <div className="block md:hidden">
-        {/* Bulk toolbar (delete + export) */}
-        <Group className="px-1 py-2" spacing="xs">
-          <Button size="xs" color="green" leftIcon={<IconPlus size={14} />} onClick={() => router.push('/create-customer')}>
-            Add
-          </Button>
-          {selectedIds.length > 0 && (
-            <ActionIcon size={30} variant="filled" color="red" title={`Delete ${selectedIds.length} selected`} aria-label="Delete selected customers" onClick={deleteSelected}>
-              <IconTrash size={16} />
-            </ActionIcon>
-          )}
-          <Button size="xs" onClick={handleExportData} leftIcon={<IconFileExport size={14} />}>
-            Export
-          </Button>
-          <Button size="xs" onClick={() => setCsvModalOpen(true)} leftIcon={<IconFileExport size={14} />}>
-            Upload CSV
-          </Button>
-        </Group>
+        {/* Header */}
+        <div className="flex items-center gap-3 pb-2">
+          <ActionIcon variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+            <IconArrowLeft size={22} />
+          </ActionIcon>
+          <div>
+            <div className="text-xl font-semibold leading-tight dark:text-white-light">Customers</div>
+            <div className="text-sm text-gray-500">{customers.length} {customers.length === 1 ? 'Customer' : 'Customers'}</div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <TextInput
+          icon={<IconSearch size={18} />}
+          placeholder="Search by name or phone"
+          radius="xl"
+          size="md"
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          mb="sm"
+        />
+
+        {selectionMode ? (
+          <Group className="px-1 py-2" position="apart" noWrap>
+            <Text size="sm" weight={500}>{selectedIds.length} selected</Text>
+            <Group spacing="xs" noWrap>
+              <Button size="xs" color="red" leftIcon={<IconTrash size={14} />} onClick={deleteSelected}>
+                Delete
+              </Button>
+              <Button size="xs" variant="default" onClick={exitSelection}>
+                Cancel
+              </Button>
+            </Group>
+          </Group>
+        ) : (
+          <div className="flex items-center py-2 mb-2">
+            <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconPlus size={18} />} onClick={() => router.push('/create-customer')}>
+              Add
+            </Button>
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+            <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconUpload size={18} />} onClick={() => setCsvModalOpen(true)}>
+              Upload CSV
+            </Button>
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+            <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconDownload size={18} />} onClick={handleExportData}>
+              Export
+            </Button>
+          </div>
+        )}
 
         <div className="px-1">
           {mobileList.slice(0, mobileCount).map((cust) => {
             const isSel = selectedIds.includes(cust.id);
-            const nextAppt = getNextAppointment(cust.appointments);
+            const photo = cust.avatar_url || cust.image_url || cust.photo_url || null;
+            const initial = (cust.full_name || '?').trim().charAt(0).toUpperCase();
             return (
-              <Paper
+              <div
                 key={cust.id}
-                p="xs"
-                withBorder
-                shadow="xs"
-                mb="xs"
-                className="flex items-start justify-between"
+                className={`flex items-center gap-3 select-none py-2.5 border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSel ? 'bg-blue-50 dark:bg-gray-700' : ''}`}
+                style={{ WebkitTouchCallout: 'none' }}
+                onTouchStart={() => startLongPress(cust.id)}
+                onTouchMove={cancelLongPress}
+                onTouchEnd={cancelLongPress}
+                onTouchCancel={cancelLongPress}
+                onContextMenu={(e) => e.preventDefault()}
+                onClick={() => handleCardClick(cust.id)}
               >
-                {/* Main info */}
-                <div className="flex-1 mr-2">
-                  <Group position="apart" noWrap>
-                    <Text weight={500} lineClamp={1}>{cust.full_name}</Text>
-                    <Checkbox checked={isSel} onChange={() => toggleSelect(cust.id)} />
-                  </Group>
+                {selectionMode ? (
+                  <Checkbox checked={isSel} onChange={() => toggleSelect(cust.id)} onClick={(e) => e.stopPropagation()} />
+                ) : (
+                  <Avatar color={AVATAR_COLORS[(initial.charCodeAt(0) || 0) % AVATAR_COLORS.length]} variant="light" radius="xl" size="lg" src={photo}>{initial}</Avatar>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <Text weight={500} lineClamp={1}>{cust.full_name}</Text>
                   <Text size="xs" color="dimmed">{cust.phone_number}</Text>
-                  {nextAppt && (
-                    <Badge size="xs" color="blue" variant="light" mt="xs">
-                      {new Date(nextAppt.appointment_date).toLocaleDateString()} @ {new Date(nextAppt.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Badge>
-                  )}
-                  <div className="mt-2">
-                    <CustomerQuickActions customer={cust} onAppointment={handleManageAppointments} size="lg" />
-                  </div>
                 </div>
 
-                {/* Actions menu */}
-                <Menu shadow="md" withinPortal>
-                  <Menu.Target>
-                    <ActionIcon size="sm" variant="subtle">
-                      <IconDotsVertical size={18} />
-                    </ActionIcon>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item icon={<IconEye size={14} />} onClick={() => handleViewCustomer(cust)}>
-                      View
+                {!selectionMode && (
+                  <>
+                    <CustomerQuickActions customer={cust} onAppointment={handleManageAppointments} size="xl" hideAppointment plain />
+                    <div onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
+                      <Menu shadow="md" withinPortal>
+                        <Menu.Target>
+                          <ActionIcon size="sm" variant="subtle">
+                            <IconDotsVertical size={18} />
+                          </ActionIcon>
+                        </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item icon={<IconEye size={14} />} onClick={() => handleViewCustomer(cust)}>
+                View
+              </Menu.Item>
+              <Menu.Item icon={<IconPencil size={14} />} onClick={() => handleEditCustomer(cust)}>
+                Edit
+              </Menu.Item>
+                    <Menu.Item icon={<IconCalendarPlus size={14} />} onClick={() => handleManageAppointments(cust)}>
+                      Appointments
                     </Menu.Item>
-                    <Menu.Item icon={<IconPencil size={14} />} onClick={() => handleEditCustomer(cust)}>
-                      Edit
-                    </Menu.Item>
-                    {/* 👇 4. ADD THE NEW MENU ITEMS FOR MOBILE */}
-                    <Menu.Divider />
-                    <Menu.Item icon={<IconCashBanknotes size={14} />} onClick={() => {
-                      const qs = new URLSearchParams({
-                        id: cust.id,
-                        type: 'customer',
-                        name: cust.full_name,
-                        phone: cust.phone_number,
-                        email: cust.email,
-                        doctor: profile?.name || ''
-                      }).toString();
-                      router.push(`/fincalc?${qs}`);
-                    }}>
-                     Fin-Health Checkup
-                    </Menu.Item>
-                    <Menu.Item icon={<IconListCheck size={14} />} onClick={() => {
-                      const qs = new URLSearchParams({
-                        clientId: cust.id,
-                        clientType: 'customer',
-                        clientName: cust.full_name
-                      }).toString();
-                      router.push(`/fhclog?${qs}`);
-                    }}>
-                      Checkup History
-                    </Menu.Item>
-                    <Menu.Divider />
-                    {/* 👆 END OF NEW ITEMS */}
-                    <Menu.Item
-                      icon={<IconTrash size={14} />}
-                      color="red"
-                      onClick={() => deleteCustomer(cust.id)}
-                    >
-                      Delete
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </Paper>
+              {/* 👇 4. ADD THE NEW MENU ITEMS FOR MOBILE */}
+              <Menu.Divider />
+              <Menu.Item icon={<IconCashBanknotes size={14} />} onClick={() => {
+                const qs = new URLSearchParams({
+                  id: cust.id,
+                  type: 'customer',
+                  name: cust.full_name,
+                  phone: cust.phone_number,
+                  email: cust.email,
+                  doctor: profile?.name || ''
+                }).toString();
+                router.push(`/fincalc?${qs}`);
+              }}>
+               Fin-Health Checkup
+              </Menu.Item>
+              <Menu.Item icon={<IconListCheck size={14} />} onClick={() => {
+                const qs = new URLSearchParams({
+                  clientId: cust.id,
+                  clientType: 'customer',
+                  clientName: cust.full_name
+                }).toString();
+                router.push(`/fhclog?${qs}`);
+              }}>
+                Checkup History
+              </Menu.Item>
+              <Menu.Divider />
+              {/* 👆 END OF NEW ITEMS */}
+              <Menu.Item
+                icon={<IconTrash size={14} />}
+                color="red"
+                onClick={() => deleteCustomer(cust.id)}
+              >
+                Delete
+              </Menu.Item>
+            </Menu.Dropdown>
+                      </Menu>
+                    </div>
+                  </>
+                )}
+              </div>
             );
           })}
           {hasMore && (
@@ -557,8 +657,21 @@ const CustomerTable = ({ profile }) => {
           )}
         </div>
 
+        {!selectionMode && (
+          <ActionIcon
+            size={56}
+            radius="xl"
+            variant="filled"
+            color="violet"
+            className="shadow-lg"
+            style={{ position: 'fixed', right: 'max(16px, env(safe-area-inset-right))', bottom: 'calc(80px + env(safe-area-inset-bottom))', zIndex: 50 }}
+            onClick={() => router.push('/create-customer')}
+            aria-label="Add customer"
+          >
+            <IconPlus size={28} />
+          </ActionIcon>
+        )}
       </div>
-
 
       {/* ⬇︎ Existing appointment drawer */}
       <AppointmentDrawer customer={selectedCustomer} opened={openDrawer} onClose={() => setOpenDrawer(false)} />

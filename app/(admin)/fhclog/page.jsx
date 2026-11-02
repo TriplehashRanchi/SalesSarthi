@@ -12,6 +12,8 @@ import {
   Flex,
   Box,
   Group,
+  Avatar,
+  ActionIcon,
 } from '@mantine/core';
 import { DataTable } from 'mantine-datatable';
 import {
@@ -20,11 +22,12 @@ import {
   IconSearch,
   IconX,
   IconCalendar,
+  IconArrowLeft,
 } from '@tabler/icons-react';
 import { getAuth } from 'firebase/auth';
 import { parseISO, format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import FinancialHealthReportModal from '@/components/modals/finhealth2';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -48,6 +51,7 @@ const CheckupHistory = () => {
   
      // 👈 2. READ PARAMETERS FROM THE URL
     const searchParams = useSearchParams();
+    const router = useRouter();
     const clientIdFromUrl = searchParams.get('clientId');
     const clientTypeFromUrl = searchParams.get('clientType');
     const clientNameFromUrl = searchParams.get('clientName');
@@ -251,31 +255,33 @@ const CheckupHistory = () => {
   ];
 
   const CheckupCard = ({ checkup }) => (
-    <div className="space-y-3 rounded-lg border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex items-start justify-between">
-        <div>
-          <Text weight={600} className="dark:text-white">
-            {checkup.clientName}
-          </Text>
-          <Text size="sm" color="dimmed">
-            on {formatDate(checkup.checkupDate)}
-          </Text>
-        </div>
-        <Button variant="light" size="xs" onClick={() => handleViewReport(checkup)}>
-          View
-        </Button>
+    <div className="flex items-center gap-3 border-b border-gray-200 py-3 last:border-b-0 dark:border-gray-700">
+      <Avatar color="violet" variant="light" radius="xl" size="lg">
+        {(checkup.clientName || '?').trim().charAt(0).toUpperCase()}
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <Text weight={500} lineClamp={1} className="dark:text-white">
+          {checkup.clientName}
+        </Text>
+        <Text size="xs" color="dimmed" lineClamp={1}>
+          {formatDate(checkup.checkupDate)} · {checkup.financialDoctorName || 'N/A'}
+        </Text>
       </div>
-      <Text size="sm" className="dark:text-gray-300">
-        Advisor:{' '}
-        <span className="font-medium">{checkup.financialDoctorName || 'N/A'}</span>
-      </Text>
+      <Button variant="light" color="violet" size="xs" onClick={() => handleViewReport(checkup)}>
+        View
+      </Button>
     </div>
   );
 
   // --- Render ---
   return (
-    <div className="panel relative mt-6">
-      <h2 className="text-xl font-semibold mb-4">Financial Health Checkup History</h2>
+    <div className="panel relative mt-0 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent md:mt-6">
+      <div className="mb-4 flex items-center gap-2">
+        <ActionIcon variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+          <IconArrowLeft size={22} />
+        </ActionIcon>
+        <h2 className="text-lg font-semibold md:text-xl">Financial Health Checkup History</h2>
+      </div>
 
       {/* FILTERS */}
       <Box mb="md">
@@ -292,11 +298,13 @@ const CheckupHistory = () => {
             icon={<IconSearch size={16} />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.currentTarget.value)}
-            style={{ flex: 1, minWidth: '250px' }}
+            radius="xl"
+            className="w-full sm:w-auto"
+            style={{ flex: 1, minWidth: 0 }}
           />
 
           {/* Date Range Inputs */}
-          <Group gap="xs" align="center" wrap="nowrap" style={{ flexWrap: 'nowrap' }}>
+          <Group gap="xs" align="center" wrap="nowrap" className="w-full sm:w-auto" style={{ flexWrap: 'nowrap' }}>
             <TextInput
               type="date"
               value={dateRange.from}
@@ -304,6 +312,7 @@ const CheckupHistory = () => {
                 setDateRange((r) => ({ ...r, from: e.target.value }))
               }
               placeholder="From"
+              className="min-w-0 flex-1"
               icon={<IconCalendar size={16} />}
               styles={{
                 input: { height: 36, paddingRight: 8, paddingLeft: 34 },
@@ -316,6 +325,7 @@ const CheckupHistory = () => {
                 setDateRange((r) => ({ ...r, to: e.target.value }))
               }
               placeholder="To"
+              className="min-w-0 flex-1"
               icon={<IconCalendar size={16} />}
               styles={{
                 input: { height: 36, paddingRight: 8, paddingLeft: 34 },
@@ -353,7 +363,7 @@ const CheckupHistory = () => {
       )}
 
       {/* Mobile View */}
-      <div className="md:hidden space-y-4">
+      <div className="md:hidden">
         {!loading &&
           records.length > 0 &&
           records.map((c) => <CheckupCard key={c.id} checkup={c} />)}

@@ -4,8 +4,9 @@ import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { useState, useEffect, useCallback } from 'react';
 import FinancialHealthReportModal from '@/components/modals/finhealth2'; // Assuming this path is correct
-import { Button, Checkbox, NumberInput, Popover, Progress, ScrollArea, Text } from '@mantine/core';
-import { useSearchParams } from 'next/navigation';
+import { ActionIcon, Button, Checkbox, NumberInput, Popover, Progress, ScrollArea, Text } from '@mantine/core';
+import { IconArrowLeft } from '@tabler/icons-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // --- Helper Functions ---
 
@@ -242,6 +243,8 @@ const FinancialHealthCalculator = () => {
     });
 
     const searchParams = useSearchParams();
+
+    const router = useRouter();
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     // NEW EFFECT: Prefill form fields from URL query parameters
@@ -741,13 +744,18 @@ const FinancialHealthCalculator = () => {
     return (
         <>
             {/* Form Section */}
-            <div className="form-container p-6 md:p-8 bg-white rounded-lg dark:bg-gray-800 shadow-lg border border-gray-200 mb-8">
-                <h2 className="text-2xl font-semibold dark:text-gray-100 text-gray-800 mb-6 border-b pb-3">Financial Health Assessment</h2>
+            <div className="form-container p-6 md:p-8 bg-white rounded-lg dark:bg-gray-800 shadow-lg border border-gray-200 mb-8 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
+                <div className="mb-6 flex items-center gap-2 border-b pb-3">
+                    <ActionIcon variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+                        <IconArrowLeft size={22} />
+                    </ActionIcon>
+                    <h2 className="text-xl md:text-2xl font-semibold dark:text-gray-100 text-gray-800">Financial Health Assessment</h2>
+                </div>
 
                 {/* User Details & Core Financials Form */}
-                <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+                <form className="grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-6 lg:grid-cols-3 max-sm:[&_.form-input]:!bg-transparent">
                     {/* Basic Information */}
-                    <div>
+                    <div className="min-w-0 max-sm:col-span-2">
                         {/* Renamed Label */}
                         <label htmlFor="financialDoctorName" className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">
                             Financial Doctor Name
@@ -765,7 +773,7 @@ const FinancialHealthCalculator = () => {
                         />
                     </div>
 
-                    <div>
+                    <div className="min-w-0 max-sm:col-span-2">
                         <label htmlFor="clientName" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Client Name 
                         </label>
@@ -782,7 +790,7 @@ const FinancialHealthCalculator = () => {
                     </div>
 
                     {/* Added Email ID */}
-                    <div>
+                    <div className="min-w-0 max-sm:col-span-2">
                         <label htmlFor="emailId" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Email ID
                         </label>
@@ -798,7 +806,7 @@ const FinancialHealthCalculator = () => {
                     </div>
 
                     {/* Added Mobile Number */}
-                    <div>
+                    <div className="min-w-0 max-sm:col-span-2">
                         <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Mobile Number
                         </label>
@@ -814,7 +822,7 @@ const FinancialHealthCalculator = () => {
                     </div>
 
                     {/* Added Date of Birth */}
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Date of Birth
                         </label>
@@ -829,7 +837,7 @@ const FinancialHealthCalculator = () => {
                     </div>
 
                     {/* Added Age */}
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="age" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Age
                         </label>
@@ -845,7 +853,7 @@ const FinancialHealthCalculator = () => {
                         />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="familyMembers" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Family Members
                         </label>
@@ -861,7 +869,7 @@ const FinancialHealthCalculator = () => {
                         />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="date" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Assessment Date
                         </label>{' '}
@@ -878,7 +886,7 @@ const FinancialHealthCalculator = () => {
                     </div>
 
                     {/* Core Financial Inputs */}
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="annualIncome" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Total Annual Income (₹)
                         </label>
@@ -893,7 +901,7 @@ const FinancialHealthCalculator = () => {
                             min="0"
                         />  
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="monthlyExpenses" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Avg. Monthly Expenses (₹)
                         </label>
@@ -908,7 +916,7 @@ const FinancialHealthCalculator = () => {
                             min="0"
                         />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="childEducationFundGoal" className="block text-sm font-medium text-gray-700  dark:text-gray-400 mb-1">
                             Child Education Goal (₹)
                         </label>
@@ -923,7 +931,7 @@ const FinancialHealthCalculator = () => {
                             min="0"
                         />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <label htmlFor="marriageFundGoal" className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">
                             Marriage Fund Goal (₹)
                         </label>
@@ -940,7 +948,7 @@ const FinancialHealthCalculator = () => {
                     </div>
 
                     {/* Added Wealth Target */}
-                    <div>
+                    <div className="min-w-0 max-sm:col-span-2">
                         <label htmlFor="wealthTarget" className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">
                             Wealth Target (₹)
                         </label>
@@ -959,7 +967,7 @@ const FinancialHealthCalculator = () => {
             </div>
 
             {/* Checklist Table Section */}
-            <div className="form-container p-6 md:p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700">
+            <div className="form-container p-6 md:p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
                 <h3 className="text-xl font-semibold mb-5 text-gray-800 dark:text-gray-300">Financial Checklist & Scores</h3>
 
                  {/* Mobile View - Cards (Hidden on Medium screens and up) */}
@@ -989,7 +997,7 @@ const FinancialHealthCalculator = () => {
                 }
 
                 return (
-                    <div key={index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                    <div key={index} className="bg-transparent px-0 py-4 border-0 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex justify-between items-start">
                             <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-base mb-2">{row.item}</h4>
                             <span
@@ -1015,13 +1023,13 @@ const FinancialHealthCalculator = () => {
 
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             {/* Target */}
-                            <div className="bg-white dark:bg-gray-700 p-2 rounded">
+                            <div className="bg-transparent p-0">
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Target</p>
                                 <p className="font-medium text-gray-900 dark:text-gray-100">{displayTarget}</p>
                             </div>
 
                             {/* Gap */}
-                            <div className="bg-white dark:bg-gray-700 p-2 rounded">
+                            <div className="bg-transparent p-0">
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Gap</p>
                                 <p className="font-medium text-gray-900 dark:text-gray-100">{displayGap}</p>
                             </div>

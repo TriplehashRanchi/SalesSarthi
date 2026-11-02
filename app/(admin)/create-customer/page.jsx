@@ -1,6 +1,8 @@
 'use client'
 import CustomerForm from "@/components/forms/customerform";
 import { showNotification } from "@mantine/notifications";
+import { ActionIcon } from "@mantine/core";
+import { IconArrowLeft } from "@tabler/icons-react";
 import axios from "axios";
 import { getAuth } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -32,6 +34,9 @@ export default function CreateCustomer() {
 
     return (
         <div>
+            <ActionIcon variant="subtle" color="dark" mb="xs" onClick={() => router.push('/customers')} aria-label="Back">
+                <IconArrowLeft size={22} />
+            </ActionIcon>
             <CustomerForm  onSubmit={onSubmit} customerData={null}/>
         </div>
     );
