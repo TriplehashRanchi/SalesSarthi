@@ -407,10 +407,10 @@ const ReportsExportPage = () => {
                     <Card shadow="sm" padding="lg" radius="md" withBorder>
                         <Title order={4} mb="md">Lead Reports</Title>
                         <Stack gap="sm">
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_created_week'} onClick={() => handleGenerateReport('leads_created_week')} leftSection={<IconDownload size="1rem" />}>Leads Created (This Week)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_created_month'} onClick={() => handleGenerateReport('leads_created_month')} leftSection={<IconDownload size="1rem" />}>Leads Created (This Month)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_created_period'} onClick={() => handleGenerateReport('leads_created_period')} leftSection={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Leads Created (Selected Period)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_by_source_period'} onClick={() => handleGenerateReport('leads_by_source_period')} leftSection={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Leads by Source (Selected Period)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_created_week'} onClick={() => handleGenerateReport('leads_created_week')} leftIcon={<IconDownload size="1rem" />}>Leads Created (This Week)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_created_month'} onClick={() => handleGenerateReport('leads_created_month')} leftIcon={<IconDownload size="1rem" />}>Leads Created (This Month)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_created_period'} onClick={() => handleGenerateReport('leads_created_period')} leftIcon={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Leads Created (Selected Period)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'leads_by_source_period'} onClick={() => handleGenerateReport('leads_by_source_period')} leftIcon={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Leads by Source (Selected Period)</Button>
                         </Stack>
                     </Card>
 
@@ -418,12 +418,12 @@ const ReportsExportPage = () => {
                     <Card shadow="sm" padding="lg" radius="md" withBorder>
                         <Title order={4} mb="md">Conversion & Sales Reports</Title>
                         <Stack gap="sm">
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_week'} onClick={() => handleGenerateReport('conversions_week')} leftSection={<IconDownload size="1rem" />}>Conversions (This Week)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_month'} onClick={() => handleGenerateReport('conversions_month')} leftSection={<IconDownload size="1rem" />}>Conversions (This Month)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_period'} onClick={() => handleGenerateReport('conversions_period')} leftSection={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Conversions (Selected Period)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_by_user_all'} onClick={() => handleGenerateReport('conversions_by_user_all')} leftSection={<IconDownload size="1rem" />} disabled={!selectedUser}>Conversions by User (All Time)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_by_user_period'} onClick={() => handleGenerateReport('conversions_by_user_period')} leftSection={<IconDownload size="1rem" />} disabled={!selectedUser || !dateRange[0] || !dateRange[1]}>Conversions by User (Selected Period)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'sales_value_by_user_period'} onClick={() => handleGenerateReport('sales_value_by_user_period')} leftSection={<IconDownload size="1rem" />} disabled={!selectedUser || !dateRange[0] || !dateRange[1]}>Total Sales by User (Selected Period)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_week'} onClick={() => handleGenerateReport('conversions_week')} leftIcon={<IconDownload size="1rem" />}>Conversions (This Week)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_month'} onClick={() => handleGenerateReport('conversions_month')} leftIcon={<IconDownload size="1rem" />}>Conversions (This Month)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_period'} onClick={() => handleGenerateReport('conversions_period')} leftIcon={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Conversions (Selected Period)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_by_user_all'} onClick={() => handleGenerateReport('conversions_by_user_all')} leftIcon={<IconDownload size="1rem" />} disabled={!selectedUser}>Conversions by User (All Time)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'conversions_by_user_period'} onClick={() => handleGenerateReport('conversions_by_user_period')} leftIcon={<IconDownload size="1rem" />} disabled={!selectedUser || !dateRange[0] || !dateRange[1]}>Conversions by User (Selected Period)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'sales_value_by_user_period'} onClick={() => handleGenerateReport('sales_value_by_user_period')} leftIcon={<IconDownload size="1rem" />} disabled={!selectedUser || !dateRange[0] || !dateRange[1]}>Total Sales by User (Selected Period)</Button>
                         </Stack>
                     </Card>
 
@@ -431,9 +431,9 @@ const ReportsExportPage = () => {
                     <Card shadow="sm" padding="lg" radius="md" withBorder>
                          <Title order={4} mb="md">Appointment Reports</Title>
                          <Stack gap="sm">
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'appointments_week'} onClick={() => handleGenerateReport('appointments_week')} leftSection={<IconDownload size="1rem" />}>Appointments (This Week)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'appointments_month'} onClick={() => handleGenerateReport('appointments_month')} leftSection={<IconDownload size="1rem" />}>Appointments (This Month)</Button>
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'appointments_period'} onClick={() => handleGenerateReport('appointments_period')} leftSection={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Appointments (Selected Period)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'appointments_week'} onClick={() => handleGenerateReport('appointments_week')} leftIcon={<IconDownload size="1rem" />}>Appointments (This Week)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'appointments_month'} onClick={() => handleGenerateReport('appointments_month')} leftIcon={<IconDownload size="1rem" />}>Appointments (This Month)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'appointments_period'} onClick={() => handleGenerateReport('appointments_period')} leftIcon={<IconDownload size="1rem" />} disabled={!dateRange[0] || !dateRange[1]}>Appointments (Selected Period)</Button>
                              {/* Add Appointments by User/Status here if needed */}
                          </Stack>
                     </Card>
@@ -442,7 +442,7 @@ const ReportsExportPage = () => {
                      <Card shadow="sm" padding="lg" radius="md" withBorder>
                          <Title order={4} mb="md">User Performance</Title>
                          <Stack gap="sm">
-                             <Button variant="outline" size="sm" loading={generatingReportType === 'user_performance_summary_period'} onClick={() => handleGenerateReport('user_performance_summary_period')} leftSection={<IconDownload size="1rem" />} disabled={!selectedUser || !dateRange[0] || !dateRange[1]}>User Summary (Selected Period)</Button>
+                             <Button variant="outline" size="sm" loading={generatingReportType === 'user_performance_summary_period'} onClick={() => handleGenerateReport('user_performance_summary_period')} leftIcon={<IconDownload size="1rem" />} disabled={!selectedUser || !dateRange[0] || !dateRange[1]}>User Summary (Selected Period)</Button>
                              {/* Add other user-specific reports */}
                          </Stack>
                      </Card>

@@ -216,7 +216,7 @@ const AdminTable = () => {
             title: 'Action',
             render: (admin) => (
                 <div className="flex flex-wrap gap-2">
-                    <Button variant="light" color="blue" size="xs" leftSection={<IconEdit size={16} />} onClick={() => handleEditClick(admin)}>
+                    <Button variant="light" color="blue" size="xs" leftIcon={<IconEdit size={16} />} onClick={() => handleEditClick(admin)}>
                         Edit
                     </Button>
                     <Link href={`/superadmin/admins/${admin.admin_id}`} className="inline-flex">

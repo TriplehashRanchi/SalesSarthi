@@ -16,6 +16,7 @@ import { getAuth } from 'firebase/auth';
 import { IconDotsVertical, IconFileExport, IconUpload } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
 import { Pagination } from '@mantine/core';
+import CustomerQuickActions from '@/components/common/CustomerQuickActions';
 
 const CustomerTable = () => {
     /* ─────────── existing state ─────────── */
@@ -152,6 +153,11 @@ const CustomerTable = () => {
                             },
                         },
                         {
+                            accessor: 'quick_actions',
+                            title: 'Quick Actions',
+                            render: (record) => <CustomerQuickActions customer={record} onAppointment={handleManageAppointments} />,
+                        },
+                        {
                             accessor: 'actions',
                             title: 'Actions',
                             render: (record) => (
@@ -197,7 +203,7 @@ const CustomerTable = () => {
             <div className="block md:hidden">
                 {/* Bulk toolbar (delete + export) */}
                 <Group className="px-3 py-2" position="apart" noWrap>
-                    <Button size="xs" onClick={() => setCsvModalOpen(true)} leftSection={<IconFileExport size={14} />}>
+                    <Button size="xs" onClick={() => setCsvModalOpen(true)} leftIcon={<IconFileExport size={14} />}>
                         Upload CSV
                     </Button>
                 </Group>
@@ -225,6 +231,9 @@ const CustomerTable = () => {
                                             {new Date(nextAppt.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </Badge>
                                     )}
+                                    <div className="mt-2">
+                                        <CustomerQuickActions customer={cust} onAppointment={handleManageAppointments} size="lg" />
+                                    </div>
                                 </div>
 
                                 {/* Actions menu */}

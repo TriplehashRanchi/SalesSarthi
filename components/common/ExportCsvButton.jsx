@@ -90,7 +90,7 @@ export default function ExportCsvModal({ allAdmins = [] }) {
       <Button
         variant="filled"
         color="blue"
-        leftSection={<IconDownload size={16} />}
+        leftIcon={<IconDownload size={16} />}
         onClick={() => setOpen(true)}
       >
         Export CSV
@@ -164,7 +164,7 @@ export default function ExportCsvModal({ allAdmins = [] }) {
             <Button
               variant="light"
               color="gray"
-              leftSection={<IconFilter size={16} />}
+              leftIcon={<IconFilter size={16} />}
               onClick={() => setFilters({
                 search: '',
                 status: null,
@@ -183,7 +183,7 @@ export default function ExportCsvModal({ allAdmins = [] }) {
               filename={`filtered_customers_${new Date().toISOString().slice(0, 10)}.csv`}
               onClick={handleDownload}
             >
-              <Button color="blue" leftSection={<IconDownload size={16} />}>
+              <Button color="blue" leftIcon={<IconDownload size={16} />}>
                 Download CSV ({filteredAdmins.length} Records)
               </Button>
             </CSVLink>

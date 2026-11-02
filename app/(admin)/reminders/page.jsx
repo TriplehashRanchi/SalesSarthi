@@ -1,530 +1,326 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react'; // Added useMemo
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { Box, Table, Tabs, Loader, Title, Text, Button, Group, TextInput, Paper, Badge, ScrollArea, Stack, Divider } from '@mantine/core'; // Added Paper, Badge
+import { Box, Tabs, Loader, Title, Text, Button, Group, TextInput, Paper, ScrollArea, Stack, Divider } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { getAuth } from 'firebase/auth';
-import { 
-  IconBrandWhatsapp, IconCake, IconGift, IconCalendarEvent, IconUserPlus, IconSearch,
-  IconFlame, IconThumbUp, IconThumbDown, IconRefresh, IconSnowflake // Icons for lead status
-} from '@tabler/icons-react';
+import { IconBrandWhatsapp, IconCake, IconGift, IconCalendarEvent, IconUserPlus, IconSearch, IconBell, IconSettings } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import calendar from 'dayjs/plugin/calendar';
 import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone'; // For correct timezone handling
+import timezone from 'dayjs/plugin/timezone';
 import { useRouter } from 'next/navigation';
 
-// Extend dayjs with plugins
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// --- Set default timezone if needed, or rely on browser's timezone ---
-// Example: dayjs.tz.setDefault("Asia/Calcutta"); 
-// It's often better to handle dates in UTC and format in the user's local time.
-
-// Define API_URL from environment variable or fallback.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-// Utility function to replace placeholders in a template with record data.
+// Fills {variables} in a reminder message with the person's data.
 const replacePlaceholders = (templateMessage, record) => {
-  // Use dayjs for consistent date formatting in messages
-  let msg = templateMessage;
-  if (record.full_name) {
-    msg = msg.replace('{name}', record.full_name);
-  }
-  if (record.policy_number) {
-    msg = msg.replace('{policy_number}', record.policy_number);
-  }
-  if (record.date_of_birth) {
-    // Format DOB consistently, assuming it's a date string like 'YYYY-MM-DD'
-    msg = msg.replace('{dob}', dayjs.utc(record.date_of_birth).local().format('MMMM D, YYYY'));
-  }
-  if (record.renewal_date) {
-    // Format renewal date
-    msg = msg.replace('{renewal_date}', dayjs.utc(record.renewal_date).local().format('MMMM D, YYYY'));
-  }
-  if (record.appointment_date) {
-     // Format appointment date/time
-    msg = msg.replace('{appointment_date}', dayjs.utc(record.appointment_date).local().format('MMMM D, YYYY h:mm A'));
-  }
-  // Add anniversary if needed
-  if (record.anniversary) {
-    msg = msg.replace('{anniversary}', dayjs.utc(record.anniversary).local().format('MMMM D, YYYY'));
-  }
-  return msg;
+  const fmt = (v) => dayjs.utc(v).local().format('MMMM D, YYYY');
+  const values = {
+    '{name}': record.full_name,
+    '{policy_number}': record.policy_number,
+    '{dob}': record.date_of_birth && fmt(record.date_of_birth),
+    '{renewal_date}': record.renewal_date && fmt(record.renewal_date),
+    '{anniversary}': record.anniversary && fmt(record.anniversary),
+    '{appointment_date}': record.appointment_date && dayjs.utc(record.appointment_date).local().format('MMMM D, YYYY h:mm A'),
+  };
+  return Object.entries(values).reduce((msg, [token, value]) => (value ? msg.split(token).join(value) : msg), templateMessage);
 };
 
-// Helper function to format reminder dates for display
-const formatReminderDate = (record, category) => {
-  // 1) Pick the raw ISO string based on category
-  let raw;
-  switch (category) {
-    case 'nurturing':
-      raw = record.created_at;
-      break;
-    case 'birthday':
-      raw = record.date_of_birth;
-      break;
-    case 'anniversary':
-      raw = record.anniversary;
-      break;
-    case 'renewal':
-      raw = record.renewal_date;
-      break;
-    default:
-      return '—';
-  }
-  if (!raw) return '—';
-
-  // 2) Parse in UTC, convert to local
-  const now = dayjs();
-  const date = dayjs.utc(raw).local();
-  if (!date.isValid()) return 'Invalid date';
-
-  // 3) If it’s a recurring event, compute its next occurrence
-  let displayDate = date;
-  if (['birthday', 'anniversary', 'renewal'].includes(category)) {
-    displayDate = getNextEventDate(date);
-  }
-
-  // 4) Format:
-  if (category === 'nurturing') {
-    // “Added 2 days ago”
-    return `Added ${date.fromNow()}`;
-  }
-
-  // For all other tabs, use calendar-style:
-  return displayDate.calendar(now, {
-    sameDay: `[Today at] h:mm A`,
-    nextDay: `[Tomorrow at] h:mm A`,
-    nextWeek: `dddd [at] h:mm A`,
-    lastDay: `[Yesterday at] h:mm A`,
-    lastWeek: `[Last] dddd [at] h:mm A`,
-    sameElse: 'MMMM D, YYYY h:mm A',
-  });
-};
-
-// Helper function to calculate the next occurrence of a date (for sorting)
+// Next time a yearly date (birthday, anniversary) comes around.
 const getNextEventDate = (date) => {
   const now = dayjs();
-  const todayMonthDay = now.format('MM-DD');
-  const eventMonthDay = date.format('MM-DD');
-  let nextEventDate = date.year(now.year());
-  if (eventMonthDay < todayMonthDay) {
-    nextEventDate = nextEventDate.add(1, 'year');
+  let next = date.year(now.year());
+  if (date.format('MM-DD') < now.format('MM-DD')) next = next.add(1, 'year');
+  return next;
+};
+
+// How the type's date rule behaves: recent (added in the last N days), recurring (yearly), upcoming (one date), or manual.
+const modeOf = (type, dateFields) => (type.date_field ? dateFields?.[type.audience]?.[type.date_field]?.mode || 'manual' : 'manual');
+
+const formatReminderDate = (record, type, mode) => {
+  if (mode === 'manual') return record.phone_number || '—';
+  const raw = record[type.date_field];
+  if (!raw) return '—';
+  const date = dayjs.utc(raw).local();
+  if (!date.isValid()) return 'Invalid date';
+  if (mode === 'recent') return `Added ${date.fromNow()}`;
+  const shown = mode === 'recurring' ? getNextEventDate(date) : date;
+  return shown.calendar(dayjs(), { sameDay: '[Today]', nextDay: '[Tomorrow]', nextWeek: 'dddd', lastDay: '[Yesterday]', lastWeek: '[Last] dddd', sameElse: 'MMMM D, YYYY' });
+};
+
+const iconFor = (type) => {
+  const style = { marginRight: '8px' };
+  switch (type.date_field) {
+    case 'created_at': return <IconUserPlus size={18} style={style} />;
+    case 'date_of_birth': return <IconCake size={18} style={style} />;
+    case 'anniversary': return <IconGift size={18} style={style} />;
+    case 'renewal_date': return <IconCalendarEvent size={18} style={style} />;
+    default: return <IconBell size={18} style={style} />;
   }
-  return nextEventDate;
 };
 
-
-// Helper to get the right icon for reminder category
-const getCategoryIcon = (category) => {
-    switch (category) {
-        case 'nurturing': return <IconUserPlus size={18} style={{ marginRight: '8px' }} />;
-        case 'birthday': return <IconCake size={18} style={{ marginRight: '8px' }} />;
-        case 'anniversary': return <IconGift size={18} style={{ marginRight: '8px' }} />;
-        case 'renewal': return <IconCalendarEvent size={18} style={{ marginRight: '8px' }} />;
-        default: return null;
-    }
+const authHeaders = async () => {
+  const user = getAuth().currentUser;
+  if (!user) return null;
+  return { Authorization: `Bearer ${await user.getIdToken()}` };
 };
-
-// Helper to get icon and color for lead status
-const getLeadStatusInfo = (status) => {
-    switch (status) {
-        case 'Hot Lead': return { icon: IconFlame, color: 'red' };
-        case 'Qualified Lead': return { icon: IconThumbUp, color: 'green' };
-        case 'Follow-up': return { icon: IconRefresh, color: 'blue' };
-        case 'Cold Lead': return { icon: IconSnowflake, color: 'cyan' };
-        case 'Lost Lead': return { icon: IconThumbDown, color: 'gray' };
-        default: return { icon: null, color: 'gray' };
-    }
-};
-
-
-// Custom hook to fetch reminder data for a given category.
-const useReminderData = (category) => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const auth = getAuth();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          showNotification({
-            title: 'Error',
-            message: 'You must be logged in to view reminders',
-            color: 'red',
-          });
-          return;
-        }
-        const token = await user.getIdToken();
-        let endpoint = '';
-        // For nurturing, use leads; otherwise, query customers endpoint with appropriate type.
-        if (category === 'nurturing') {
-          endpoint = '/api/reminders/leads';
-        } else {
-          endpoint = `/api/reminders/customers?type=${category}`;
-        }
-        const res = await axios.get(API_URL + endpoint, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setData(res.data);
-      } catch (error) {
-        console.error('Error fetching reminder data:', error);
-        showNotification({
-          title: 'Error',
-          message: 'Failed to fetch reminders',
-          color: 'red',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (category) fetchData();
-  }, [category, auth]);
-
-  return { data, loading };
-};
-
-// Custom hook to fetch reminder logs for the active category for today.
-const useReminderLogs = (category) => {
-    const [logs, setLogs] = useState([]);
-    const [loadingLogs, setLoadingLogs] = useState(false);
-    const auth = getAuth();
-  
-    useEffect(() => {
-      const fetchLogs = async () => {
-        setLoadingLogs(true);
-        try {
-          const user = auth.currentUser;
-          if (!user) return;
-          const token = await user.getIdToken();
-          // This endpoint should return logs for the current admin for today filtered by category.
-          const res = await axios.get(API_URL + '/api/reminders/reminder_logs?category=' + category, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setLogs(res.data);
-        } catch (error) {
-          console.error('Error fetching reminder logs:', error);
-        } finally {
-          setLoadingLogs(false);
-        }
-      };
-      if (category) fetchLogs();
-    }, [category, auth]);
-    return { logs, loadingLogs };
-  };
-  
 
 const RemindersPage = () => {
-  // Define reminder categories.
-  const reminderCategories = [
-    { value: 'nurturing', label: 'Nurturing Reminders' },
-    { value: 'birthday', label: 'Birthday Reminders' },
-    { value: 'anniversary', label: 'Anniversary Reminders' },
-    { value: 'renewal', label: 'Renewal Reminders' },
-  ];
-  const [activeTab, setActiveTab] = useState('nurturing');
-  const [templates, setTemplates] = useState({});
-  const [search, setSearch] = useState(''); // State for search input
-  const auth = getAuth();
+  const router = useRouter();
+  const [types, setTypes] = useState([]);
+  const [dateFields, setDateFields] = useState({});
+  const [typesLoading, setTypesLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(null); // id of the active reminder type, as a string
+  const [records, setRecords] = useState([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [search, setSearch] = useState('');
 
-  // Fetch records based on the active reminder category.
-  const { data: records, loading } = useReminderData(activeTab);
+  const activeType = useMemo(() => types.find((t) => String(t.id) === activeTab) || null, [types, activeTab]);
+  const mode = activeType ? modeOf(activeType, dateFields) : 'manual';
 
-  // Fetch admin templates (one per category) once the page loads.
+  // 1) The admin's reminder types become the tabs.
   useEffect(() => {
-    const fetchTemplates = async () => {
+    const load = async () => {
       try {
-        const user = auth.currentUser;
-        if (!user) return;
-        const token = await user.getIdToken();
-        const res = await axios.get(API_URL + '/api/templates', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        // Transform the array of templates into an object keyed by category.
-        const fetchedTemplates = {};
-        res.data.forEach((template) => {
-          // Each admin can have one template per category.
-          fetchedTemplates[template.category] = template;
-        });
-        setTemplates(fetchedTemplates);
+        const headers = await authHeaders();
+        if (!headers) return;
+        const res = await axios.get(`${API_URL}/api/reminder-types`, { headers });
+        setTypes(res.data.types);
+        setDateFields(res.data.dateFields);
+        setActiveTab((current) => current ?? (res.data.types[0] ? String(res.data.types[0].id) : null));
       } catch (error) {
-        console.error('Error fetching templates:', error);
-        showNotification({
-          title: 'Error',
-          message: 'Failed to fetch templates',
-          color: 'red',
-        });
+        console.error('Error fetching reminder types:', error);
+        showNotification({ title: 'Error', message: 'Failed to load reminder types', color: 'red' });
+      } finally {
+        setTypesLoading(false);
       }
     };
+    load();
+  }, []);
 
-    fetchTemplates();
-  }, [auth]);
+  // 2) People due for the active type, plus today's already-sent log for it.
+  useEffect(() => {
+    if (!activeType) return;
+    let cancelled = false;
+    const load = async () => {
+      setRecordsLoading(true);
+      try {
+        const headers = await authHeaders();
+        if (!headers) return;
+        const [recordsRes, logsRes] = await Promise.all([
+          axios.get(`${API_URL}/api/reminder-types/${activeType.id}/recipients`, { headers }),
+          axios.get(`${API_URL}/api/reminders/reminder_logs?category=${encodeURIComponent(activeType.type_key)}`, { headers }),
+        ]);
+        if (!cancelled) {
+          setRecords(recordsRes.data);
+          setLogs(logsRes.data);
+        }
+      } catch (error) {
+        console.error('Error fetching reminder data:', error);
+        showNotification({ title: 'Error', message: 'Failed to fetch reminders', color: 'red' });
+      } finally {
+        if (!cancelled) setRecordsLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [activeType]);
 
-  // Fetch reminder logs for the active category.
-  const { logs, loadingLogs } = useReminderLogs(activeTab);
+  const shownRecords = useMemo(() => {
+    if (!activeType) return [];
+    const base = records.filter((r) => !logs.some((log) => log.source_id === r.id));
+    const searched = search ? base.filter((r) => r.full_name?.toLowerCase().includes(search.toLowerCase())) : base;
+    const sorted = [...searched];
+    const dateOf = (r) => dayjs.utc(r[activeType.date_field]).local();
+    if (mode === 'recent') sorted.sort((a, b) => dateOf(b).diff(dateOf(a)));
+    else if (mode === 'recurring') sorted.sort((a, b) => getNextEventDate(dateOf(a)).diff(getNextEventDate(dateOf(b))));
+    else if (mode === 'upcoming') sorted.sort((a, b) => dateOf(a).diff(dateOf(b)));
+    else sorted.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+    return sorted;
+  }, [activeType, records, logs, search, mode]);
 
-  // Filter out records that have already been sent a reminder today.
-  const recordsToSend = records.filter(
-    (record) => !logs.some((log) => log.source_id === record.id)
-  );
-
-  // Apply search filter first
-  const searchedRecords = recordsToSend.filter((record) => {
-    if (!search) return true;
-    return record.full_name?.toLowerCase().includes(search.toLowerCase());
-  });
-
-  // Apply sorting based on active tab - useMemo for performance
-  const sortedAndFilteredRecords = useMemo(() => {
-    const recordsToSort = [...searchedRecords]; // Create a mutable copy
-
-    if (activeTab === 'nurturing') {
-      // Sort by creation date, latest first
-      recordsToSort.sort((a, b) => dayjs(b.created_at).diff(dayjs(a.created_at)));
-    } else {
-      // Sort by next event date, closest first
-      recordsToSort.sort((a, b) => {
-        const dateA = activeTab === 'birthday' ? a.date_of_birth : activeTab === 'anniversary' ? a.anniversary : a.renewal_date;
-        const dateB = activeTab === 'birthday' ? b.date_of_birth : activeTab === 'anniversary' ? b.anniversary : b.renewal_date;
-        
-        const nextA = getNextEventDate(dayjs.utc(dateA).local());
-        const nextB = getNextEventDate(dayjs.utc(dateB).local());
-
-        return nextA.diff(nextB);
-      });
-    }
-    return recordsToSort;
-  }, [searchedRecords, activeTab]);
-
-  // Handle sending a reminder.
   const handleSendReminder = async (record) => {
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        showNotification({
-          title: 'Error',
-          message: 'You must be logged in to send a reminder',
-          color: 'red',
-        });
+      const headers = await authHeaders();
+      if (!headers) {
+        showNotification({ title: 'Error', message: 'You must be logged in to send a reminder', color: 'red' });
         return;
       }
-      const token = await user.getIdToken();
-
-      // Retrieve the appropriate template for the active category.
-      const template = templates[activeTab];
-      if (!template) {
-        showNotification({
-          title: 'Error',
-          message: 'No template found for this category',
-          color: 'red',
-        });
-        return;
-      }
-
-      // Compute the final message by replacing placeholders with record data.
-      const finalMessage = replacePlaceholders(template.template_message, record);
-
-     
-
-      // Prepare payload to log the reminder.
-      const payload = {
-        admin_id: record.admin_id, // Or get from auth context if available.
-        user_id: record.user_id,   // Or use the current logged-in user's ID.
-        source_type: activeTab === 'nurturing' ? 'lead' : 'customer',
-        source_id: record.id,
-        template_id: template.id,
-        category: activeTab,
-        message_sent: finalMessage,
-      };
-
-      // Log the reminder (fire-and-forget).
-      axios
-        .post(API_URL + '/api/reminders/reminder_logs', payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .catch((err) => {
-          console.error('Reminder log update failed:', err);
-        });
-
-      // Verify the record has a phone number.
       if (!record.phone_number) {
-        showNotification({
-          title: 'Error',
-          message: 'No phone number found for this record.',
-          color: 'red',
-        });
+        showNotification({ title: 'Error', message: 'No phone number found for this record.', color: 'red' });
         return;
       }
 
-      // Open WhatsApp using the record's phone number.
-      const waURL = `https://wa.me/${record.phone_number}?text=${encodeURIComponent(finalMessage)}`;
-      window.open(waURL, '_blank');
-      showNotification({
-        title: 'Success',
-        message: 'Reminder sent successfully!',
-        color: 'green',
-      });
+      const finalMessage = replacePlaceholders(activeType.template_message, record);
+
+      // Log it so it is hidden from today's list (fire-and-forget).
+      axios
+        .post(
+          `${API_URL}/api/reminders/reminder_logs`,
+          {
+            admin_id: record.admin_id,
+            user_id: record.user_id,
+            source_type: activeType.audience,
+            source_id: record.id,
+            template_id: activeType.id,
+            category: activeType.type_key,
+            message_sent: finalMessage,
+          },
+          { headers }
+        )
+        .then(() => setLogs((prev) => [...prev, { source_id: record.id }]))
+        .catch((err) => console.error('Reminder log update failed:', err));
+
+      window.open(`https://wa.me/${record.phone_number}?text=${encodeURIComponent(finalMessage)}`, '_blank');
+      showNotification({ title: 'Success', message: 'Reminder sent successfully!', color: 'green' });
     } catch (error) {
       console.error('Error sending reminder:', error);
-      showNotification({
-        title: 'Error',
-        message: 'Failed to send reminder',
-        color: 'red',
-      });
+      showNotification({ title: 'Error', message: 'Failed to send reminder', color: 'red' });
     }
   };
 
-  const router = useRouter();
+  const loading = typesLoading || recordsLoading;
 
   return (
-<Box className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-  <Title order={2} className="mb-4 flex items-center justify-between">
-    Reminders
-    <Button
-      onClick={() => router.push('/template')}
-      className="ml-4 bg-gray-200 dark:bg-gray-700 text-black dark:text-white text-xs px-3 py-1 rounded-full"
-    >
-      Add Template
-    </Button>
-  </Title>
+    <Box className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+      <Group position="apart" mb="md" noWrap spacing="xs">
+        <Title order={2} className="text-xl sm:text-2xl">Reminders</Title>
+        <Button variant="default" radius="xl" size="xs" leftIcon={<IconSettings size={14} />} onClick={() => router.push('/template')}>
+          <span className="sm:hidden">Manage</span>
+          <span className="hidden sm:inline">Manage reminder types</span>
+        </Button>
+      </Group>
 
-  <Group className="mb-4 flex justify-between">
-    <TextInput
-      placeholder="Search by name..."
-      icon={<IconSearch size={16} />}
-      value={search}
-      onChange={(e) => setSearch(e.currentTarget.value)}
-      className="flex-1 rounded-md dark:bg-gray-700 dark:text-white"
-    />
-  </Group>
+      <Group className="mb-4 flex justify-between">
+        <TextInput
+          placeholder="Search by name..."
+          icon={<IconSearch size={16} />}
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          className="flex-1 rounded-md dark:bg-gray-700 dark:text-white"
+        />
+      </Group>
 
-  <Tabs value={activeTab} onTabChange={setActiveTab}>
-    <Tabs.List grow>
-      {reminderCategories.map((cat) => (
-        <Tabs.Tab key={cat.value} value={cat.value} className="dark:text-white">
-          {cat.label}
-        </Tabs.Tab>
-      ))}
-    </Tabs.List>
-    <Tabs.Panel value={activeTab} className="pt-4">
-      {loading || loadingLogs ? (
-        <Group className="justify-center mt-10">
-          <Loader />
-        </Group>
-      ) : sortedAndFilteredRecords.length > 0 ? (
-        <>
-        <div className='hidden md:block'>
-        <Paper className="shadow-md p-4 rounded-md border dark:bg-gray-700 dark:border-gray-600">
-          <table className="w-full text-sm table-auto">
-            <thead className="bg-gray-100 dark:bg-gray-600 dark:text-white">
-              <tr>
-                <th className="text-left p-2">Name</th>
-                {activeTab === 'nurturing' && <th>Status</th>}
-                <th>Date Info</th>
-                <th className="text-center ">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedAndFilteredRecords.map((record) => (
-                <tr key={record.id} className="hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">
-                  <td className="p-2">{record.full_name || 'N/A'}</td>
-                  {activeTab === 'nurturing' && (
-                    <td>
-                      {/* Status Badge - Use a component or span with dynamic Tailwind color */}
-                    </td>
-                  )}
-                  <td className="flex items-center">
-                    {getCategoryIcon(activeTab)}
-                    {formatReminderDate(record, activeTab)}
-                  </td>
-                  <td className="text-center p-2">
-                    <Button
-                      size="xs"
-                      className="bg-gradient-to-r from-teal-400 to-lime-400 text-white dark:from-teal-500 dark:to-lime-500"
-                      leftIcon={<IconBrandWhatsapp size={16} />}
-                      onClick={() => handleSendReminder(record)}
-                    >
-                      Send
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Paper>
-        </div>
-
-         {/* ── Mobile Cards ── */}
-          <div className="block md:hidden">
-            <ScrollArea style={{ height: '60vh' }} mx="0" px="0">
-              <Stack spacing="sm">
-                {sortedAndFilteredRecords.map((record) => (
-                  <Paper
-                    key={record.id}
-                    p="sm"
-                    withBorder
-                    radius="md"
-                    className="flex flex-col gap-2"
-                  >
-                    <Group position="apart" noWrap>
-                      <Text weight={500} lineClamp={1}>
-                        {record.full_name}
-                      </Text>
-                      {activeTab === 'nurturing' && (
-                        <Badge
-                          size="xs"
-                          variant="light"
-                          color={
-                            record.status === 'sent'
-                              ? 'green'
-                              : record.status === 'pending'
-                              ? 'orange'
-                              : 'gray'
-                          }
-                        >
-                          {record.status}
-                        </Badge>
-                      )}
-                    </Group>
-                    <Group spacing="xs" align="center">
-                      {getCategoryIcon(activeTab)}
-                      <Text size="xs">{formatReminderDate(record, activeTab)}</Text>
-                    </Group>
-                    <Divider my="xs" />
-                    <Button
-                      size="xs"
-                      fullWidth
-                      leftIcon={<IconBrandWhatsapp size={16} />}
-                      onClick={() => handleSendReminder(record)}
-                    >
-                      Send
-                    </Button>
-                  </Paper>
-                ))}
-              </Stack>
-            </ScrollArea>
-          </div>
-          </>
+      {typesLoading ? (
+        <Group className="justify-center mt-10"><Loader /></Group>
+      ) : types.length === 0 ? (
+        <Stack align="center" mt="xl" spacing="xs">
+          <Text className="text-gray-500 dark:text-gray-400 text-lg">You have no reminder types yet.</Text>
+          <Button onClick={() => router.push('/template')}>Add a reminder type</Button>
+        </Stack>
       ) : (
-        <Text align="center" className="text-gray-500 dark:text-gray-400 mt-10 text-lg">
-          🎉 No pending reminders for this category!
-        </Text>
-      )}
-    </Tabs.Panel>
-  </Tabs>
-</Box>
+        <Tabs value={activeTab} onTabChange={setActiveTab}>
+          {/* Scrolls sideways when there are more types than fit, so tabs never squash or wrap on phones. */}
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }} className="-mx-4 px-4">
+            <Tabs.List grow sx={{ flexWrap: 'nowrap', minWidth: 'max-content' }}>
+              {types.map((t) => (
+                <Tabs.Tab
+                  key={t.id}
+                  value={String(t.id)}
+                  className="dark:text-white"
+                  sx={{ whiteSpace: 'nowrap', fontSize: 14, padding: '10px 14px' }}
+                >
+                  {t.name}
+                </Tabs.Tab>
+              ))}
+            </Tabs.List>
+          </div>
+          {types.length > 1 && (
+            <Text size="xs" color="dimmed" align="right" mt={4} className="md:hidden">
+              Swipe for more types →
+            </Text>
+          )}
+          <Tabs.Panel value={activeTab || ''} className="pt-4">
+            {loading ? (
+              <Group className="justify-center mt-10"><Loader /></Group>
+            ) : shownRecords.length > 0 ? (
+              <>
+                <div className="hidden md:block">
+                  <Paper className="shadow-md p-4 rounded-md border dark:bg-gray-700 dark:border-gray-600">
+                    <table className="w-full text-sm table-auto">
+                      <thead className="bg-gray-100 dark:bg-gray-600 dark:text-white">
+                        <tr>
+                          <th className="text-left p-2">Name</th>
+                          <th>{mode === 'manual' ? 'Phone' : 'Date Info'}</th>
+                          <th className="text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shownRecords.map((record) => (
+                          <tr key={record.id} className="hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white">
+                            <td className="p-2">{record.full_name || 'N/A'}</td>
+                            <td className="flex items-center">
+                              {iconFor(activeType)}
+                              {formatReminderDate(record, activeType, mode)}
+                            </td>
+                            <td className="text-center p-2">
+                              <Button
+                                size="xs"
+                                className="bg-gradient-to-r from-teal-400 to-lime-400 text-white dark:from-teal-500 dark:to-lime-500"
+                                leftIcon={<IconBrandWhatsapp size={16} />}
+                                onClick={() => handleSendReminder(record)}
+                              >
+                                Send
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Paper>
+                </div>
 
+                {/* Mobile cards */}
+                <div className="block md:hidden">
+                  <Text size="xs" color="dimmed" mb="xs">
+                    {shownRecords.length} pending {shownRecords.length === 1 ? 'reminder' : 'reminders'}
+                  </Text>
+                  <ScrollArea style={{ height: '60vh' }} mx="0" px="0">
+                    <Stack spacing="sm">
+                      {shownRecords.map((record) => (
+                        <Paper key={record.id} p="sm" withBorder radius="md" className="flex flex-col gap-2">
+                          <Group position="apart" noWrap>
+                            <Text weight={500} lineClamp={1}>{record.full_name}</Text>
+                          </Group>
+                          <Group spacing="xs" align="center">
+                            {iconFor(activeType)}
+                            <Text size="xs">{formatReminderDate(record, activeType, mode)}</Text>
+                          </Group>
+                          <Divider my="xs" />
+                          <Button size="xs" fullWidth leftIcon={<IconBrandWhatsapp size={16} />} onClick={() => handleSendReminder(record)}>
+                            Send
+                          </Button>
+                        </Paper>
+                      ))}
+                    </Stack>
+                  </ScrollArea>
+                </div>
+              </>
+            ) : (
+              <Stack align="center" spacing={6} mt={40} px="md">
+                <Text style={{ fontSize: 40, lineHeight: 1 }}>🎉</Text>
+                <Text weight={600} align="center" className="text-gray-800 dark:text-gray-100 text-base sm:text-lg">
+                  All caught up!
+                </Text>
+                <Text size="sm" align="center" className="text-gray-500 dark:text-gray-400">
+                  No pending reminders for “{activeType?.name}”.
+                </Text>
+              </Stack>
+            )}
+          </Tabs.Panel>
+        </Tabs>
+      )}
+    </Box>
   );
-  
 };
 
 export default RemindersPage;

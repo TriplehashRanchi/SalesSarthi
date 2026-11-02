@@ -8,7 +8,6 @@
     handleVideoDownload,
     handleVideoShare,
     } from '@/utils/videoDownloadUtils';
-import VideoThumbnail from './VideoThumbnail';
 
     /* ------------------ CATEGORIES ------------------ */
 
@@ -205,27 +204,26 @@ import VideoThumbnail from './VideoThumbnail';
                 {video.subcategory ? ` • ${video.subcategory}` : ''}
                 </Text>
 
-                {/* NO VIDEO RENDERING */}
-               <div className="relative w-full h-40 rounded overflow-hidden mb-3 bg-gray-200">
- <VideoThumbnail
-    src={video.url}
-    className="w-full h-40 object-cover bg-gray-200"
-/>
-  {/* Play icon overlay (visual cue only) */}
-  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-    <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center text-lg">
-      ▶️
-    </div>
-  </div>
-</div>
-
+                {/* Light preview: the compressed copy when available, otherwise just the first frame of the original. */}
+                <div className="relative w-full h-40 rounded overflow-hidden mb-3 bg-black">
+                    <video
+                        className="w-full h-full object-contain"
+                        src={video.preview_url ? video.preview_url : `${video.url}#t=0.5`}
+                        preload="metadata"
+                        controls
+                        playsInline
+                    />
+                </div>
+                <Text size="xs" color="dimmed" mb="xs">
+                    {video.preview_url ? 'Light preview. Download keeps the original quality and size of the video, in a smaller file.' : 'Download keeps the original quality of the video.'}
+                </Text>
 
                 <div className="flex gap-2">
                 <Button
                     fullWidth
                     size="xs"
                     variant="light"
-                    onClick={() => handleVideoDownload(video.url)}
+                    onClick={() => handleVideoDownload(video)}
                 >
                     Download
                 </Button>
@@ -235,7 +233,7 @@ import VideoThumbnail from './VideoThumbnail';
                     fullWidth
                     size="xs"
                     color="green"
-                    onClick={() => handleVideoShare(video.url)}
+                    onClick={() => handleVideoShare(video)}
                     >
                     Share
                     </Button>

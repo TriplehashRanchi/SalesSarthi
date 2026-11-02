@@ -1,4 +1,4 @@
-const cookieObj = typeof window === 'undefined' ? require('next/headers') : require('universal-cookie');
+import Cookies from 'universal-cookie';
 
 import en from './public/locales/en.json';
 import ae from './public/locales/ae.json';
@@ -19,15 +19,11 @@ import zh from './public/locales/zh.json';
 const langObj: any = { en, ae, da, de, el, es, fr, hu, it, ja, pl, pt, ru, sv, tr, zh };
 
 const getLang = () => {
-    let lang = null;
-    if (typeof window !== 'undefined') {
-        const cookies = new cookieObj(null, { path: '/' });
-        lang = cookies.get('i18nextLng');
-    } else {
-        const cookies = cookieObj.cookies();
-        lang = cookies.get('i18nextLng')?.value;
-    }
-    return lang;
+    // On the server, next/headers cookies() is async in Next 15+, so it can't be read synchronously here;
+    // fall back to the default language and let the browser pick up the saved cookie.
+    if (typeof window === 'undefined') return null;
+    const cookies = new Cookies(null, { path: '/' });
+    return cookies.get('i18nextLng') as string | null;
 };
 
 export const getTranslation = () => {
@@ -46,7 +42,7 @@ export const getTranslation = () => {
     const i18n = {
         language: lang,
         changeLanguage: (lang: string) => {
-            const cookies = new cookieObj(null, { path: '/' });
+            const cookies = new Cookies(null, { path: '/' });
             cookies.set('i18nextLng', lang);
         },
     };

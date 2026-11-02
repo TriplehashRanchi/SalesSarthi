@@ -18,41 +18,34 @@ const blobToBase64 = (blob) =>
     reader.readAsDataURL(blob);
   });
 
-/* ------------------ web ------------------ */
+/* ------------------ download (original quality) ------------------ */
 
-export const downloadVideoWeb = async (url, filename) => {
-  const blob = await fetchVideoBlob(url);
-  const blobUrl = URL.createObjectURL(blob);
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// The API streams the original file as an attachment, so the browser never needs cross-origin access to R2.
+const downloadUrlFor = (video) => `${API_URL}/api/banners/video/${video.id}/download`;
+
+export const downloadVideoWeb = (video) => {
   const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = filename;
+  a.href = downloadUrlFor(video);
+  a.download = '';
   document.body.appendChild(a);
   a.click();
-
   document.body.removeChild(a);
-  URL.revokeObjectURL(blobUrl);
 };
 
-/* ------------------ mobile ------------------ */
-
-export const downloadVideoMobile = async (url) => {
-  const blob = await fetchVideoBlob(url);
-  const base64 = await blobToBase64(blob);
-
-  const filename = `video-banner-${Date.now()}.mp4`;
-
-  await Filesystem.writeFile({
-    path: filename,
-    data: base64,
+export const downloadVideoMobile = async (video) => {
+  // Native download: streams straight to disk, no base64 round-trip through memory.
+  await Filesystem.downloadFile({
+    url: downloadUrlFor(video),
+    path: `video-banner-${video.id}-${Date.now()}.mp4`,
     directory: Directory.Documents,
   });
-
   alert('Video saved to your device');
 };
 
-export const shareVideoMobile = async (url) => {
-  const blob = await fetchVideoBlob(url);
+export const shareVideoMobile = async (video) => {
+  const blob = await fetchVideoBlob(downloadUrlFor(video));
   const base64 = await blobToBase64(blob);
 
   const filename = `video-banner-${Date.now()}.mp4`;
@@ -77,18 +70,18 @@ export const shareVideoMobile = async (url) => {
 
 /* ------------------ unified ------------------ */
 
-export const handleVideoDownload = async (url) => {
+export const handleVideoDownload = async (video) => {
   if (Capacitor.isNativePlatform()) {
-    await downloadVideoMobile(url);
+    await downloadVideoMobile(video);
   } else {
-    await downloadVideoWeb(url, 'video-banner.mp4');
+    downloadVideoWeb(video);
   }
 };
 
-export const handleVideoShare = async (url) => {
+export const handleVideoShare = async (video) => {
   if (!Capacitor.isNativePlatform()) {
     alert('Sharing supported only on mobile');
     return;
   }
-  await shareVideoMobile(url);
+  await shareVideoMobile(video);
 };

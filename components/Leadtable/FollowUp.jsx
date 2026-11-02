@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Box, Paper, LoadingOverlay, Alert, Title, Modal, Group, Button, Select, Grid, Text, Stack, Avatar, ScrollArea, Badge, Blockquote } from '@mantine/core';
-import { IconAlertCircle, IconPlus, IconCalendarEvent, IconClock, IconCircleCheck, IconListCheck, IconPencil } from '@tabler/icons-react';
+import { Box, Paper, LoadingOverlay, Alert, Title, Modal, Group, Button, Select, Grid, Text, Stack, Avatar, Badge, Blockquote, SegmentedControl } from '@mantine/core';
+import { IconAlertCircle, IconPlus, IconCalendarEvent, IconClock, IconCircleCheck, IconListCheck, IconPencil, IconCalendar, IconList } from '@tabler/icons-react';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 
@@ -15,6 +15,18 @@ import FollowupForm from '@/components/forms/followupform'; // Adjust path if ne
 import { useAuth } from '@/context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// The follow-up view the user last picked is remembered per user, so the page reopens the same way.
+// Keeps the Calendar/List switch and the Add button exactly the same height.
+const HEADER_CONTROL_HEIGHT = 42;
+const VIEWS = ['dayGridMonth', 'timeGridWeek', 'listWeek'];
+const DEFAULT_VIEW = 'dayGridMonth';
+const viewKey = (userId) => `followups_default_view_${userId}`;
+const readSavedView = (userId) => {
+    if (typeof window === 'undefined' || !userId) return DEFAULT_VIEW;
+    const saved = window.localStorage.getItem(viewKey(userId));
+    return VIEWS.includes(saved) ? saved : DEFAULT_VIEW;
+};
 
 // --- Helper Functions (Fully Expanded) ---
 
@@ -95,6 +107,8 @@ export default function FollowupsCalendar() {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [allLeads, setAllLeads] = useState([]);
+    const [allCustomers, setAllCustomers] = useState([]);
+    const [targetType, setTargetType] = useState('lead'); // who a new follow-up is for: 'lead' | 'customer'
     const [selectedLeadForNewFollowup, setSelectedLeadForNewFollowup] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -103,6 +117,39 @@ export default function FollowupsCalendar() {
     console.log(selectedEvent);
 
     const { user } = useAuth();
+
+    // Phones get a simpler calendar toolbar and a full-width header; follows rotation and window resizes.
+    const [narrow, setNarrow] = useState(false);
+    useEffect(() => {
+        const update = () => setNarrow(window.innerWidth < 640);
+        update();
+        window.addEventListener('resize', update);
+        return () => window.removeEventListener('resize', update);
+    }, []);
+
+    const calendarRef = useRef(null);
+    const [currentView, setCurrentView] = useState(DEFAULT_VIEW);
+    const userId = user?.uid;
+
+    // Load the saved choice once we know who the user is.
+    useEffect(() => {
+        if (!userId) return;
+        const saved = readSavedView(userId);
+        setCurrentView(saved);
+        calendarRef.current?.getApi().changeView(saved);
+    }, [userId]);
+
+    const rememberView = (view) => {
+        setCurrentView(view);
+        if (userId) window.localStorage.setItem(viewKey(userId), view);
+    };
+
+    // Calendar / List toggle above the calendar
+    const handleViewToggle = (mode) => {
+        const next = mode === 'list' ? 'listWeek' : currentView === 'listWeek' ? DEFAULT_VIEW : currentView;
+        calendarRef.current?.getApi().changeView(next);
+        rememberView(next);
+    };
 
     // This is the new fetchData function
     const fetchData = async () => {
@@ -116,10 +163,19 @@ export default function FollowupsCalendar() {
             const leadsEndpoint = user.role === 'admin' ? `${API_URL}/api/leads/all` : `${API_URL}/api/users/leads`;
 
             // Fetch both follow-ups and the correct list of leads in parallel
-            const [followupsResponse, leadsResponse] = await Promise.all([
+            const customersEndpoint = user.role === 'admin' ? `${API_URL}/api/customers` : `${API_URL}/api/customers/user`;
+
+            const [followupsResponse, leadsResponse, customersResponse] = await Promise.all([
                 axios.get(`${API_URL}/api/followups/view/calendar`, config),
                 axios.get(leadsEndpoint, config), // Use the dynamically determined endpoint
+                axios.get(customersEndpoint, config).catch((err) => {
+                    // Customers are optional here; don't break the whole page if they fail to load.
+                    console.error('Failed to fetch customers:', err);
+                    return { data: [] };
+                }),
             ]);
+
+            setAllCustomers((customersResponse.data || []).map((c) => ({ value: c.id.toString(), label: c.phone_number ? `${c.full_name} (${c.phone_number})` : c.full_name })));
 
             setEvents(followupsResponse.data);
 
@@ -168,6 +224,7 @@ export default function FollowupsCalendar() {
         setSelectedEvent(null);
         setSelectedDate(null);
         setSelectedLeadForNewFollowup(null);
+        setTargetType('lead');
         setIsEditing(false);
     };
 
@@ -180,9 +237,41 @@ export default function FollowupsCalendar() {
         <Box p="lg">
             <Group position="apart" mb="xl">
                 <Title order={2}>Follow-ups Dashboard</Title>
-                <Button leftIcon={<IconPlus size={16} />} onClick={handleAddNewClick}>
-                    Add Follow-up
-                </Button>
+                <Group spacing="sm" align="center" grow={narrow} sx={narrow ? { width: '100%' } : undefined}>
+                    <SegmentedControl
+                        color="blue"
+                        radius="md"
+                        styles={{
+                            root: { height: HEADER_CONTROL_HEIGHT, padding: 3 },
+                            label: { height: HEADER_CONTROL_HEIGHT - 6, padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+                        }}
+                        value={currentView === 'listWeek' ? 'list' : 'calendar'}
+                        onChange={handleViewToggle}
+                        data={[
+                            {
+                                value: 'calendar',
+                                label: (
+                                    <Group spacing={6} position="center" noWrap>
+                                        <IconCalendar size={16} />
+                                        <span>Calendar</span>
+                                    </Group>
+                                ),
+                            },
+                            {
+                                value: 'list',
+                                label: (
+                                    <Group spacing={6} position="center" noWrap>
+                                        <IconList size={16} />
+                                        <span>List</span>
+                                    </Group>
+                                ),
+                            },
+                        ]}
+                    />
+                    <Button radius="md" style={{ height: HEADER_CONTROL_HEIGHT }} leftIcon={<IconPlus size={16} />} onClick={handleAddNewClick}>
+                        Add Follow-up
+                    </Button>
+                </Group>
             </Group>
 
             <Grid gutter="xl" mb="xl">
@@ -202,7 +291,18 @@ export default function FollowupsCalendar() {
 
             <Grid gutter="xl">
                 <Grid.Col lg={8}>
-                    <Paper shadow="md" radius="md" p="md" style={{ position: 'relative', height: '100%' }}>
+                    <Paper
+                        shadow="md"
+                        radius="md"
+                        p="md"
+                        style={{ position: 'relative', height: '100%' }}
+                        // Everything clickable in the calendar shows a pointer: days (add), events (open), toolbar buttons.
+                        sx={{
+                            '& .fc-daygrid-day, & .fc-timegrid-col, & .fc-timegrid-slot, & .fc-event, & .fc-list-event, & .fc-button, & .fc-daygrid-more-link': {
+                                cursor: 'pointer',
+                            },
+                        }}
+                    >
                         <LoadingOverlay visible={loading} overlayBlur={2} />
                         {error && (
                             <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red">
@@ -210,13 +310,16 @@ export default function FollowupsCalendar() {
                             </Alert>
                         )}
                         {!loading && !error && (
+                            <>
                             <FullCalendar
+                                ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-                                initialView="dayGridMonth"
+                                initialView={readSavedView(userId)}
+                                datesSet={(info) => rememberView(info.view.type)}
                                 headerToolbar={{
                                     left: 'prev,next',
                                     center: 'title',
-                                    right: window.innerWidth < 640 ? 'listWeek' : 'dayGridMonth,timeGridWeek,listWeek',
+                                    right: narrow ? '' : 'dayGridMonth,timeGridWeek',
                                 }}
                                 events={events}
                                 eventClick={handleEventClick}
@@ -264,6 +367,7 @@ export default function FollowupsCalendar() {
                                 }}
                         
                             />
+                            </>
                         )}
                     </Paper>
                 </Grid.Col>
@@ -273,7 +377,7 @@ export default function FollowupsCalendar() {
                         <Title order={4} mb="md">
                             Upcoming Follow-ups
                         </Title>
-                        <ScrollArea style={{ height: 'calc(70vh - 60px)' }}>
+                        <div style={{ height: 'calc(70vh - 60px)', overflowY: 'auto' }}>
                             <Stack spacing="sm">
                                 {upcoming.length > 0 ? (
                                     upcoming.map((event) => (
@@ -302,7 +406,7 @@ export default function FollowupsCalendar() {
                                     </Text>
                                 )}
                             </Stack>
-                        </ScrollArea>
+                        </div>
                     </Paper>
                 </Grid.Col>
             </Grid>
@@ -310,7 +414,7 @@ export default function FollowupsCalendar() {
             <Modal opened={modalOpen} onClose={handleModalClose} title={selectedEvent ? (isEditing ? 'Edit Follow-up' : 'Follow-up Details') : 'Create New Follow-up'} centered size="md">
                 {selectedEvent ? (
                     isEditing ? (
-                        <FollowupForm leadId={selectedEvent.leadId} existingFollowUp={selectedEvent} onFollowupChange={handleFormSuccess} onCancel={() => setIsEditing(false)} />
+                        <FollowupForm leadId={selectedEvent.leadId} customerId={selectedEvent.customerId} existingFollowUp={selectedEvent} onFollowupChange={handleFormSuccess} onCancel={() => setIsEditing(false)} />
                     ) : (
                         <Stack spacing="md">
                             <Text size="lg" weight={700}>
@@ -340,19 +444,35 @@ export default function FollowupsCalendar() {
                     )
                 ) : (
                     <Box>
+                        <SegmentedControl
+                            fullWidth
+                            mb="md"
+                            value={targetType}
+                            onChange={(v) => {
+                                setTargetType(v);
+                                setSelectedLeadForNewFollowup(null);
+                            }}
+                            data={[
+                                { label: 'Lead', value: 'lead' },
+                                { label: 'Customer', value: 'customer' },
+                            ]}
+                        />
                         <Select
-            label="Select a Lead"
-            placeholder="Choose which lead this follow-up is for"
-            data={allLeads}
-            value={selectedLeadForNewFollowup}
-            onChange={setSelectedLeadForNewFollowup}
-            searchable
-            required
-            mb="md"
-        />
+                            label={targetType === 'customer' ? 'Select a Customer' : 'Select a Lead'}
+                            placeholder={targetType === 'customer' ? 'Choose which customer this follow-up is for' : 'Choose which lead this follow-up is for'}
+                            data={targetType === 'customer' ? allCustomers : allLeads}
+                            value={selectedLeadForNewFollowup}
+                            onChange={setSelectedLeadForNewFollowup}
+                            searchable
+                            required
+                            mb="md"
+                            nothingFound={targetType === 'customer' ? 'No customers found' : 'No leads found'}
+                        />
                         {selectedLeadForNewFollowup && (
                             <FollowupForm
-                leadId={selectedLeadForNewFollowup}
+                key={`${targetType}-${selectedLeadForNewFollowup}`}
+                leadId={targetType === 'lead' ? selectedLeadForNewFollowup : undefined}
+                customerId={targetType === 'customer' ? selectedLeadForNewFollowup : undefined}
                 existingFollowUp={null} // Pass null because we are NOT editing
                 initialDate={selectedDate} // Pass the selected date via the new prop
                 onFollowupChange={handleFormSuccess}

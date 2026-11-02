@@ -1,7 +1,7 @@
 'use client';
 
 import { DataTable } from 'mantine-datatable';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
 import { useRouter } from 'next/navigation';
@@ -11,14 +11,15 @@ import IconPencil from '../icon/icon-pencil';
 import IconTrash from '../icon/icon-trash-lines';
 // import IconUpload from '../icon/icon-upload-cloud';
 import AppointmentDrawer from './AppointmentDrawer';
-import IconMailDot from '../icon/icon-mail-dot';
 import { getAuth } from 'firebase/auth';
 import { IconDotsVertical, IconFileExport, IconUpload } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
-import { Pagination } from '@mantine/core';
+import { Loader } from '@mantine/core';
 import IconCashBanknotes from '../icon/icon-cash-banknotes';
 import IconListCheck from '../icon/icon-list-check';
 import IconHeart from '../icon/icon-heart';
+import CustomerQuickActions from '@/components/common/CustomerQuickActions';
+import { IconEye, IconPlus } from '@tabler/icons-react';
 
 const CustomerTable = ({ profile }) => {
   /* ─────────── existing state ─────────── */
@@ -35,6 +36,9 @@ const CustomerTable = ({ profile }) => {
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [openDrawer, setOpenDrawer] = useState(false);
+  const handleViewCustomer = (customer) => {
+    router.push(`/view-customer/${customer.id}`);
+  };
 
   /* ─────────── NEW state ─────────── */
   const [selectedIds, setSelectedIds] = useState([]); // checkbox picks
@@ -70,6 +74,18 @@ const CustomerTable = ({ profile }) => {
   const handleManageAppointments = (customer) => {
     setSelectedCustomer(customer);
     setOpenDrawer(true);
+  };
+
+  const openFinCheckup = (c) => {
+    const qs = new URLSearchParams({
+      id: c.id,
+      type: 'customer',
+      name: c.full_name,
+      phone: c.phone_number,
+      email: c.email,
+      doctor: profile?.name || '',
+    }).toString();
+    router.push(`/fincalc?${qs}`);
   };
 
   const handleEditCustomer = (customer) => {
@@ -270,6 +286,39 @@ const CustomerTable = ({ profile }) => {
     setRecordsData(customers.slice(from, to));
   }, [page, pageSize, customers]);
 
+  /* ─────────── mobile infinite scroll ─────────── */
+  const MOBILE_BATCH = 10;
+  const [mobileCount, setMobileCount] = useState(MOBILE_BATCH);
+  const sentinelRef = useRef(null);
+
+  const mobileList = useMemo(() => {
+    const q = search.toLowerCase();
+    const filtered = customers.filter(
+      (item) => (item.full_name || '').toLowerCase().includes(q) || (item.email || '').toLowerCase().includes(q) || (item.phone_number || '').toLowerCase().includes(q),
+    );
+    const sorted = sortBy(filtered, sortStatus.columnAccessor);
+    return sortStatus.direction === 'desc' ? sorted.reverse() : sorted;
+  }, [customers, search, sortStatus]);
+
+  const hasMore = mobileCount < mobileList.length;
+
+  useEffect(() => {
+    setMobileCount(MOBILE_BATCH);
+  }, [search, sortStatus]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) setMobileCount((c) => c + MOBILE_BATCH);
+      },
+      { rootMargin: '300px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, mobileCount]);
+
   const getNextAppointment = (appointments) => {
     if (!appointments || appointments.length === 0) return null;
     const upcoming = appointments.filter((appt) => new Date(appt.appointment_date) > new Date()).sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date));
@@ -280,14 +329,20 @@ const CustomerTable = ({ profile }) => {
   return (
     <div className="panel mt-6">
       {/* ⬇︎ Header / toolbar */}
-      <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center">
+      <div className="mb-5 flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
         <h5 className="text-lg font-semibold dark:text-white-light">Customer Table</h5>
 
-        <input type="text" className="form-input w-auto md:ml-4" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input type="text" className="form-input w-full md:w-auto md:ml-4" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
-        <div className="hidden md:flex ml-auto gap-2">
-          <Button size="sm" color="red" disabled={!selectedIds.length} leftSection={<IconTrash />} onClick={deleteSelected}>
-            Delete&nbsp;Selected&nbsp;({selectedIds.length})
+        <div className="hidden md:flex md:flex-wrap md:justify-end ml-auto gap-2">
+          {selectedIds.length > 0 && (
+            <ActionIcon size={36} variant="filled" color="red" title={`Delete ${selectedIds.length} selected`} aria-label="Delete selected customers" onClick={deleteSelected}>
+              <IconTrash />
+            </ActionIcon>
+          )}
+
+          <Button color="green" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/create-customer')}>
+            Add Customer
           </Button>
 
           <Button onClick={() => setCsvModalOpen(true)}>
@@ -324,7 +379,6 @@ const CustomerTable = ({ profile }) => {
             },
             { accessor: 'full_name', title: 'Name', sortable: true },
             { accessor: 'email', title: 'Email', sortable: true },
-            { accessor: 'phone_number', title: 'Phone', sortable: true },
             {
               accessor: 'next_appointment',
               title: 'Next Appointment',
@@ -340,56 +394,43 @@ const CustomerTable = ({ profile }) => {
               },
             },
             {
+              accessor: 'quick_actions',
+              title: 'Quick Actions',
+              render: (record) => <CustomerQuickActions customer={record} onAppointment={handleManageAppointments} />,
+            },
+            {
               accessor: 'actions',
               title: 'Actions',
               render: (record) => (
                 <Menu withinPortal shadow="md" width={200}>
                   <Menu.Target>
-                    <Button variant="transparent" compact>
-                      <IconPencil />
-                    </Button>
+                    <ActionIcon variant="subtle" aria-label="More actions">
+                      <IconDotsVertical size={18} />
+                    </ActionIcon>
                   </Menu.Target>
                   <Menu.Dropdown>
-                    <Menu.Item onClick={() => handleEditCustomer(record)}>
-                      <Group gap={6}>
-                        <IconPencil /> Edit Customer
-                      </Group>
+                    <Menu.Item icon={<IconEye size={16} />} onClick={() => handleViewCustomer(record)}>
+                      View
                     </Menu.Item>
-                    <Menu.Item onClick={() => handleManageAppointments(record)}>
-                      <Group gap={6}>
-                        <IconMailDot /> Appointments
-                      </Group>
-                    </Menu.Item>
-                    {/* 👇 3. ADD THE NEW MENU ITEMS FOR DESKTOP */}
-                    <Menu.Divider />
-                    <Menu.Item onClick={() => {
-                      const qs = new URLSearchParams({
-                        id: record.id,
-                        type: 'customer', // Use 'customer' type
-                        name: record.full_name,
-                        phone: record.phone_number,
-                        email: record.email,
-                        doctor: profile?.name || ''
-                      }).toString();
-                      router.push(`/fincalc?${qs}`);
-                    }}>
-                      <Group gap={6}><IconCashBanknotes />Fin-Health Checkup</Group>
-                    </Menu.Item>
-                    <Menu.Item onClick={() => {
-                      const qs = new URLSearchParams({
-                        clientId: record.id,
-                        clientType: 'customer',
-                        clientName: record.full_name
-                      }).toString();
-                      router.push(`/fhclog?${qs}`);
-                    }}>
-                      <Group gap={6}><IconListCheck /> Checkup History</Group>
+                    <Menu.Item icon={<IconPencil />} onClick={() => handleEditCustomer(record)}>
+                      Edit Customer
                     </Menu.Item>
                     <Menu.Divider />
-                    <Menu.Item color="red" onClick={() => deleteCustomer(record.id)}>
-                      <Group gap={6}>
-                        <IconTrash /> Delete
-                      </Group>
+                    <Menu.Item icon={<IconCashBanknotes />} onClick={() => openFinCheckup(record)}>
+                      Fin-Health Checkup
+                    </Menu.Item>
+                    <Menu.Item
+                      icon={<IconListCheck />}
+                      onClick={() => {
+                        const qs = new URLSearchParams({ clientId: record.id, clientType: 'customer', clientName: record.full_name }).toString();
+                        router.push(`/fhclog?${qs}`);
+                      }}
+                    >
+                      Checkup History
+                    </Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Item color="red" icon={<IconTrash />} onClick={() => deleteCustomer(record.id)}>
+                      Delete
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>
@@ -409,26 +450,25 @@ const CustomerTable = ({ profile }) => {
       {/* ─── Mobile Customer List ─── */}
       <div className="block md:hidden">
         {/* Bulk toolbar (delete + export) */}
-        <Group className="px-3 py-2" position="apart" noWrap>
-          <Button
-            size="xs"
-            color="red"
-            disabled={!selectedIds.length}
-            leftSection={<IconTrash size={14} />}
-            onClick={deleteSelected}
-          >
-            Delete ({selectedIds.length})
+        <Group className="px-1 py-2" spacing="xs">
+          <Button size="xs" color="green" leftIcon={<IconPlus size={14} />} onClick={() => router.push('/create-customer')}>
+            Add
           </Button>
-          <Button size="xs" onClick={handleExportData} leftSection={<IconFileExport size={14} />}>
+          {selectedIds.length > 0 && (
+            <ActionIcon size={30} variant="filled" color="red" title={`Delete ${selectedIds.length} selected`} aria-label="Delete selected customers" onClick={deleteSelected}>
+              <IconTrash size={16} />
+            </ActionIcon>
+          )}
+          <Button size="xs" onClick={handleExportData} leftIcon={<IconFileExport size={14} />}>
             Export
           </Button>
-          <Button size="xs" onClick={() => setCsvModalOpen(true)} leftSection={<IconFileExport size={14} />}>
+          <Button size="xs" onClick={() => setCsvModalOpen(true)} leftIcon={<IconFileExport size={14} />}>
             Upload CSV
           </Button>
         </Group>
 
-        <ScrollArea style={{ height: 'calc(100vh - 160px)' }} px="xs" scrollbarSize={0}>
-          {recordsData.map((cust) => {
+        <div className="px-1">
+          {mobileList.slice(0, mobileCount).map((cust) => {
             const isSel = selectedIds.includes(cust.id);
             const nextAppt = getNextAppointment(cust.appointments);
             return (
@@ -452,6 +492,9 @@ const CustomerTable = ({ profile }) => {
                       {new Date(nextAppt.appointment_date).toLocaleDateString()} @ {new Date(nextAppt.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Badge>
                   )}
+                  <div className="mt-2">
+                    <CustomerQuickActions customer={cust} onAppointment={handleManageAppointments} size="lg" />
+                  </div>
                 </div>
 
                 {/* Actions menu */}
@@ -462,11 +505,11 @@ const CustomerTable = ({ profile }) => {
                     </ActionIcon>
                   </Menu.Target>
                   <Menu.Dropdown>
+                    <Menu.Item icon={<IconEye size={14} />} onClick={() => handleViewCustomer(cust)}>
+                      View
+                    </Menu.Item>
                     <Menu.Item icon={<IconPencil size={14} />} onClick={() => handleEditCustomer(cust)}>
                       Edit
-                    </Menu.Item>
-                    <Menu.Item icon={<IconMailDot size={14} />} onClick={() => handleManageAppointments(cust)}>
-                      Appointments
                     </Menu.Item>
                     {/* 👇 4. ADD THE NEW MENU ITEMS FOR MOBILE */}
                     <Menu.Divider />
@@ -507,16 +550,13 @@ const CustomerTable = ({ profile }) => {
               </Paper>
             );
           })}
+          {hasMore && (
+            <div ref={sentinelRef} className="flex justify-center py-4">
+              <Loader size="sm" />
+            </div>
+          )}
+        </div>
 
-        </ScrollArea>
-        <Group position="center" spacing="xs" my="xs">
-          <Pagination
-            page={page}
-            onChange={setPage}
-            total={Math.ceil(customers.length / pageSize)}
-            size="xs"
-          />
-        </Group>
       </div>
 
 

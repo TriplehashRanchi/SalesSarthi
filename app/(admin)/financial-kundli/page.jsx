@@ -173,6 +173,20 @@ export default function FinancialKundliPage() {
         'Synthesizing final Financial Kundli report...',
     ];
 
+    // Opened from a lead/customer profile: prefill the client and link the report to that record.
+    const [linked, setLinked] = useState(null);
+    useEffect(() => {
+        const q = new URLSearchParams(window.location.search);
+        const linkedType = q.get('linkedType');
+        const linkedId = q.get('linkedId');
+        if (!['lead', 'customer'].includes(linkedType) || !linkedId) return;
+        setLinked({ type: linkedType, id: linkedId });
+        setData((prev) => ({
+            ...prev,
+            client: { ...prev.client, name: q.get('name') || prev.client.name, phone: q.get('phone') || prev.client.phone, email: q.get('email') || prev.client.email },
+        }));
+    }, []);
+
     useEffect(() => {
         if (loading) {
             const interval = setInterval(() => {
@@ -573,7 +587,7 @@ export default function FinancialKundliPage() {
             const res = await fetch(`${API_URL}/api/financial-kundli/submit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                body: JSON.stringify(data),
+                body: JSON.stringify(linked ? { ...data, linked_entity_type: linked.type, linked_entity_id: linked.id } : data),
             });
             const result = await res.json();
             if(result.success && result.reportId){

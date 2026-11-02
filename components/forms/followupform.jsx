@@ -5,32 +5,20 @@ import Swal from 'sweetalert2';
 import { Button, TextInput, Select, Textarea, Group, Box, Title, Alert, ScrollArea, Grid } from '@mantine/core';
 import { getAuth } from 'firebase/auth';
 
-const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, initialDate }) => {
-  const [stages, setStages] = useState([]);
+const PURPOSE_OPTIONS = ['FHC', 'First Meeting', 'Product Discussion', 'Closing', 'Other'];
+
+// A follow-up is for either a lead (leadId) or a customer (customerId).
+const FollowupForm = ({ leadId, customerId, existingFollowUp, onFollowupChange, onCancel, initialDate }) => {
   const [followUpDate, setFollowUpDate] = useState('');
   const [status, setStatus] = useState('');
   const [purpose, setPurpose] = useState('');
+  const [otherReason, setOtherReason] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-  // Fetch follow-up stages. This is a PUBLIC endpoint as requested.
-  useEffect(() => {
-    const fetchStages = async () => {
-      try {
-        // CORRECT: Calling the public endpoint without auth or user ID.
-        const response = await axios.get(`${API_URL}/api/followup-stages/1`);
-        setStages(response.data);
-      } catch (err) {
-        console.error("Error fetching stages:", err);
-        setError('Error fetching follow-up stages.');
-      }
-    };
-    fetchStages();
-  }, []);
 
   // Populate form fields if editing an existing follow-up
   useEffect(() => {
@@ -40,7 +28,14 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, in
             const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
             setFollowUpDate(localDate.toISOString().slice(0, 16));
             setStatus(existingFollowUp.status);
-            setPurpose(existingFollowUp.purpose);
+            // A saved purpose outside the fixed list was typed in by the user, so show it under "Other".
+            if (PURPOSE_OPTIONS.includes(existingFollowUp.purpose)) {
+              setPurpose(existingFollowUp.purpose);
+              setOtherReason('');
+            } else {
+              setPurpose('Other');
+              setOtherReason(existingFollowUp.purpose || '');
+            }
             setNotes(existingFollowUp.notes || '');
             setIsUpdating(true);
         }
@@ -48,6 +43,7 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, in
       setFollowUpDate('');
       setStatus('');
       setPurpose('');
+      setOtherReason('');
       setNotes('');
       setIsUpdating(false);
 
@@ -70,6 +66,10 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, in
       setError('Please fill all required fields.');
       return;
     }
+    if (purpose === 'Other' && !otherReason.trim()) {
+      setError('Please type the reason for this follow-up.');
+      return;
+    }
     setSubmitting(true);
 
     const localDate = new Date(followUpDate);
@@ -88,10 +88,10 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, in
 
     // The data payload is clean, with no user_id.
     const followUpData = {
-      lead_id: leadId,
+      ...(customerId ? { customer_id: customerId } : { lead_id: leadId }),
       follow_up_date: correctUtcIsoString,
       status: status,
-      purpose: purpose,
+      purpose: purpose === 'Other' ? otherReason.trim() : purpose,
       notes: notes,
     };
 
@@ -135,7 +135,7 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, in
 
                     {/* THIS IS THE CHANGE: Using a Grid for the two dropdowns */}
                     <Grid>
-                        <Grid.Col span={6}>
+                        <Grid.Col span={12} sm={6}>
                             <Select
                                 label="Status"
                                 placeholder="Status"
@@ -146,19 +146,31 @@ const FollowupForm = ({ leadId, existingFollowUp, onFollowupChange, onCancel, in
                                 variant="filled"
                             />
                         </Grid.Col>
-                        <Grid.Col span={6}>
+                        <Grid.Col span={12} sm={6}>
                             <Select
                                 label="Purpose"
                                 placeholder="Purpose"
                                 value={purpose}
                                 onChange={setPurpose}
-                                data={stages.map((stage) => stage.name)}
+                                data={PURPOSE_OPTIONS}
                                 required
-                                searchable
                                 variant="filled"
                             />
                         </Grid.Col>
                     </Grid>
+
+                    {purpose === 'Other' && (
+                        <TextInput
+                            label="Reason"
+                            placeholder="Type the reason for this follow-up"
+                            value={otherReason}
+                            onChange={(e) => setOtherReason(e.target.value)}
+                            maxLength={255}
+                            required
+                            variant="filled"
+                            data-autofocus
+                        />
+                    )}
 
                     <Textarea
                         label="Notes"

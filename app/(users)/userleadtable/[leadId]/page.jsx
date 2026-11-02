@@ -11,6 +11,9 @@ import {
     IconCoinRupee
 } from '@tabler/icons-react';
 
+import LinkedFinancialKundli from '@/components/common/LinkedFinancialKundli';
+import LinkedFinHealthCheckups from '@/components/common/LinkedFinHealthCheckups';
+
 // Reusable component for displaying each piece of information
 const InfoSection = ({ label, children, icon }) => {
     // If the child is null, empty, or 'N/A', don't render the section
@@ -138,6 +141,10 @@ const LeadDetailPage = ({ params }) => {
                             <Text c="dimmed" sx={{ fontStyle: 'italic' }}>"{lead.notes || 'No notes added.'}"</Text>
                         </InfoSection>
                         
+                        <LinkedFinHealthCheckups type="lead" entity={lead} />
+
+                        <LinkedFinancialKundli type="lead" entity={lead} />
+
                         <Divider my="sm" label="Activity Timeline" labelPosition="center" />
 
                         {/* --- TIMELINE SECTION --- */}
