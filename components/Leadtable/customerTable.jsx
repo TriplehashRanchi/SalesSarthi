@@ -345,6 +345,7 @@ const CustomerTable = ({ profile }) => {
       return;
     }
     if (selectionMode) toggleSelect(id);
+    else router.push(`/view-customer/${id}`);
   };
 
   const exitSelection = () => {
@@ -404,6 +405,8 @@ const CustomerTable = ({ profile }) => {
         <DataTable
           highlightOnHover
           verticalSpacing="sm"
+          onRowClick={(record) => router.push(`/view-customer/${record.id}`)}
+          rowStyle={() => ({ cursor: 'pointer' })}
           className="table-hover whitespace-nowrap"
           records={recordsData}
           columns={[
@@ -417,7 +420,11 @@ const CustomerTable = ({ profile }) => {
                   onChange={toggleSelectAll}
                 />
               ),
-              render: (record) => <Checkbox checked={selectedIds.includes(record.id)} onChange={() => toggleSelect(record.id)} />,
+              render: (record) => (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Checkbox checked={selectedIds.includes(record.id)} onChange={() => toggleSelect(record.id)} />
+                </div>
+              ),
               width: 48,
             },
             {
@@ -463,6 +470,7 @@ const CustomerTable = ({ profile }) => {
               accessor: 'actions',
               title: 'Actions',
               render: (record) => (
+                <div onClick={(e) => e.stopPropagation()}>
                 <Menu withinPortal shadow="md" width={200}>
                   <Menu.Target>
                     <ActionIcon variant="subtle" aria-label="More actions">
@@ -495,6 +503,7 @@ const CustomerTable = ({ profile }) => {
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>
+                </div>
               ),
             },
           ]}
@@ -568,7 +577,7 @@ const CustomerTable = ({ profile }) => {
             return (
               <div
                 key={cust.id}
-                className={`flex items-center gap-3 select-none py-2.5 border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSel ? 'bg-blue-50 dark:bg-gray-700' : ''}`}
+                className={`flex cursor-pointer items-center gap-3 select-none py-2.5 border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSel ? 'bg-blue-50 dark:bg-gray-700' : ''}`}
                 style={{ WebkitTouchCallout: 'none' }}
                 onTouchStart={() => startLongPress(cust.id)}
                 onTouchMove={cancelLongPress}

@@ -17,27 +17,38 @@ const LeadForm = ({ existingLead }) => {
   ];
 
   // Extended form data including most of the fields from your leads table.
+  // Saved leads can have null fields, a short gender code ("F") or a zero date; the inputs need clean strings.
+  const field = (key) => existingLead?.[key] ?? '';
+  const genderOf = (v) => {
+    const g = String(v ?? '').trim().toLowerCase();
+    return g === 'm' || g === 'male' ? 'Male' : g === 'f' || g === 'female' ? 'Female' : g === 'other' ? 'Other' : '';
+  };
+  const dateOf = (v) => {
+    if (!v) return '';
+    const d = new Date(v);
+    return isNaN(d.getTime()) || d.getFullYear() < 1900 ? '' : d.toLocaleDateString('en-CA');
+  };
+
+  // Extended form data including most of the fields from your leads table.
   const [formData, setFormData] = useState({
     id: existingLead ? existingLead.id : Math.floor(Math.random() * 100000000),
-    admin_id: existingLead ? existingLead.admin_id : '',
-    full_name: existingLead ? existingLead.full_name : '',
-    email: existingLead ? existingLead.email : '',
-    phone_number: existingLead ? existingLead.phone_number : '',
-    lead_status: existingLead ? existingLead.lead_status : '',
-    gender: existingLead ? existingLead.gender : '',
-    date_of_birth: existingLead
-      ? new Date(existingLead.date_of_birth).toLocaleDateString('en-CA')
-      : '',
-    address: existingLead ? existingLead.address : '',
-    insurance_type: existingLead ? existingLead.insurance_type : '',
-    policy_number: existingLead ? existingLead.policy_number : '',
-    coverage_amount: existingLead ? existingLead.coverage_amount : '',
-    preferred_plan: existingLead ? existingLead.preferred_plan : '',
-    next_follow_up_date: existingLead ? existingLead.next_follow_up_date : '',
-    source: existingLead ? existingLead.source : '',
-    company_name: existingLead ? existingLead.company_name : '',
-    referrer: existingLead ? existingLead.referrer : '',
-    notes: existingLead ? existingLead.notes : '',
+    admin_id: field('admin_id'),
+    full_name: field('full_name'),
+    email: field('email'),
+    phone_number: field('phone_number'),
+    lead_status: field('lead_status'),
+    gender: genderOf(existingLead?.gender),
+    date_of_birth: dateOf(existingLead?.date_of_birth),
+    address: field('address'),
+    insurance_type: field('insurance_type'),
+    policy_number: field('policy_number'),
+    coverage_amount: field('coverage_amount'),
+    preferred_plan: field('preferred_plan'),
+    next_follow_up_date: field('next_follow_up_date'),
+    source: field('source'),
+    company_name: field('company_name'),
+    referrer: field('referrer'),
+    notes: field('notes'),
   });
 
   const router = useRouter();
@@ -109,13 +120,11 @@ const LeadForm = ({ existingLead }) => {
   };
 
   return (
-    <div className="form-container p-6 bg-white dark:bg-gray-900 rounded shadow-md">
-      <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
-        {existingLead ? 'Edit Lead' : 'Add New Lead'}
-      </h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="form-container p-6 bg-white dark:bg-gray-900 rounded shadow-md max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none">
+      {!existingLead && <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">Add New Lead</h2>}
+      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-1 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 max-sm:[&_.form-input]:!bg-transparent max-sm:[&_.form-select]:!bg-transparent max-sm:[&_.form-textarea]:!bg-transparent">
         {/* Full Name */}
-        <div>
+        <div className="min-w-0 max-sm:order-[1] max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Full Name
           </label>
@@ -131,7 +140,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Email */}
-        <div>
+        <div className="min-w-0 max-sm:order-[2] max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700  dark:text-slate-300 mb-1">
             Email
           </label>
@@ -147,7 +156,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Phone Number */}
-        <div>
+        <div className="min-w-0 max-sm:order-[3] max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700  dark:text-slate-300 mb-1">
             Phone Number
           </label>
@@ -163,7 +172,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Lead Status with custom options */}
-        <div>
+        <div className="min-w-0 max-sm:order-[6]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Lead Status
           </label>
@@ -184,7 +193,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Gender */}
-        <div>
+        <div className="min-w-0 max-sm:order-[4]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Gender
           </label>
@@ -202,7 +211,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Date of Birth */}
-        <div>
+        <div className="min-w-0 max-sm:order-[5]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Date of Birth
           </label>
@@ -216,7 +225,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Address */}
-        <div className="col-span-1 lg:col-span-3">
+        <div className="min-w-0 max-sm:order-[8] max-sm:col-span-2 col-span-1 lg:col-span-3">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Address
           </label>
@@ -230,7 +239,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Insurance Type */}
-        <div>
+        <div className="min-w-0 max-sm:order-[9]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Insurance Type
           </label>
@@ -245,7 +254,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Policy Number */}
-        <div>
+        <div className="min-w-0 max-sm:order-[10]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Policy Number
           </label>
@@ -260,7 +269,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Coverage Amount */}
-        <div>
+        <div className="min-w-0 max-sm:order-[11]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Coverage Amount
           </label>
@@ -276,7 +285,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Preferred Plan */}
-        <div>
+        <div className="min-w-0 max-sm:order-[12]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Preferred Plan
           </label>
@@ -291,7 +300,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Next Follow-up Date */}
-        <div>
+        <div className="min-w-0 max-sm:order-[13] max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Next Follow-up Date Time
           </label>
@@ -305,7 +314,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Source */}
-        <div>
+        <div className="min-w-0 max-sm:order-[7]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Source
           </label>
@@ -320,7 +329,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Company Name */}
-        <div>
+        <div className="min-w-0 max-sm:order-[14]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Company Name
           </label>
@@ -335,7 +344,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Referrer */}
-        <div>
+        <div className="min-w-0 max-sm:order-[15]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Referrer
           </label>
@@ -350,7 +359,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Notes */}
-        <div className="col-span-1 lg:col-span-3">
+        <div className="min-w-0 max-sm:order-[16] max-sm:col-span-2 col-span-1 lg:col-span-3">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Notes
           </label>
@@ -364,8 +373,8 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Submit Button */}
-        <div className="col-span-1 lg:col-span-3 flex justify-end space-x-3">
-          <button type="submit" className="btn btn-primary">
+        <div className="col-span-2 sm:col-span-1 lg:col-span-3 flex justify-end space-x-3 max-sm:order-[17]">
+          <button type="submit" className="btn btn-primary max-sm:w-full">
             {existingLead ? 'Update Lead' : 'Add Lead'}
           </button>
         </div>

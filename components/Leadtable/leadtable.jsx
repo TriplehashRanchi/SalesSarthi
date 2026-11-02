@@ -1,7 +1,7 @@
 'use client';
 
 import { DataTable } from 'mantine-datatable';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
 import { useRouter } from 'next/navigation';
@@ -26,17 +26,20 @@ import {
     Title,
     Avatar,
     Stack,
+    TextInput,
+    Loader,
 } from '@mantine/core';
 import Papa from 'papaparse';
 import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
-import { IconAlertCircle, IconBrandWhatsapp, IconCalculator, IconHistory, IconListCheck, IconMenu4, IconUserCheck } from '@tabler/icons-react';
+import { IconAlertCircle, IconArrowLeft, IconBrandFacebook, IconBrandWhatsapp, IconCalculator, IconDownload, IconHistory, IconListCheck, IconMenu4, IconPhoneCall, IconSearch, IconUpload, IconUserCheck } from '@tabler/icons-react';
 import IconChatDot from '../icon/icon-chat-dot';
 import IconFacebook from '@/components/icon/icon-facebook';
 import IconPencil from '../icon/icon-pencil';
 
 import FollowupForm from '@/components/forms/followupform';
 import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUpload';
+import LeadDetailView from './LeadDetailView';
 
 import { getAuth } from 'firebase/auth';
 import IconX from '../icon/icon-x';
@@ -574,8 +577,99 @@ const LeadTable = ({ profile, userId }) => {
     const allSel = currentIds.length && currentIds.every((id) => selectedLeads.includes(id));
     const someSel = currentIds.length && currentIds.some((id) => selectedLeads.includes(id));
 
+    /* ───────── mobile: long-press selection + infinite scroll ───────── */
+    const [viewLeadId, setViewLeadId] = useState(null); // desktop: lead shown in the side panel
+    const [selectionMode, setSelectionMode] = useState(false);
+    const pressTimer = useRef(null);
+    const longPressed = useRef(false);
+    const sentinelRef = useRef(null);
+    const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+    const colorFor = (name) => AVATAR_COLORS[((name || '?').trim().charCodeAt(0) || 0) % AVATAR_COLORS.length];
+    const statusColor = (st) =>
+        st === 'Hot Lead' ? 'red' : st === 'Cold Lead' ? 'blue' : st === 'Qualified Lead' ? 'green' : st === 'Lost Lead' ? 'gray' : st === 'Follow-up' ? 'lime' : st === 'Fin Health Checkup Done' ? 'teal' : 'orange';
+
+    const cancelLongPress = () => clearTimeout(pressTimer.current);
+    const startLongPress = (id) => {
+        longPressed.current = false;
+        cancelLongPress();
+        pressTimer.current = setTimeout(() => {
+            longPressed.current = true;
+            if (navigator.vibrate) navigator.vibrate(30);
+            setSelectionMode(true);
+            setSelectedLeads((prev) => (prev.includes(id) ? prev : [...prev, id]));
+        }, 500);
+    };
+    const toggleLead = (id) => setSelectedLeads((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    const handleRowClick = (id) => {
+        if (longPressed.current) {
+            longPressed.current = false;
+            return;
+        }
+        if (selectionMode) toggleLead(id);
+        else router.push(`/leadtable/${id}`);
+    };
+    const exitSelection = () => {
+        setSelectionMode(false);
+        setSelectedLeads([]);
+    };
+
+    useEffect(() => {
+        if (selectionMode && selectedLeads.length === 0) setSelectionMode(false);
+    }, [selectionMode, selectedLeads]);
+
+    const hasMoreMobile = mobileVisibleCount < filteredLeads.length;
+    useEffect(() => {
+        const node = sentinelRef.current;
+        if (!node || !hasMoreMobile) return;
+        const observer = new IntersectionObserver((entries) => entries[0].isIntersecting && setMobileVisibleCount((c) => c + 20), { rootMargin: '300px' });
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [hasMoreMobile, mobileVisibleCount]);
+
+    const openWhatsApp = (record) => {
+        const digits = (record.phone_number || '').replace(/\D/g, '');
+        const ten = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits.length === 10 ? digits : null;
+        if (ten && /^[6-9]\d{9}$/.test(ten)) window.open(`https://wa.me/91${ten}?text=Hello ${record.full_name},`, '_blank');
+        else alert('Invalid phone number');
+    };
+    const callLead = (record) => {
+        const digits = (record.phone_number || '').replace(/[^\d+]/g, '');
+        if (digits) window.open(`tel:${digits}`, '_self');
+        else alert('Phone number invalid');
+    };
+
+    const bulkBar = (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 dark:bg-gray-800">
+            <Text size="sm" weight={600}>{selectedLeads.length} selected</Text>
+            {teamMembers.length > 0 && (
+                <>
+                    <Select
+                        data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
+                        value={selectedTeamMember}
+                        onChange={setSelectedTM}
+                        placeholder="Assign to..."
+                        searchable
+                        clearable
+                        size="xs"
+                        radius="xl"
+                        style={{ minWidth: 170 }}
+                    />
+                    <Button size="xs" radius="xl" color="violet" onClick={() => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
+                        Assign
+                    </Button>
+                </>
+            )}
+            <Button size="xs" radius="xl" color="red" variant="light" onClick={deleteLeads} disabled={!selectedLeads.length}>
+                Delete
+            </Button>
+            <Button size="xs" radius="xl" variant="default" className="ml-auto" onClick={exitSelection}>
+                Clear
+            </Button>
+        </div>
+    );
+
     return (
-        <div className="panel p-2 mt-6 relative">
+        <div className="panel relative mt-0 p-2 md:!p-5 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent md:mt-6">
             {/* <LoadingOverlay visible={loading || isPolling} overlayBlur={2} /> */}
 
             {error && (
@@ -584,25 +678,99 @@ const LeadTable = ({ profile, userId }) => {
                 </Alert>
             )}
 
-            {/* top controls */}
-            <div className="mb-5 hidden md:flex flex-col gap-5 md:flex-row md:items-center">
-                {/* <h5 className="text-lg font-semibold dark:text-white-light">Lead Management</h5> */}
+            {/* header */}
+            <div className="mb-4 flex items-center gap-2">
+                <ActionIcon className="md:hidden" variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+                    <IconArrowLeft size={22} />
+                </ActionIcon>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-xl font-bold leading-tight sm:text-2xl">Leads</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {filteredLeads.length} {filteredLeads.length === 1 ? 'Lead' : 'Leads'}
+                        {filteredLeads.length !== leads.length ? ` of ${leads.length}` : ''}
+                    </p>
+                </div>
+            </div>
 
-                {/* search + filter */}
-                <div className="ltr:ml-auto rtl:mr-auto flex flex-col sm:flex-row gap-4">
-                    <input
-                        className="form-input w-auto"
-                        placeholder="Search Name, Email, Phone..."
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
+            {/* desktop controls */}
+            <div className="mb-4 hidden flex-wrap items-center gap-3 md:flex">
+                <TextInput
+                    icon={<IconSearch size={16} />}
+                    placeholder="Search name, email or phone"
+                    radius="xl"
+                    className="w-full max-w-xs flex-1"
+                    value={search}
+                    onChange={(e) => {
+                        setSearch(e.currentTarget.value);
+                        setPage(1);
+                    }}
+                />
+                <Select
+                    data={statusOptions}
+                    placeholder="All statuses"
+                    radius="xl"
+                    value={statusFilter}
+                    onChange={(v) => {
+                        setStatusFilter(v);
+                        setPage(1);
+                    }}
+                    clearable
+                    searchable
+                    style={{ minWidth: 170 }}
+                />
+                {!userId && (
+                    <Select
+                        data={[
+                            { value: 'unassigned', label: 'Unassigned' },
+                            ...teamMembers.map((u) => ({
+                                value: u.id.toString(),
+                                label: `${u.username} (${u.role})`,
+                            })),
+                        ]}
+                        placeholder="Assigned to"
+                        radius="xl"
+                        value={assignedUserFilter}
+                        onChange={(v) => {
+                            setAssignedUserFilter(v);
                             setPage(1);
                         }}
+                        clearable
+                        searchable
+                        style={{ minWidth: 200 }}
                     />
+                )}
+                <div className="ml-auto flex items-center gap-2">
+                    <Button variant="light" color="violet" radius="xl" leftIcon={<IconUpload size={16} />} onClick={() => setCsvOpen(true)}>
+                        Upload CSV
+                    </Button>
+                    <Button variant="light" color="violet" radius="xl" leftIcon={<IconDownload size={16} />} onClick={exportCSV}>
+                        Export
+                    </Button>
+                </div>
+            </div>
 
+            {/* Bulk actions: only while something is selected */}
+            {selectedLeads.length > 0 && bulkBar}
+
+            {/* mobile controls */}
+            <div className="mb-3 md:hidden">
+                <TextInput
+                    icon={<IconSearch size={18} />}
+                    placeholder="Search name, email or phone"
+                    radius="xl"
+                    size="md"
+                    value={search}
+                    onChange={(e) => {
+                        setSearch(e.currentTarget.value);
+                        setPage(1);
+                    }}
+                    mb="sm"
+                />
+                <div className="mb-2 grid grid-cols-2 gap-2">
                     <Select
                         data={statusOptions}
-                        placeholder="Filter by Status"
+                        placeholder="Status"
+                        radius="xl"
                         value={statusFilter}
                         onChange={(v) => {
                             setStatusFilter(v);
@@ -611,7 +779,6 @@ const LeadTable = ({ profile, userId }) => {
                         clearable
                         searchable
                     />
-
                     {!userId && (
                         <Select
                             data={[
@@ -621,7 +788,8 @@ const LeadTable = ({ profile, userId }) => {
                                     label: `${u.username} (${u.role})`,
                                 })),
                             ]}
-                            placeholder="Filter by Assigned User"
+                            placeholder="Assigned to"
+                            radius="xl"
                             value={assignedUserFilter}
                             onChange={(v) => {
                                 setAssignedUserFilter(v);
@@ -629,161 +797,40 @@ const LeadTable = ({ profile, userId }) => {
                             }}
                             clearable
                             searchable
-                            style={{ minWidth: '240px' }}
                         />
                     )}
                 </div>
-
-
-                {/* facebook + csv buttons */}
-                {/* <button className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50" onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
-                  <span className="flex gap-2 items-center">
-                      <IconFacebook /> Import from Facebook
-                  </span>
-              </button> */}
-
-                <button onClick={() => setCsvOpen(true)} className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">
-                    CSV Bulk Upload
-                </button>
-                <button onClick={exportCSV} className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg">
-                    Export CSV
-                </button>
-            </div>
-            <div className="hidden md:flex flex-col sm:flex-row gap-4 mb-4 items-center">
-                {/* assign dropdown */}
-                {teamMembers.length > 0 && (
-                    <>
-                        <Select
-                            data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
-                            value={selectedTeamMember}
-                            onChange={setSelectedTM}
-                            placeholder="Assign selected to..."
-                            searchable
-                            clearable
-                            style={{ minWidth: '200px' }}
-                        />
-                        <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
-                            Assign ({selectedLeads.length})
-                        </Button>
-                    </>
-                )}
-
-                <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
-                    Delete ({selectedLeads.length})
-                </Button>
-            </div>
-
-            {/* Mobile Controls */}
-            <div className="md:hidden flex flex-col gap-3 mb-5">
-                {/* Line 1: Search */}
-                <input
-                    className="form-input w-full text-sm"
-                    placeholder="Search Name, Email, Phone..."
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                        setPage(1);
-                    }}
-                />
-
-
-                <div className="flex gap-2 items-center">
-                    <div className="flex-1">
-                        {!userId && (
-                            <Select
-                                data={[
-                                    { value: 'unassigned', label: 'Unassigned' },
-                                    ...teamMembers.map((u) => ({
-                                        value: u.id.toString(),
-                                        label: `${u.username} (${u.role})`,
-                                    })),
-                                ]}
-                                placeholder="Assigned user"
-                                value={assignedUserFilter}
-                                onChange={(v) => {
-                                    setAssignedUserFilter(v);
-                                    setPage(1);
-                                }}
-                                clearable
-                                searchable
-                            />
-                        )}
-                    </div>
-                </div>
-
-
-                {/* Line 2: Filter + Facebook + CSV */}
-                <div className="flex gap-2 items-center">
-                    <div className="flex-1">
-                        <Select
-                            data={statusOptions}
-                            placeholder="Status"
-                            value={statusFilter}
-                            onChange={(v) => {
-                                setStatusFilter(v);
-                                setPage(1);
-                            }}
-                            clearable
-                            searchable
-                            theme="dark"
-                        />
-                    </div>
-
-                    <button className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm disabled:opacity-50" onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
-                        <IconFacebook className="inline w-4 h-4" />
-                    </button>
-
-                    <button onClick={() => setCsvOpen(true)} className="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm">
-                        CSV
-                    </button>
-                </div>
-
-                <div className="flex gap-2 items-center">
-                    {/* Assign dropdown */}
-                    {teamMembers.length > 0 && (
-                        <>
-                            <div className="flex-1 min-w-[140px]">
-                                <Select
-                                    data={teamMembers.map((u) => ({
-                                        value: u.id.toString(),
-                                        label: `${u.username} (${u.role})`,
-                                    }))}
-                                    value={selectedTeamMember}
-                                    onChange={setSelectedTM}
-                                    placeholder="Assign selected to..."
-                                    searchable
-                                    clearable
-                                    className="w-full"
-                                />
-                            </div>
-
-                            {/* Assign button */}
-                            <button onClick={assignLeads} disabled={!selectedTeamMember || !selectedLeads.length} className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs disabled:opacity-50">
-                                Assign ({selectedLeads.length})
-                            </button>
-                        </>
-                    )}
-
-                    {/* Delete button */}
-                    <button onClick={deleteLeads} disabled={!selectedLeads.length} className="bg-red-500 text-white px-3 py-1 rounded-md text-xs disabled:opacity-50">
-                        Delete ({selectedLeads.length})
-                    </button>
+                <div className="flex items-center py-1">
+                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconBrandFacebook size={18} />} onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
+                        Facebook
+                    </Button>
+                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconUpload size={18} />} onClick={() => setCsvOpen(true)}>
+                        Upload CSV
+                    </Button>
+                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconDownload size={18} />} onClick={exportCSV}>
+                        Export
+                    </Button>
                 </div>
             </div>
 
             {/* table */}
-            <div className="hidden md:block datatables dark:bg-gray-800 dark:text-gray-200">
+            <div className="datatables hidden dark:bg-gray-800 dark:text-gray-200 md:block [&_table]:!w-full [&_table]:!min-w-0 [&_table]:table-fixed [&_thead]:!bg-transparent [&_th]:!border-b [&_th]:!border-gray-200 [&_th]:!bg-transparent [&_th]:!py-3 [&_th]:!text-xs [&_th]:!font-semibold [&_th]:!uppercase [&_th]:!tracking-wide [&_th]:!text-gray-500 [&_td]:!border-gray-100 [&_tbody_tr:hover]:!bg-violet-50/60 [&_tbody_tr]:!bg-transparent">
                 <DataTable
                     // className="dark:bg-gray-800 dark:text-gray-100"
-                    withBorder
-                    striped
                     highlightOnHover
-                    borderRadius="sm"
+                    verticalSpacing="sm"
+                    fontSize="sm"
+                    className="whitespace-nowrap"
+                    onRowClick={(record) => setViewLeadId(record.id)}
+                    rowStyle={() => ({ cursor: 'pointer' })}
+                    paginationColor="violet"
                     records={recordsData}
                     columns={[
                         {
                             accessor: 'select',
-                            width: '2%',
+                            width: '4%',
                             title: (
                                 <Checkbox
                                     checked={allSel}
@@ -796,26 +843,45 @@ const LeadTable = ({ profile, userId }) => {
                                 />
                             ),
                             render: (r) => (
-                                <Checkbox
-                                    aria-label={`Select ${r.full_name}`}
-                                    checked={selectedLeads.includes(r.id)}
-                                    onChange={() => setSelectedLeads((prev) => (prev.includes(r.id) ? prev.filter((id) => id !== r.id) : [...prev, r.id]))}
-                                />
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <Checkbox
+                                        aria-label={`Select ${r.full_name}`}
+                                        checked={selectedLeads.includes(r.id)}
+                                        onChange={() => toggleLead(r.id)}
+                                    />
+                                </div>
                             ),
                             textAlign: 'center',
                         },
-                        { accessor: 'full_name', title: 'Name', sortable: true },
-                        { accessor: 'email', title: 'Email', sortable: true },
-                        { accessor: 'phone_number', title: 'Phone', sortable: true },
+                        {
+                            accessor: 'full_name',
+                            title: 'Lead',
+                            sortable: true,
+                            width: '25%',
+                            render: (r) => (
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <Avatar color={colorFor(r.full_name)} variant="light" radius="xl" size="md" className="flex-shrink-0">
+                                        {(r.full_name || '?').trim().charAt(0).toUpperCase()}
+                                    </Avatar>
+                                    <div className="min-w-0">
+                                        <div className="truncate font-medium">{r.full_name}</div>
+                                        <div className="truncate text-xs text-gray-500">{r.email || '—'}</div>
+                                    </div>
+                                </div>
+                            ),
+                        },
+                        { accessor: 'phone_number', title: 'Phone', sortable: true, width: '12%', ellipsis: true },
                         {
                             accessor: 'lead_status',
                             title: 'Status',
                             sortable: true,
+                            width: '14%',
                             render: (record) => (
+                                <div onClick={(e) => e.stopPropagation()} className="inline-block">
                                 <Menu withinPortal shadow="md" position="bottom-start">
                                     <Menu.Target>
                                         <Badge
-                                            style={{ cursor: 'pointer', minWidth: '100px' }}
+                                            style={{ cursor: 'pointer' }}
                                             color={
                                                 record.lead_status === 'Hot Lead'
                                                     ? 'red'
@@ -844,50 +910,50 @@ const LeadTable = ({ profile, userId }) => {
                                         ))}
                                     </Menu.Dropdown>
                                 </Menu>
+                                </div>
                             ),
                         },
                         {
                             accessor: 'source',
                             title: 'Source',
                             sortable: true,
-                            render: (r) =>
-                                r.source === 'facebook' ? (
-                                    <Badge color="blue" variant="light">
-                                        FB/Meta
-                                    </Badge>
-                                ) : (
-                                    <Badge color="green" variant="light">
-                                        {r.source || 'Manual'}
-                                    </Badge>
-                                ),
-                        },
-                        {
-                            accessor: 'form_name',
-                            title: 'Form',
-                            width: '15%',
+                            width: '14%',
                             render: (r) => (
-                                <Button
-                                    variant="subtle"
-                                    size="xs"
-                                    onClick={() =>
-                                        setPayloadViewer({
-                                            open: true,
-                                            data: payloadToSections(r.raw_payload), // ← parsed sections
-                                            title: r.form_name || 'Unknown Form',
-                                        })
-                                    }
-                                >
-                                    {r.form_name || '—'}
-                                </Button>
+                                <div className="min-w-0">
+                                    {r.source === 'facebook' ? (
+                                        <Badge color="blue" variant="light">
+                                            FB/Meta
+                                        </Badge>
+                                    ) : (
+                                        <Badge color="green" variant="light">
+                                            {r.source || 'Manual'}
+                                        </Badge>
+                                    )}
+                                    {r.form_name && (
+                                        <button
+                                            type="button"
+                                            className="mt-0.5 block max-w-full truncate text-xs text-blue-600 hover:underline"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPayloadViewer({
+                                                    open: true,
+                                                    data: payloadToSections(r.raw_payload), // ← parsed sections
+                                                    title: r.form_name || 'Unknown Form',
+                                                });
+                                            }}
+                                        >
+                                            {r.form_name}
+                                        </button>
+                                    )}
+                                </div>
                             ),
                         },
-
                         {
                             accessor: 'notes',
                             title: 'Notes',
-                            width: '10%',
+                            width: '12%',
                             render: (record) => (
-                                <Button variant="subtle" size="xs" onClick={() => setNoteEditor({ open: true, lead: record, text: record.notes || '' })}>
+                                <Button variant="subtle" size="xs" onClick={(e) => { e.stopPropagation(); setNoteEditor({ open: true, lead: record, text: record.notes || '' }); }}>
                                     {/* show up to 15 chars as preview, or “Add” if empty */}
                                     {record.notes ? `${record.notes.slice(0, 15)}…` : 'Add'}
                                 </Button>
@@ -897,6 +963,8 @@ const LeadTable = ({ profile, userId }) => {
                             accessor: 'user_id',
                             title: 'Assigned To',
                             sortable: true,
+                            width: '12%',
+                            ellipsis: true,
                             render: ({ user_id }) => {
                                 const u = teamMembers.find((t) => t.id === user_id);
                                 return u ? u.username : <Text color="dimmed">Unassigned</Text>;
@@ -906,7 +974,9 @@ const LeadTable = ({ profile, userId }) => {
                             accessor: 'actions',
                             title: 'Actions',
                             textAlign: 'right',
+                            width: '7%',
                             render: (record) => (
+                                <div onClick={(e) => e.stopPropagation()}>
                                 <Menu withinPortal shadow="md" width={200} position="bottom-end">
                                     <Menu.Target>
                                         <ActionIcon variant="subtle" color="gray">
@@ -1002,6 +1072,7 @@ const LeadTable = ({ profile, userId }) => {
                                         </Menu.Item>
                                     </Menu.Dropdown>
                                 </Menu>
+                                </div>
                             ),
                         },
                     ]}
@@ -1016,7 +1087,7 @@ const LeadTable = ({ profile, userId }) => {
                     }}
                     sortStatus={sortStatus}
                     onSortStatusChange={setSortStatus}
-                    minHeight={200}
+                    minHeight={120}
                     noRecordsText="No leads found"
                     fetching={loading || isPolling}
                     paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} leads`}
@@ -1076,35 +1147,49 @@ const LeadTable = ({ profile, userId }) => {
                 />
             </div>
             <div className="block md:hidden">
-                <div className="md:hidden flex flex-col gap-4">
-                    {filteredLeads.slice(0, mobileVisibleCount).map((record) => {
-                        const isSelected = selectedLeads.includes(record.id);
-                        const u = teamMembers.find((t) => t.id === record.user_id);
+                {selectionMode && (
+                    <div className="mb-2 flex items-center justify-between">
+                        <Text size="sm" weight={600}>{selectedLeads.length} selected</Text>
+                        <Button size="xs" radius="xl" variant="default" onClick={exitSelection}>Cancel</Button>
+                    </div>
+                )}
+                {filteredLeads.slice(0, mobileVisibleCount).map((record) => {
+                    const isSelected = selectedLeads.includes(record.id);
+                    const u = teamMembers.find((t) => t.id === record.user_id);
+                    return (
+                        <div
+                            key={record.id}
+                            className={`flex cursor-pointer select-none items-center gap-3 border-b border-gray-200 py-2.5 last:border-b-0 dark:border-gray-700 ${isSelected ? 'bg-blue-50 dark:bg-gray-700' : ''}`}
+                            style={{ WebkitTouchCallout: 'none' }}
+                            onTouchStart={() => startLongPress(record.id)}
+                            onTouchMove={cancelLongPress}
+                            onTouchEnd={cancelLongPress}
+                            onTouchCancel={cancelLongPress}
+                            onContextMenu={(e) => e.preventDefault()}
+                            onClick={() => handleRowClick(record.id)}
+                        >
+                            {selectionMode ? (
+                                <Checkbox checked={isSelected} onChange={() => toggleLead(record.id)} onClick={(e) => e.stopPropagation()} />
+                            ) : (
+                                <Avatar color={colorFor(record.full_name)} variant="light" radius="xl" size="lg">
+                                    {(record.full_name || '?').trim().charAt(0).toUpperCase()}
+                                </Avatar>
+                            )}
 
-                        return (
-                            <div
-                                key={record.id}
-                                className="bg-white dark:bg-gray-800 shadow-sm rounded-md p-2 text-sm flex flex-col gap-1 border"
-                                onClick={() => router.push(`/leadtable/${record.id}`)}
-                            >
-                                <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-between">
-                                    <span className="font-medium truncate text-sm max-w-[80%]">{record.full_name}</span>
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => setSelectedLeads((prev) => (isSelected ? prev.filter((id) => id !== record.id) : [...prev, record.id]))}
-                                    />
-                                </div>
-
-                                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
-                                    <span>📞 {record.phone_number}</span>
+                            <div className="min-w-0 flex-1">
+                                <Text weight={500} lineClamp={1}>{record.full_name}</Text>
+                                <Text size="xs" color="dimmed" lineClamp={1}>
+                                    {record.phone_number}
+                                    {u ? ` · ${u.username}` : ''}
+                                </Text>
+                                <div className="mt-1" onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
                                     <Menu withinPortal shadow="md" position="bottom-start">
                                         <Menu.Target>
-                                            <Badge onClick={(e) => e.stopPropagation()} className="cursor-pointer px-1 text-[10px]" color="blue" variant="light">
-                                                {record.lead_status || 'Select'}
+                                            <Badge size="sm" className="cursor-pointer" color={statusColor(record.lead_status)} variant="light">
+                                                {record.lead_status || 'Select status'}
                                             </Badge>
                                         </Menu.Target>
-                                        <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+                                        <Menu.Dropdown>
                                             {statusOptions.map((o) => (
                                                 <Menu.Item key={o.value} onClick={() => updateLeadStatus(record, o.value)}>
                                                     {o.label}
@@ -1113,86 +1198,71 @@ const LeadTable = ({ profile, userId }) => {
                                         </Menu.Dropdown>
                                     </Menu>
                                 </div>
-
-                                <div className="text-xs text-gray-500">Assigned to: {u ? u.username : '—'}</div>
-
-                                <div onClick={(e) => e.stopPropagation()} className="flex justify-start flex-wrap gap-1 mt-1">
-                                    <Button size="xs" compact variant="transparent" onClick={() => router.push(`/editlead/${record.id}`)}>
-                                        <IconPencil size={12} />
-                                    </Button>
-                                    <Button
-                                        size="xs"
-                                        compact
-                                        variant="transparent"
-                                        onClick={() => {
-                                            const digits = (record.phone_number || '').replace(/\D/g, '');
-                                            const tenDigitNumber = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits.length === 10 ? digits : null;
-
-                                            if (tenDigitNumber && /^[6-9]\d{9}$/.test(tenDigitNumber)) {
-                                                window.open(`https://wa.me/91${tenDigitNumber}?text=Hello ${record.full_name},`, '_blank');
-                                            } else {
-                                                alert('Invalid phone number');
-                                            }
-                                        }}
-                                    >
-                                        <IconChatDot size={12} />
-                                    </Button>
-                                    <Button
-                                        size="xs"
-                                        compact
-                                        variant="transparent"
-                                        onClick={() => {
-                                            setSelectedLead(record);
-                                            setShowDrawer(true);
-                                            fetchFollowupHistory(record.id);
-                                        }}
-                                    >
-                                        <IconHistory size={16} />
-                                    </Button>
-                                    <Button size="xs" compact variant="transparent" onClick={() => convertLeadToCustomer(record)}>
-                                        Convert
-                                    </Button>
-                                    <Button
-                                        size="xs"
-                                        compact
-                                        variant="transparent"
-                                        onClick={() => {
-                                            const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email }).toString();
-                                            router.push(`/calc?${qs}`);
-                                        }}
-                                    >
-                                        <IconCalculator size={12} />
-                                    </Button>
-                                    <Button
-                                        size="xs"
-                                        compact
-                                        variant="light"
-                                        onClick={() => {
-                                            const digits = (record.phone_number || '').replace(/\D/g, '');
-                                            const tel = digits.length ? `tel:${digits}` : '';
-                                            if (tel) {
-                                                window.open(tel, '_self');
-                                            } else {
-                                                alert('Phone number invalid');
-                                            }
-                                        }}
-                                    >
-                                        <IconPhone size={12} />
-                                    </Button>
-                                </div>
                             </div>
-                        );
-                    })}
 
-                    {mobileVisibleCount < filteredLeads.length && (
-                        <div className="mt-6 text-center">
-                            <Button variant="default" onClick={handleLoadMore}>
-                                Load More
-                            </Button>
+                            {!selectionMode && (
+                                <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
+                                    <ActionIcon size="xl" variant="subtle" color="violet" aria-label="Call" onClick={() => callLead(record)}>
+                                        <IconPhoneCall size={24} />
+                                    </ActionIcon>
+                                    <ActionIcon size="xl" variant="subtle" color="green" aria-label="WhatsApp" onClick={() => openWhatsApp(record)}>
+                                        <IconBrandWhatsapp size={24} />
+                                    </ActionIcon>
+                                    <Menu withinPortal shadow="md" position="bottom-end" width={200}>
+                                        <Menu.Target>
+                                            <ActionIcon size="sm" variant="subtle" color="gray" aria-label="More">
+                                                <IconMenu4 size={18} />
+                                            </ActionIcon>
+                                        </Menu.Target>
+                                        <Menu.Dropdown>
+                                            <Menu.Item icon={<IconPencil size={14} />} onClick={() => router.push(`/editlead/${record.id}`)}>
+                                                <Text size="xs">Edit Lead</Text>
+                                            </Menu.Item>
+                                            <Menu.Item
+                                                icon={<IconHistory size={14} />}
+                                                onClick={() => {
+                                                    setSelectedLead(record);
+                                                    setShowDrawer(true);
+                                                    fetchFollowupHistory(record.id);
+                                                }}
+                                            >
+                                                <Text size="xs">Follow-ups</Text>
+                                            </Menu.Item>
+                                            <Menu.Item
+                                                icon={<IconCalculator size={14} />}
+                                                onClick={() => {
+                                                    const qs = new URLSearchParams({ id: record.id, name: record.full_name, phone: record.phone_number, email: record.email }).toString();
+                                                    router.push(`/calc?${qs}`);
+                                                }}
+                                            >
+                                                <Text size="xs">Health Check-up</Text>
+                                            </Menu.Item>
+                                            <Menu.Item color="teal" icon={<IconUserCheck size={14} />} onClick={() => convertLeadToCustomer(record)}>
+                                                <Text size="xs">Convert to Customer</Text>
+                                            </Menu.Item>
+                                        </Menu.Dropdown>
+                                    </Menu>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    );
+                })}
+
+                {filteredLeads.length === 0 && !loading && (
+                    <Text align="center" color="dimmed" py={40}>No leads found</Text>
+                )}
+
+                {hasMoreMobile && (
+                    <div ref={sentinelRef} className="flex justify-center py-4">
+                        <Loader size="sm" />
+                    </div>
+                )}
             </div>
+            {/* Desktop: click a lead to see it in a side panel */}
+            <Drawer opened={viewLeadId !== null} onClose={() => setViewLeadId(null)} position="right" size={460} padding={0} withCloseButton={false} shadow="md" zIndex={1000}>
+                {viewLeadId !== null && <LeadDetailView key={viewLeadId} leadId={viewLeadId} onClose={() => setViewLeadId(null)} />}
+            </Drawer>
+
             <Drawer
                 opened={showDrawer}
                 onClose={() => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { Avatar, Badge, Timeline, Group, Text, ActionIcon, Paper, Stack, Divider, Title, Button, Center, Loader, Box } from '@mantine/core';
@@ -41,8 +41,8 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
-const LeadDetailPage = ({ params }) => {
-    const { leadId } = params;
+const LeadDetailPage = () => {
+    const { leadId } = useParams();
     const router = useRouter();
     const [lead, setLead] = useState(null);
     const [timeline, setTimeline] = useState([]);
