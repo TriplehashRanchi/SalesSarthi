@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { getAuth } from 'firebase/auth'; // 🔐 Firebase auth
+import { fetchFolders, createFolder, folderIdOf, errorMessage } from '@/components/Leadtable/leadFolders';
 
 const LeadForm = ({ existingLead }) => {
   // Define status options for the Lead Status dropdown.
@@ -49,7 +50,47 @@ const LeadForm = ({ existingLead }) => {
     company_name: field('company_name'),
     referrer: field('referrer'),
     notes: field('notes'),
+    folder_id: field('folder_id'),
   });
+
+  // Folders: only admins can load them, so the field simply stays hidden for anyone else.
+  const [folders, setFolders] = useState([]);
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [savingFolder, setSavingFolder] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFolders()
+      .then((list) => {
+        if (cancelled) return;
+        setFolders(list);
+        // A lead with no folder picked sits in Default (or Facebook if it came from there); show that.
+        setFormData((prev) => (prev.folder_id ? prev : { ...prev, folder_id: existingLead ? folderIdOf(existingLead, list) ?? '' : list.find((f) => f.name === 'Default')?.id ?? '' }));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const addFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name) return;
+    setSavingFolder(true);
+    try {
+      const created = await createFolder(name);
+      setFolders((prev) => [...prev, created]);
+      setFormData((prev) => ({ ...prev, folder_id: created.id }));
+      setCreatingFolder(false);
+      setNewFolderName('');
+    } catch (err) {
+      Swal.fire('Error', errorMessage(err, 'Could not create the folder.'), 'error');
+    } finally {
+      setSavingFolder(false);
+    }
+  };
 
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -172,7 +213,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Lead Status with custom options */}
-        <div className="min-w-0 max-sm:order-[6]">
+        <div className="min-w-0 max-sm:order-[7]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Lead Status
           </label>
@@ -224,8 +265,52 @@ const LeadForm = ({ existingLead }) => {
           />
         </div>
 
+        {/* Folder */}
+        {folders.length > 0 && (
+          <div className={`min-w-0 max-sm:order-[6] ${creatingFolder ? 'max-sm:col-span-2' : ''}`}>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Folder</label>
+            {creatingFolder ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="form-input w-full"
+                  placeholder="New folder name"
+                  value={newFolderName}
+                  maxLength={60}
+                  autoFocus
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addFolder();
+                    }
+                  }}
+                />
+                <button type="button" className="btn btn-primary" onClick={addFolder} disabled={savingFolder || !newFolderName.trim()}>
+                  Add
+                </button>
+                <button type="button" className="btn btn-outline-secondary" onClick={() => { setCreatingFolder(false); setNewFolderName(''); }}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <select
+                name="folder_id"
+                value={formData.folder_id ?? ''}
+                onChange={(e) => (e.target.value === '__new__' ? setCreatingFolder(true) : handleInputChange(e))}
+                className="form-select w-full"
+              >
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+                <option value="__new__">+ Create new folder…</option>
+              </select>
+            )}
+          </div>
+        )}
+
         {/* Address */}
-        <div className="min-w-0 max-sm:order-[8] max-sm:col-span-2 col-span-1 lg:col-span-3">
+        <div className="min-w-0 max-sm:order-[15] max-sm:col-span-2 col-span-1 lg:col-span-3">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Address
           </label>
@@ -300,7 +385,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Next Follow-up Date */}
-        <div className="min-w-0 max-sm:order-[13] max-sm:col-span-2">
+        <div className="min-w-0 max-sm:order-[16] max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Next Follow-up Date Time
           </label>
@@ -314,7 +399,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Source */}
-        <div className="min-w-0 max-sm:order-[7]">
+        <div className="min-w-0 max-sm:order-[8]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Source
           </label>
@@ -329,7 +414,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Company Name */}
-        <div className="min-w-0 max-sm:order-[14]">
+        <div className="min-w-0 max-sm:order-[13]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Company Name
           </label>
@@ -344,7 +429,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Referrer */}
-        <div className="min-w-0 max-sm:order-[15]">
+        <div className="min-w-0 max-sm:order-[14] max-sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Referrer
           </label>
@@ -359,7 +444,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Notes */}
-        <div className="min-w-0 max-sm:order-[16] max-sm:col-span-2 col-span-1 lg:col-span-3">
+        <div className="min-w-0 max-sm:order-[17] max-sm:col-span-2 col-span-1 lg:col-span-3">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Notes
           </label>
@@ -373,7 +458,7 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Submit Button */}
-        <div className="col-span-2 sm:col-span-1 lg:col-span-3 flex justify-end space-x-3 max-sm:order-[17]">
+        <div className="col-span-2 sm:col-span-1 lg:col-span-3 flex justify-end space-x-3 max-sm:order-[18]">
           <button type="submit" className="btn btn-primary max-sm:w-full">
             {existingLead ? 'Update Lead' : 'Add Lead'}
           </button>

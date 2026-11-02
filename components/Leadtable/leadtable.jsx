@@ -1,7 +1,7 @@
 'use client';
 
 import { DataTable } from 'mantine-datatable';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
 import { useRouter } from 'next/navigation';
@@ -32,7 +32,7 @@ import {
 import Papa from 'papaparse';
 import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
-import { IconAlertCircle, IconArrowLeft, IconBrandFacebook, IconBrandWhatsapp, IconCalculator, IconDownload, IconHistory, IconListCheck, IconMenu4, IconPhoneCall, IconSearch, IconUpload, IconUserCheck } from '@tabler/icons-react';
+import { IconChevronRight, IconFolder, IconFolderPlus, IconInbox, IconDotsVertical, IconTrash, IconAlertCircle, IconArrowLeft, IconBrandFacebook, IconBrandWhatsapp, IconCalculator, IconDownload, IconHistory, IconListCheck, IconMenu4, IconPhoneCall, IconSearch, IconUpload, IconUserCheck } from '@tabler/icons-react';
 import IconChatDot from '../icon/icon-chat-dot';
 import IconFacebook from '@/components/icon/icon-facebook';
 import IconPencil from '../icon/icon-pencil';
@@ -40,6 +40,7 @@ import IconPencil from '../icon/icon-pencil';
 import FollowupForm from '@/components/forms/followupform';
 import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUpload';
 import LeadDetailView from './LeadDetailView';
+import { fetchFolders, createFolder, renameFolder, deleteFolder, moveLeads, errorMessage, folderIdOf } from './leadFolders';
 
 import { getAuth } from 'firebase/auth';
 import IconX from '../icon/icon-x';
@@ -84,6 +85,13 @@ const LeadTable = ({ profile, userId }) => {
     const [filteredLeads, setFilteredLeads] = useState([]);
 
     const [assignedUserFilter, setAssignedUserFilter] = useState(null);
+
+    /* ───────── folders ───────── */
+    const [folders, setFolders] = useState([]);
+    const [activeFolder, setActiveFolder] = useState(userId ? 'all' : null); // null = folder list, 'all', or a folder id
+    const [folderModal, setFolderModal] = useState({ open: false, folder: null, name: '', saving: false });
+    const [dragIds, setDragIds] = useState([]); // leads being dragged
+    const [dragOverId, setDragOverId] = useState(null);
     const FACEBOOK_POLL_SETUP_ERRORS = new Set([
         'Admin ID missing',
         'Facebook token not found for admin',
@@ -253,6 +261,12 @@ const LeadTable = ({ profile, userId }) => {
         return { answers, meta };
     }
 
+    useEffect(() => {
+        fetchFolders()
+            .then(setFolders)
+            .catch((err) => console.error('Failed to load folders:', err));
+    }, []);
+
     /* ───────────────────── initial load ───────────────────── */
     useEffect(() => {
         let mounted = true;
@@ -282,6 +296,10 @@ const LeadTable = ({ profile, userId }) => {
         let data = [...leads];
 
         data = data.filter((l) => l.lead_status?.toLowerCase() !== 'customer');
+
+        if (activeFolder && activeFolder !== 'all') {
+            data = data.filter((l) => folderIdOf(l, folders) === activeFolder);
+        }
 
         // when userId is passed from user-performance page,
         // show only that user's assigned leads
@@ -321,7 +339,7 @@ const LeadTable = ({ profile, userId }) => {
 
         setTotalCount(data.length);
         setFilteredLeads(data);
-    }, [leads, search, statusFilter, assignedUserFilter, sortStatus, userId]);
+    }, [leads, search, statusFilter, assignedUserFilter, sortStatus, userId, activeFolder, folders]);
 
 
     useEffect(() => {
@@ -577,6 +595,111 @@ const LeadTable = ({ profile, userId }) => {
     const allSel = currentIds.length && currentIds.every((id) => selectedLeads.includes(id));
     const someSel = currentIds.length && currentIds.some((id) => selectedLeads.includes(id));
 
+    /* ───────── folder helpers ───────── */
+    const baseLeads = useMemo(() => leads.filter((l) => l.lead_status?.toLowerCase() !== 'customer' && (!userId || String(l.user_id) === String(userId))), [leads, userId]);
+    const folderCounts = useMemo(() => {
+        const counts = {};
+        baseLeads.forEach((l) => {
+            const id = folderIdOf(l, folders);
+            if (id) counts[id] = (counts[id] || 0) + 1;
+        });
+        return counts;
+    }, [baseLeads, folders]);
+    const currentFolder = typeof activeFolder === 'number' ? folders.find((f) => f.id === activeFolder) : null;
+    const folderTitle = activeFolder === 'all' ? 'All Leads' : currentFolder?.name || 'Leads';
+    const FOLDER_TINTS = ['bg-violet-50 border-violet-200', 'bg-amber-50 border-amber-200', 'bg-teal-50 border-teal-200', 'bg-pink-50 border-pink-200', 'bg-orange-50 border-orange-200', 'bg-green-50 border-green-200'];
+    const folderLook = (f, i) => {
+        if (f.is_system && f.name === 'Facebook') return { tint: 'bg-blue-50 border-blue-200', icon: <IconBrandFacebook size={22} className="text-blue-600" /> };
+        if (f.is_system) return { tint: 'bg-gray-50 border-gray-200', icon: <IconInbox size={22} className="text-gray-600" /> };
+        return { tint: FOLDER_TINTS[i % FOLDER_TINTS.length], icon: <IconFolder size={22} className="text-violet-600" /> };
+    };
+
+    const openFolder = (id) => {
+        setActiveFolder(id);
+        setPage(1);
+        setSelectedLeads([]);
+        setSelectionMode(false);
+        setMobileVisibleCount(20);
+    };
+    const handleBack = () => (!userId && activeFolder !== null ? openFolder(null) : router.back());
+
+    const moveTo = async (ids, folderId) => {
+        if (!ids.length) return;
+        try {
+            await moveLeads(ids, folderId);
+            setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, folder_id: folderId } : l)));
+            setSelectedLeads((prev) => prev.filter((id) => !ids.includes(id)));
+            showNotification({ title: 'Moved', message: `${ids.length} lead${ids.length === 1 ? '' : 's'} moved to ${folders.find((f) => f.id === folderId)?.name || 'folder'}`, color: 'green' });
+        } catch (err) {
+            showNotification({ title: 'Error', message: errorMessage(err, 'Failed to move leads.'), color: 'red' });
+        }
+    };
+
+    // Drag a lead (or all selected leads) onto a folder chip.
+    const startDrag = (e, lead) => {
+        const ids = selectedLeads.includes(lead.id) && selectedLeads.length > 1 ? selectedLeads : [lead.id];
+        setDragIds(ids);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', JSON.stringify(ids));
+    };
+    const endDrag = () => {
+        setDragIds([]);
+        setDragOverId(null);
+    };
+    const dropOn = (e, folderId) => {
+        e.preventDefault();
+        const ids = dragIds;
+        endDrag();
+        moveTo(ids, folderId);
+    };
+
+    const openCreateFolder = () => setFolderModal({ open: true, folder: null, name: '', saving: false });
+    const openRenameFolder = (folder) => setFolderModal({ open: true, folder, name: folder.name, saving: false });
+    const saveFolder = async () => {
+        const name = folderModal.name.trim();
+        if (!name) return;
+        setFolderModal((m) => ({ ...m, saving: true }));
+        try {
+            if (folderModal.folder) {
+                const updated = await renameFolder(folderModal.folder.id, name);
+                setFolders((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+            } else {
+                const created = await createFolder(name);
+                setFolders((prev) => [...prev, created]);
+            }
+            setFolderModal({ open: false, folder: null, name: '', saving: false });
+        } catch (err) {
+            showNotification({ title: 'Error', message: errorMessage(err, 'Could not save the folder.'), color: 'red' });
+            setFolderModal((m) => ({ ...m, saving: false }));
+        }
+    };
+    const removeFolder = async (folder) => {
+        if (!confirm(`Delete the folder "${folder.name}"? Its leads are not deleted; they go back to Default / Facebook.`)) return;
+        try {
+            await deleteFolder(folder.id);
+            setFolders((prev) => prev.filter((f) => f.id !== folder.id));
+            setLeads((prev) => prev.map((l) => (l.folder_id === folder.id ? { ...l, folder_id: null } : l)));
+            if (activeFolder === folder.id) setActiveFolder(null);
+        } catch (err) {
+            showNotification({ title: 'Error', message: errorMessage(err, 'Could not delete the folder.'), color: 'red' });
+        }
+    };
+
+    // "Move to folder" entries for a lead's menu (every folder except the one it is already in).
+    const moveMenuItems = (record) => (
+        <>
+            <Menu.Divider />
+            <Menu.Label>Move to folder</Menu.Label>
+            {folders
+                .filter((f) => f.id !== folderIdOf(record, folders))
+                .map((f) => (
+                    <Menu.Item key={f.id} icon={<IconFolder size={14} />} onClick={() => moveTo([record.id], f.id)}>
+                        <Text size="xs">{f.name}</Text>
+                    </Menu.Item>
+                ))}
+        </>
+    );
+
     /* ───────── mobile: long-press selection + infinite scroll ───────── */
     const [viewLeadId, setViewLeadId] = useState(null); // desktop: lead shown in the side panel
     const [selectionMode, setSelectionMode] = useState(false);
@@ -659,6 +782,17 @@ const LeadTable = ({ profile, userId }) => {
                     </Button>
                 </>
             )}
+            {folders.length > 0 && (
+                <Select
+                    data={folders.map((f) => ({ value: String(f.id), label: f.name }))}
+                    value={null}
+                    onChange={(v) => v && moveTo(selectedLeads, Number(v))}
+                    placeholder="Move to folder..."
+                    size="xs"
+                    radius="xl"
+                    style={{ minWidth: 150 }}
+                />
+            )}
             <Button size="xs" radius="xl" color="red" variant="light" onClick={deleteLeads} disabled={!selectedLeads.length}>
                 Delete
             </Button>
@@ -678,19 +812,75 @@ const LeadTable = ({ profile, userId }) => {
                 </Alert>
             )}
 
+            {activeFolder !== null || userId ? (
+                <>
             {/* header */}
             <div className="mb-4 flex items-center gap-2">
-                <ActionIcon className="md:hidden" variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+                <ActionIcon className={userId ? 'md:hidden' : ''} variant="subtle" color="dark" onClick={handleBack} aria-label="Back">
                     <IconArrowLeft size={22} />
                 </ActionIcon>
                 <div className="min-w-0 flex-1">
-                    <h1 className="text-xl font-bold leading-tight sm:text-2xl">Leads</h1>
+                    <h1 className="truncate text-xl font-bold leading-tight sm:text-2xl">{folderTitle}</h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         {filteredLeads.length} {filteredLeads.length === 1 ? 'Lead' : 'Leads'}
-                        {filteredLeads.length !== leads.length ? ` of ${leads.length}` : ''}
+                        {filteredLeads.length !== baseLeads.length && activeFolder === 'all' ? ` of ${baseLeads.length}` : ''}
                     </p>
                 </div>
+                {!userId && currentFolder && !currentFolder.is_system && (
+                    <Menu withinPortal shadow="md" position="bottom-end">
+                        <Menu.Target>
+                            <ActionIcon variant="subtle" color="gray" aria-label="Folder options"><IconDotsVertical size={20} /></ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                            <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(currentFolder)}>Rename folder</Menu.Item>
+                            <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(currentFolder)}>Delete folder</Menu.Item>
+                        </Menu.Dropdown>
+                    </Menu>
+                )}
             </div>
+
+            {/* folder chips: switch folder, or drop dragged leads on one to move them */}
+            {!userId && (
+                <div className="mb-4">
+                    <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                        <button
+                            type="button"
+                            onClick={() => openFolder('all')}
+                            className={`flex flex-shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${activeFolder === 'all' ? 'border-violet-600 bg-violet-600 text-white' : 'border-gray-300 text-gray-700 hover:border-violet-400 dark:border-gray-600 dark:text-gray-200'}`}
+                        >
+                            All <span className="text-xs opacity-70">{baseLeads.length}</span>
+                        </button>
+                        {folders.map((f) => {
+                            const active = activeFolder === f.id;
+                            const over = dragOverId === f.id;
+                            return (
+                                <button
+                                    key={f.id}
+                                    type="button"
+                                    onClick={() => openFolder(f.id)}
+                                    onDragOver={(e) => {
+                                        if (!dragIds.length) return;
+                                        e.preventDefault();
+                                        setDragOverId(f.id);
+                                    }}
+                                    onDragLeave={() => setDragOverId(null)}
+                                    onDrop={(e) => dropOn(e, f.id)}
+                                    className={`flex flex-shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${over ? 'scale-105 border-violet-600 bg-violet-100 text-violet-800' : active ? 'border-violet-600 bg-violet-600 text-white' : 'border-gray-300 text-gray-700 hover:border-violet-400 dark:border-gray-600 dark:text-gray-200'}`}
+                                >
+                                    <IconFolder size={15} />
+                                    {f.name} <span className="text-xs opacity-70">{folderCounts[f.id] || 0}</span>
+                                </button>
+                            );
+                        })}
+                        <button type="button" onClick={openCreateFolder} className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-dashed border-gray-300 px-3.5 py-1.5 text-sm text-gray-500 hover:border-violet-400 hover:text-violet-600">
+                            <IconFolderPlus size={15} /> New
+                        </button>
+                    </div>
+                    {dragIds.length > 0 && (
+                        <p className="mt-2 text-xs font-medium text-violet-600">Drop on a folder to move {dragIds.length} lead{dragIds.length === 1 ? '' : 's'}</p>
+                    )}
+                </div>
+            )}
 
             {/* desktop controls */}
             <div className="mb-4 hidden flex-wrap items-center gap-3 md:flex">
@@ -859,7 +1049,13 @@ const LeadTable = ({ profile, userId }) => {
                             sortable: true,
                             width: '25%',
                             render: (r) => (
-                                <div className="flex min-w-0 items-center gap-3">
+                                <div
+                                    className="flex min-w-0 cursor-grab items-center gap-3 active:cursor-grabbing"
+                                    draggable={!userId}
+                                    onDragStart={(e) => startDrag(e, r)}
+                                    onDragEnd={endDrag}
+                                    title={userId ? undefined : 'Drag onto a folder to move'}
+                                >
                                     <Avatar color={colorFor(r.full_name)} variant="light" radius="xl" size="md" className="flex-shrink-0">
                                         {(r.full_name || '?').trim().charAt(0).toUpperCase()}
                                     </Avatar>
@@ -1070,6 +1266,7 @@ const LeadTable = ({ profile, userId }) => {
                                         <Menu.Item color="teal" icon={<IconUserCheck size={14} />} onClick={() => convertLeadToCustomer(record)}>
                                             <Text size="xs">Convert to Customer</Text>
                                         </Menu.Item>
+                                        {!userId && moveMenuItems(record)}
                                     </Menu.Dropdown>
                                 </Menu>
                                 </div>
@@ -1240,6 +1437,7 @@ const LeadTable = ({ profile, userId }) => {
                                             <Menu.Item color="teal" icon={<IconUserCheck size={14} />} onClick={() => convertLeadToCustomer(record)}>
                                                 <Text size="xs">Convert to Customer</Text>
                                             </Menu.Item>
+                                            {!userId && moveMenuItems(record)}
                                         </Menu.Dropdown>
                                     </Menu>
                                 </div>
@@ -1258,6 +1456,120 @@ const LeadTable = ({ profile, userId }) => {
                     </div>
                 )}
             </div>
+                </>
+            ) : (
+                <>
+            {/* Folder list: the first thing you see on the Leads page */}
+            <div className="mb-5 flex items-center gap-2">
+                <ActionIcon className="md:hidden" variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+                    <IconArrowLeft size={22} />
+                </ActionIcon>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-xl font-bold leading-tight sm:text-2xl">Leads</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {baseLeads.length} {baseLeads.length === 1 ? 'lead' : 'leads'} in {folders.length} {folders.length === 1 ? 'folder' : 'folders'}
+                    </p>
+                </div>
+                <Button color="violet" radius="xl" leftIcon={<IconFolderPlus size={16} />} onClick={openCreateFolder}>
+                    <span className="sm:hidden">New</span>
+                    <span className="hidden sm:inline">New folder</span>
+                </Button>
+            </div>
+
+            {/* Phone: a simple list */}
+            <div className="md:hidden">
+                <div onClick={() => openFolder('all')} className="flex cursor-pointer items-center gap-3 border-b border-gray-200 py-3 dark:border-gray-700">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-white"><IconFolder size={22} /></div>
+                    <div className="min-w-0 flex-1">
+                        <div className="font-medium">All Leads</div>
+                        <div className="text-xs text-gray-500">{baseLeads.length} {baseLeads.length === 1 ? 'lead' : 'leads'}</div>
+                    </div>
+                    <IconChevronRight size={18} className="text-gray-400" />
+                </div>
+                {folders.map((f, i) => {
+                    const look = folderLook(f, i);
+                    return (
+                        <div key={f.id} onClick={() => openFolder(f.id)} className="flex cursor-pointer items-center gap-3 border-b border-gray-200 py-3 last:border-b-0 dark:border-gray-700">
+                            <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border ${look.tint}`}>{look.icon}</div>
+                            <div className="min-w-0 flex-1">
+                                <div className="truncate font-medium">{f.name}</div>
+                                <div className="text-xs text-gray-500">{folderCounts[f.id] || 0} {(folderCounts[f.id] || 0) === 1 ? 'lead' : 'leads'}</div>
+                            </div>
+                            {!f.is_system && (
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <Menu withinPortal shadow="md" position="bottom-end">
+                                        <Menu.Target>
+                                            <ActionIcon variant="subtle" color="gray" aria-label={`Options for ${f.name}`}><IconDotsVertical size={18} /></ActionIcon>
+                                        </Menu.Target>
+                                        <Menu.Dropdown>
+                                            <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(f)}>Rename</Menu.Item>
+                                            <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(f)}>Delete</Menu.Item>
+                                        </Menu.Dropdown>
+                                    </Menu>
+                                </div>
+                            )}
+                            <IconChevronRight size={18} className="text-gray-400" />
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Desktop: cards */}
+            <div className="hidden grid-cols-2 gap-3 sm:gap-4 md:grid md:grid-cols-3 lg:grid-cols-4">
+                <div
+                    onClick={() => openFolder('all')}
+                    className="flex min-h-[120px] cursor-pointer flex-col justify-between rounded-2xl border border-violet-300 bg-violet-600 p-4 text-white shadow-sm transition active:scale-95"
+                >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20"><IconFolder size={22} /></div>
+                    <div>
+                        <div className="font-semibold">All Leads</div>
+                        <div className="text-xs opacity-80">{baseLeads.length} leads</div>
+                    </div>
+                </div>
+
+                {folders.map((f, i) => {
+                    const look = folderLook(f, i);
+                    return (
+                        <div
+                            key={f.id}
+                            onClick={() => openFolder(f.id)}
+                            className={`relative flex min-h-[120px] cursor-pointer flex-col justify-between rounded-2xl border p-4 shadow-sm transition active:scale-95 ${look.tint}`}
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm">{look.icon}</div>
+                                {!f.is_system && (
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <Menu withinPortal shadow="md" position="bottom-end">
+                                            <Menu.Target>
+                                                <ActionIcon variant="subtle" color="gray" aria-label={`Options for ${f.name}`}><IconDotsVertical size={18} /></ActionIcon>
+                                            </Menu.Target>
+                                            <Menu.Dropdown>
+                                                <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(f)}>Rename</Menu.Item>
+                                                <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(f)}>Delete</Menu.Item>
+                                            </Menu.Dropdown>
+                                        </Menu>
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <div className="truncate font-semibold text-gray-900">{f.name}</div>
+                                <div className="text-xs text-gray-500">{folderCounts[f.id] || 0} {(folderCounts[f.id] || 0) === 1 ? 'lead' : 'leads'}</div>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                <div
+                    onClick={openCreateFolder}
+                    className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 text-gray-500 transition hover:border-violet-400 hover:text-violet-600 active:scale-95"
+                >
+                    <IconFolderPlus size={26} />
+                    <span className="text-sm font-medium">New folder</span>
+                </div>
+            </div>
+                </>
+            )}
+
             {/* Desktop: click a lead to see it in a side panel */}
             <Drawer opened={viewLeadId !== null} onClose={() => setViewLeadId(null)} position="right" size={460} padding={0} withCloseButton={false} shadow="md" zIndex={1000}>
                 {viewLeadId !== null && <LeadDetailView key={viewLeadId} leadId={viewLeadId} onClose={() => setViewLeadId(null)} />}
@@ -1379,6 +1691,32 @@ const LeadTable = ({ profile, userId }) => {
                     </div>
                 ) : null}
             </Drawer>
+
+            {/* folder create / rename */}
+            <Modal
+                opened={folderModal.open}
+                onClose={() => !folderModal.saving && setFolderModal({ open: false, folder: null, name: '', saving: false })}
+                title={<Text weight={700} size="lg">{folderModal.folder ? 'Rename folder' : 'New folder'}</Text>}
+                centered
+                radius="lg"
+                size="sm"
+            >
+                <TextInput
+                    label="Folder name"
+                    placeholder="e.g. Hot Clients, Website, Referrals"
+                    value={folderModal.name}
+                    onChange={(e) => setFolderModal((m) => ({ ...m, name: e.currentTarget.value }))}
+                    onKeyDown={(e) => e.key === 'Enter' && saveFolder()}
+                    maxLength={60}
+                    data-autofocus
+                />
+                <Group position="right" mt="lg">
+                    <Button variant="default" radius="xl" onClick={() => setFolderModal({ open: false, folder: null, name: '', saving: false })} disabled={folderModal.saving}>Cancel</Button>
+                    <Button color="violet" radius="xl" onClick={saveFolder} loading={folderModal.saving} disabled={!folderModal.name.trim()}>
+                        {folderModal.folder ? 'Save' : 'Create'}
+                    </Button>
+                </Group>
+            </Modal>
 
             {/* csv modal */}
             <CsvBulkUpload
