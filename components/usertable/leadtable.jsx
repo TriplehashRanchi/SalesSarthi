@@ -1,5 +1,6 @@
 'use client';
 
+import { authHeaders } from '@/utils/authHeaders';
 import { DataTable } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -211,7 +212,7 @@ const LeadTable = ({userId}) => {
 
     const convertLeadToCustomer = async (lead) => {
         try {
-            await axios.post(`${API_URL}/api/leads/${lead.id}/convert`);
+            await axios.post(`${API_URL}/api/leads/${lead.id}/convert`, {}, { headers: await authHeaders() });
     
             // Optionally remove the lead from the table after conversion
             setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));

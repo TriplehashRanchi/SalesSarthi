@@ -26,8 +26,8 @@ const DefaultLayout = ({ children }) => {
 
     if (!user) {
         router.push("/register"); // Not logged in
-    } else if (user.role !== "Salesperson" && user.role !== "Manager" && user.role !== "agent") {
-        router.push("/"); // Not a valid team role
+    } else if (user.role === "admin") {
+        router.push("/"); // Admins use the admin side; every other role is a team role
     } else {
         if (user.status === "pending") {
             router.push("/payment"); // Pending subscription

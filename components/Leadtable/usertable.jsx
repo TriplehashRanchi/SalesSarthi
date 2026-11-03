@@ -12,7 +12,6 @@ import {
   Table,
   Checkbox,
   Select,
-  TextInput,
   Button,
   ActionIcon,
   LoadingOverlay,
@@ -21,74 +20,99 @@ import {
   Menu,
   Paper,
   Transition,
-  Modal, // Added for mobile filters
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import { showNotification } from '@mantine/notifications';
-import { IconTrash, IconEye, IconUsers, IconSearch, IconFilter, IconDotsVertical } from '@tabler/icons-react';
+import useTeamRoles from '@/hooks/useTeamRoles';
+import { useAuth } from '@/context/AuthContext';
+import { presetRange, reportGet } from '@/utils/teamReport';
+import { IconTrash, IconEye, IconUsers, IconSearch, IconFilter, IconPhone, IconCheck } from '@tabler/icons-react';
 
 // --- Mobile-First User Card Component ---
-const UserCard = ({ user, selected, onToggleSelect, onRoleChange, onDelete, onViewProfile }) => {
+// Tap opens the member. Long press starts selecting (then tap toggles); the delete bar appears at the bottom.
+const UserCard = ({ user, selected, onToggleSelect, onViewProfile, stat }) => {
   const isSelected = selected.includes(user.id);
-  const initials = user.username?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
+  const selecting = selected.length > 0;
+  const initials = user.username?.split(' ').filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase() || '?';
+  const overdue = stat ? stat.followups_overdue : 0;
+
+  const timer = React.useRef(null);
+  const longPressed = React.useRef(false);
+  const startPress = () => {
+    longPressed.current = false;
+    timer.current = setTimeout(() => {
+      longPressed.current = true;
+      if (navigator.vibrate) navigator.vibrate(15);
+      onToggleSelect(user.id);
+    }, 450);
+  };
+  const cancelPress = () => clearTimeout(timer.current);
+  const handleClick = () => {
+    if (longPressed.current) { longPressed.current = false; return; }
+    if (selecting) onToggleSelect(user.id);
+    else onViewProfile(user.id);
+  };
+  const stop = (e) => e.stopPropagation();
 
   return (
-    <Paper withBorder p="sm" radius="md" style={{ position: 'relative' }}>
-      <Group noWrap position="apart">
-        <Group noWrap>
-          <Checkbox
-            checked={isSelected}
-            onChange={() => onToggleSelect(user.id)}
-            aria-label={`Select user ${user.username}`}
-            size="md"
-          />
-          <Avatar color="blue" radius="xl" src={user.avatar_url || null}>{initials}</Avatar>
-          <div>
-            <Text weight={500} size="sm" lineClamp={1}>{user.username}</Text>
-            <Text color="dimmed" size="xs" lineClamp={1}>{user.email}</Text>
-          </div>
-        </Group>
+    <div
+      onTouchStart={startPress}
+      onTouchEnd={cancelPress}
+      onTouchMove={cancelPress}
+      onTouchCancel={cancelPress}
+      onContextMenu={(e) => e.preventDefault()}
+      onClick={handleClick}
+      style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+      className={`border-b px-2 py-4 transition active:bg-gray-100/70 dark:active:bg-gray-800/40 ${isSelected ? 'rounded-lg border-transparent bg-blue-50 ring-1 ring-blue-200' : 'border-gray-200 dark:border-gray-700'}`}
+    >
+      <div className="flex items-center gap-3">
+        <div className="relative shrink-0">
+          <Avatar color="blue" radius="xl" size={48} src={user.avatar_url || null}>{initials}</Avatar>
+          {isSelected && (
+            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white ring-2 ring-white">
+              <IconCheck size={12} stroke={3} />
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[15px] font-semibold text-gray-900 dark:text-white">{user.username}</p>
+          <p className="truncate text-xs text-gray-500">{user.phone || user.email}</p>
+        </div>
+        {!selecting && user.phone && (
+          <a href={`tel:${user.phone}`} onClick={stop} onTouchStart={stop} aria-label="Call"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100">
+            <IconPhone size={18} />
+          </a>
+        )}
+      </div>
 
-        <Menu withinPortal position="bottom-end" shadow="sm">
-          <Menu.Target>
-            <ActionIcon variant="subtle">
-              <IconDotsVertical size={16} />
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Item icon={<IconEye size={14} />} onClick={() => onViewProfile(user.id)}>View Performance</Menu.Item>
-            <Menu.Item icon={<IconTrash size={14} />} color="red" onClick={() => onDelete([user.id])}>Delete User</Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-      </Group>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+        <span className="shrink-0 text-xs font-medium text-gray-500">{user.role}</span>
 
-      <Select
-        mt="sm"
-        label="Role"
-        data={['Manager', 'Salesperson']} // Simplified data for the dropdown
-        value={user.role}
-        onChange={(newRole) => onRoleChange(user.id, newRole)}
-        size="xs"
-      />
-    </Paper>
+        <p className="flex min-w-0 items-center gap-3 text-xs text-gray-500">
+          <span><b className="text-sm font-semibold text-gray-900 dark:text-white">{stat ? stat.leads_assigned : '-'}</b> leads</span>
+          <span><b className="text-sm font-semibold text-gray-900 dark:text-white">{stat ? stat.calls : '-'}</b> calls</span>
+          <span className={overdue ? 'text-red-500' : ''}><b className={`text-sm font-semibold ${overdue ? '' : 'text-gray-900 dark:text-white'}`}>{stat ? stat.followups_pending : '-'}</b> pending</span>
+        </p>
+      </div>
+    </div>
   );
 };
 
 
 export default function UserListPro() {
   const [users, setUsers] = useState([]);
+  const roleNames = useTeamRoles(users.map((u) => u.role));
   const [filtered, setFiltered] = useState([]);
   const [filterRole, setFilterRole] = useState('All Roles');
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [filterModalOpened, { open: openFilterModal, close: closeFilterModal }] = useDisclosure(false);
+  const [stats, setStats] = useState({});
+  const authUser = useAuth()?.user;
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const PAGE_SIZE = 10;
-
-  // --- (All data fetching and handling logic remains the same) ---
 
   // fetch users
   useEffect(() => {
@@ -112,6 +136,14 @@ export default function UserListPro() {
     }
     fetchUsers();
   }, []);
+
+  // quick numbers (last 30 days) shown next to each member
+  useEffect(() => {
+    if (!authUser) return;
+    reportGet('/overview', presetRange('30d'))
+      .then((d) => setStats(Object.fromEntries(d.members.map((m) => [m.id, m]))))
+      .catch(() => {});
+  }, [authUser]);
 
   // filter & search
   useEffect(() => {
@@ -175,6 +207,7 @@ export default function UserListPro() {
     // Prevent no-op updates
     const userToUpdate = users.find(u => u.id === id);
     if (userToUpdate && userToUpdate.role === newRole) return;
+    if (!window.confirm(`Are you sure you want to change ${userToUpdate?.username || 'this user'}'s role from ${userToUpdate?.role} to ${newRole}?`)) return;
     
     setLoading(true);
     try {
@@ -194,78 +227,47 @@ export default function UserListPro() {
     }
   };
 
-  const handleViewProfile = (id) => router.push(`/user-performance/${id}`);
+  const handleViewProfile = (id) => router.push(`/view-user/${id}`);
 
   return (
     <Container fluid px="xl" pt="md">
-      <Group align="center" position="apart" mb="md">
-        <Group>
-          <IconUsers size={28} />
-          <Text size="xl" weight={700}>Team Members</Text>
-        </Group>
-        <Text color="dimmed" size="sm">You have {filtered.length} users.</Text>
-      </Group>
-
-      {/* --- Desktop Filters --- */}
-      <Group spacing="md" mb="md" align="flex-end" className="hidden md:flex">
-        <TextInput
-          icon={<IconSearch size={16} />}
-          placeholder="Search by name or email..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          style={{ flex: 1 }}
-        />
-        <Select
-          data={['All Roles', 'Manager', 'Salesperson']}
-          value={filterRole}
-          onChange={setFilterRole}
-          icon={<IconFilter size={16} />}
-        />
-      </Group>
-      
-      {/* --- Mobile Filters --- */}
-      <Group mb="md" className="md:hidden">
-        <Button
-            leftIcon={<IconFilter size={16} />}
-            variant="default"
-            onClick={openFilterModal}
-            fullWidth
-        >
-            Filters & Search
-        </Button>
-      </Group>
-
-      <Modal opened={filterModalOpened} onClose={closeFilterModal} title="Filters & Search">
-        <TextInput
-          label="Search by name or email"
-          icon={<IconSearch size={16} />}
-          placeholder="..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          mb="md"
-        />
-        <Select
-          label="Filter by Role"
-          data={['All Roles', 'Manager', 'Salesperson']}
-          value={filterRole}
-          onChange={setFilterRole}
-          icon={<IconFilter size={16} />}
-        />
-        <Button fullWidth onClick={closeFilterModal} mt="lg">
-            Apply Filters
-        </Button>
-      </Modal>
+      {/* Header */}
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-2xl">
+            <IconUsers size={24} className="text-blue-600" /> Team Members
+            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">{filtered.length}</span>
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">Tap a member for their full report. On mobile, long press to select.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
+            <IconSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input className="form-input rounded-xl pl-9" placeholder="Search name or email" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+          <Select data={['All Roles', ...roleNames]} value={filterRole} onChange={setFilterRole} icon={<IconFilter size={15} />} className="w-[140px] shrink-0 sm:w-44" />
+        </div>
+      </div>
 
       <div style={{ position: 'relative' }}>
         <LoadingOverlay visible={loading} />
 
         {/* --- Desktop View: Table --- */}
-        <Card withBorder radius="md" p={0} className="hidden md:block">
+        <Card withBorder radius="md" p={0} shadow="xs" className="hidden md:block">
           <ScrollArea>
-            <Table miw={800} verticalSpacing="sm" highlightOnHover>
+            <Table
+              miw={1000}
+              verticalSpacing="sm"
+              highlightOnHover
+              sx={{
+                'thead th': { fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#6b7280', padding: '14px 12px' },
+                'tbody td': { padding: '12px', verticalAlign: 'middle' },
+                'th:first-of-type, td:first-of-type': { paddingLeft: 28 },
+              }}
+            >
               <thead>
                 <tr>
-                  <th style={{ width: 60 }}>
+                  <th style={{ width: 76 }}>
                     <Checkbox
                         checked={selected.length > 0 && selected.length === paged.length}
                         indeterminate={selected.length > 0 && selected.length < paged.length}
@@ -276,29 +278,42 @@ export default function UserListPro() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th style={{ textAlign: 'center' }}>Leads</th>
+                  <th style={{ textAlign: 'center' }}>Calls (30d)</th>
+                  <th style={{ textAlign: 'center' }}>Pending FU</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paged.map(user => (
-                  <tr key={user.id}>
-                    <td><Checkbox checked={selected.includes(user.id)} onChange={() => toggleSelect(user.id)} /></td>
+                  <tr key={user.id} style={{ cursor: 'pointer' }} onClick={() => handleViewProfile(user.id)}>
+                    <td onClick={e => e.stopPropagation()}><Checkbox checked={selected.includes(user.id)} onChange={() => toggleSelect(user.id)} /></td>
                     <td>
-                      <Group spacing="sm">
+                      <Group spacing="sm" style={{ cursor: 'pointer' }} onClick={() => handleViewProfile(user.id)}>
                         <Avatar color="blue" radius="xl" src={user.avatar_url || null}>{user.username.split(' ').map(n=>n[0]).join('')}</Avatar>
-                        <Text weight={500}>{user.username}</Text>
+                        <div>
+                          <Text weight={500}>{user.username}</Text>
+                          {user.phone && <Text color="dimmed" size="xs">{user.phone}</Text>}
+                        </div>
                       </Group>
                     </td>
                     <td><Text color="dimmed">{user.email}</Text></td>
-                    <td>
+                    <td onClick={e => e.stopPropagation()}>
                       <Select
-                        data={['Manager', 'Salesperson']}
+                        data={roleNames.includes(user.role) ? roleNames : [...roleNames, user.role]}
                         value={user.role}
                         onChange={v => handleRoleChange(user.id, v)}
                         size="xs" sx={{ width: 140 }}
                       />
                     </td>
+                    <td style={{ textAlign: 'center' }}>{stats[user.id] ? stats[user.id].leads_assigned : '-'}</td>
+                    <td style={{ textAlign: 'center' }}>{stats[user.id] ? stats[user.id].calls : '-'}</td>
                     <td style={{ textAlign: 'center' }}>
+                      {stats[user.id] ? (
+                        <Text size="sm" color={stats[user.id].followups_overdue ? 'red' : undefined} weight={stats[user.id].followups_overdue ? 600 : 400}>{stats[user.id].followups_pending}</Text>
+                      ) : '-'}
+                    </td>
+                    <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                       <Group spacing="xs" position="center" noWrap>
                         <ActionIcon color="blue" variant="subtle" onClick={() => handleViewProfile(user.id)}><IconEye size={18} /></ActionIcon>
                         <ActionIcon color="red" variant="subtle" onClick={() => handleDelete([user.id])}><IconTrash size={18} /></ActionIcon>
@@ -312,7 +327,7 @@ export default function UserListPro() {
         </Card>
 
         {/* --- Mobile View: Cards --- */}
-        <div className="md:hidden space-y-3">
+        <div className="md:hidden">
           {paged.length > 0 ? (
             paged.map(user => (
               <UserCard
@@ -320,9 +335,8 @@ export default function UserListPro() {
                 user={user}
                 selected={selected}
                 onToggleSelect={toggleSelect}
-                onRoleChange={handleRoleChange}
-                onDelete={handleDelete}
                 onViewProfile={handleViewProfile}
+                stat={stats[user.id]}
               />
             ))
           ) : (
@@ -342,18 +356,20 @@ export default function UserListPro() {
       <Transition transition="slide-up" mounted={selected.length > 0}>
         {(styles) => (
           <Paper
-            style={{ ...styles, position: 'fixed', bottom: 20, left: 20, right: 20, zIndex: 10 }}
+            style={{ ...styles, position: 'fixed', bottom: 20, left: 20, right: 20, zIndex: 10, maxWidth: 420, margin: '0 auto' }}
             p="sm"
             shadow="md"
             radius="md"
-            className="md:hidden"
           >
             <Group position="apart">
               <Text weight={500}>{selected.length} selected</Text>
-              <Button color="red" size="xs" onClick={() => handleDelete(selected)}>
-                <IconTrash size={16} style={{ marginRight: '8px' }} />
-                Delete
-              </Button>
+              <Group spacing="xs">
+                <Button variant="default" size="xs" onClick={() => setSelected([])}>Cancel</Button>
+                <Button color="red" size="xs" onClick={() => handleDelete(selected)}>
+                  <IconTrash size={16} style={{ marginRight: '8px' }} />
+                  Delete
+                </Button>
+              </Group>
             </Group>
           </Paper>
         )}

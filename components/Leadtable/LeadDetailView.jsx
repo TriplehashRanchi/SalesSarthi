@@ -10,6 +10,8 @@ import {
     IconNote, IconBuildingStore, IconUser, IconCategory, IconLink, IconReceipt2 
 } from '@tabler/icons-react';
 
+import { useAuth } from '@/context/AuthContext';
+import LogCallModal from '@/components/team/LogCallModal';
 import LinkedFinancialKundli from '@/components/common/LinkedFinancialKundli';
 import LinkedFinHealthCheckups from '@/components/common/LinkedFinHealthCheckups';
 
@@ -42,6 +44,8 @@ const formatDate = (dateString) => {
 
 // Lead details. As a page it fills the screen; with `onClose` it sits inside a side panel.
 const LeadDetailView = ({ leadId, onClose }) => {
+    const { user: authUser } = useAuth();
+    const [callOpen, setCallOpen] = useState(false);
     const embedded = !!onClose;
     const router = useRouter();
     const [lead, setLead] = useState(null);
@@ -115,8 +119,14 @@ const LeadDetailView = ({ leadId, onClose }) => {
                         <ActionIcon component="a" href={`mailto:${lead.email}`} size="xl" radius="xl" variant="light"><IconMail /></ActionIcon>
                         <ActionIcon component="a" href={`https://wa.me/${lead.phone_number}`} target="_blank" size="xl" radius="xl" variant="light"><IconBrandWhatsapp /></ActionIcon>
                     </Group>
+                    {authUser && authUser.role !== 'admin' && (
+                        <Group position="center" mt="md">
+                            <Button leftIcon={<IconPhone size={16} />} variant="light" onClick={() => setCallOpen(true)}>Log call</Button>
+                        </Group>
+                    )}
                 </Paper>
-                
+                {callOpen && <LogCallModal lead={lead} onClose={() => setCallOpen(false)} />}
+
                 {/* <Divider  className='my-2'/> */}
 
                 {/* --- MAIN DETAILS SECTION --- */}

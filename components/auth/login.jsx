@@ -75,7 +75,7 @@ export default function ComponentsAuthLoginForm() {
   useEffect(() => {
     if (user?.role === 'admin') {
       router.push('/dashboard');
-    } else if (user?.role === 'Manager' || user?.role === 'Salesperson' || user?.role === 'agent') {
+    } else if (user?.role) {
       router.push('/user-dashboard');
     }
   }, [user, router]);

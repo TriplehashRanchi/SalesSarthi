@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button, Card, Grid, Text, Title, Badge, Menu, TextInput, Select, Modal, Group } from '@mantine/core';
+import { Button, Card, Grid, Text, Title, Badge, Menu, TextInput, Select, Modal, Group, NumberInput } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { DataTable } from 'mantine-datatable';
 import superAdminAxios from '@/utils/superAdminAxios';
@@ -41,6 +41,32 @@ const AdminTable = () => {
         amount: '',
         currency: 'INR',
     });
+
+    // 👥 Team member limit modal
+    const [limitAdmin, setLimitAdmin] = useState(null);
+    const [limitValue, setLimitValue] = useState('');
+    const [savingLimit, setSavingLimit] = useState(false);
+
+    const openLimitModal = (admin) => {
+        setLimitAdmin(admin);
+        setLimitValue(admin.max_team_members ?? '');
+    };
+
+    const handleLimitSave = async () => {
+        setSavingLimit(true);
+        try {
+            const res = await superAdminAxios.put(`/api/superadmin/admins/${limitAdmin.admin_id}/team-limit`, {
+                max_team_members: limitValue === '' || limitValue == null ? null : limitValue,
+            });
+            Swal.fire('✅ Updated!', res.data.message, 'success');
+            setLimitAdmin(null);
+            fetchAdmins();
+        } catch (err) {
+            Swal.fire('❌ Error', err.response?.data?.message || 'Update failed', 'error');
+        } finally {
+            setSavingLimit(false);
+        }
+    };
 
     const fetchAdmins = async () => {
         try {
@@ -178,10 +204,10 @@ const AdminTable = () => {
         {
             accessor: 'stats',
             title: 'Stats',
-            render: ({ user_count, lead_count }) => (
+            render: ({ user_count, lead_count, max_team_members }) => (
                 <div className="flex flex-col gap-1 text-xs">
-                    <Badge size="xs" color="blue">
-                        Users: {user_count}
+                    <Badge size="xs" color={max_team_members !== null && max_team_members !== undefined && user_count >= max_team_members ? 'red' : 'blue'}>
+                        Users: {user_count} / {max_team_members ?? '∞'}
                     </Badge>
                     <Badge size="xs" color="purple">
                         Leads: {lead_count}
@@ -218,6 +244,9 @@ const AdminTable = () => {
                 <div className="flex flex-wrap gap-2">
                     <Button variant="light" color="blue" size="xs" leftIcon={<IconEdit size={16} />} onClick={() => handleEditClick(admin)}>
                         Edit
+                    </Button>
+                    <Button variant="light" color="teal" size="xs" onClick={() => openLimitModal(admin)}>
+                        Team Limit
                     </Button>
                     <Link href={`/superadmin/admins/${admin.admin_id}`} className="inline-flex">
                         <Button variant="outline" color="gray" size="xs">
@@ -290,6 +319,24 @@ const AdminTable = () => {
 
             {/* Create Admin Modal */}
             <CreateAdminModal isOpen={openModal} closeModal={() => setOpenModal(false)} onSuccess={fetchAdmins} />
+
+            <Modal opened={!!limitAdmin} onClose={() => setLimitAdmin(null)} title="Team Member Limit" centered>
+                <div className="space-y-4">
+                    <Text size="sm" color="dimmed">
+                        How many team members can <b>{limitAdmin?.name}</b> add? Currently using {limitAdmin?.user_count ?? 0}. Leave empty for no limit.
+                    </Text>
+                    <NumberInput label="Max team members" min={0} placeholder="No limit" value={limitValue} onChange={setLimitValue} />
+                    {limitValue !== '' && limitAdmin && Number(limitValue) < limitAdmin.user_count && (
+                        <Text size="xs" color="orange">
+                            Already above this limit. Existing members stay, but no new ones can be added.
+                        </Text>
+                    )}
+                    <Group position="right">
+                        <Button variant="default" onClick={() => setLimitAdmin(null)} disabled={savingLimit}>Cancel</Button>
+                        <Button color="blue" onClick={handleLimitSave} loading={savingLimit}>Save</Button>
+                    </Group>
+                </div>
+            </Modal>
 
             <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Admin Details" centered>
                 <div className="space-y-4">

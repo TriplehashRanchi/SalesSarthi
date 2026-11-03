@@ -11,6 +11,7 @@ import {
   Grid,
   Text,
   Notification,
+  NumberInput,
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { IconUsersPlus, IconCheck, IconX } from '@tabler/icons-react';
@@ -24,6 +25,7 @@ const CreateAdminModal = ({ isOpen, closeModal, onSuccess }) => {
     password: '',
     subscription_plan: '',
     expires_at: null,
+    max_team_members: '',
   });
 
   const [plans, setPlans] = useState([]);
@@ -46,6 +48,10 @@ const CreateAdminModal = ({ isOpen, closeModal, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
+    if (form.max_team_members === '' || form.max_team_members == null) {
+      setErrorMsg('Please set how many team members this admin can add');
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -63,6 +69,7 @@ const CreateAdminModal = ({ isOpen, closeModal, onSuccess }) => {
           password: '',
           subscription_plan: '',
           expires_at: null,
+          max_team_members: '',
         });
       }, 1000);
     } catch (err) {
@@ -147,6 +154,18 @@ const CreateAdminModal = ({ isOpen, closeModal, onSuccess }) => {
             placeholder="Choose expiry"
             value={form.expires_at}
             onChange={(val) => handleChange('expires_at', val)}
+          />
+        </Grid.Col>
+
+        <Grid.Col span={12}>
+          <NumberInput
+            label="Team Member Limit"
+            description="How many team members this admin can add"
+            placeholder="e.g. 5"
+            min={0}
+            value={form.max_team_members}
+            onChange={(val) => handleChange('max_team_members', val)}
+            required
           />
         </Grid.Col>
       </Grid>

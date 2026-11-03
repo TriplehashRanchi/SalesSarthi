@@ -60,7 +60,7 @@ const UserSide = () => {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const semidark = useSelector((state: IRootState) => state.themeConfig.semidark);
     const [todayBannerCount, setTodayBannerCount] = useState(0);
-    //  const { user } = useAuth();
+    const user = useAuth()?.user;
     // const role = user?.role;
     // console.log("user", role)
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -176,6 +176,26 @@ const UserSide = () => {
                                     </div>
                                 </Link>
                             </li>
+                            {user?.role === 'Manager' && (
+                                <li className="menu nav-item">
+                                    <Link href="/team-leads">
+                                        <div className="flex items-center">
+                                            <IconUsersGroup className="shrink-0 group-hover:!text-primary" />
+                                            <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Team Leads')}</span>
+                                        </div>
+                                    </Link>
+                                </li>
+                            )}
+                            {user?.role === 'Manager' && (
+                                <li className="menu nav-item">
+                                    <Link href="/team-kpi">
+                                        <div className="flex items-center">
+                                            <IconUsersGroup className="shrink-0 group-hover:!text-primary" />
+                                            <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Team KPI')}</span>
+                                        </div>
+                                    </Link>
+                                </li>
+                            )}
                             <li className="menu nav-item">
                                 <Link href="/userleadtable">
                                     <div className="flex items-center">

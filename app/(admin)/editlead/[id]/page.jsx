@@ -1,5 +1,6 @@
 'use client';
 
+import { authHeaders } from '@/utils/authHeaders';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -19,7 +20,7 @@ const EditLeadPage = () => {
   useEffect(() => {
     const fetchLead = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/leads/${id}`);
+        const response = await axios.get(`${API_URL}/api/leads/${id}`, { headers: await authHeaders() });
         setLeadData(response.data);
       } catch (error) {
         console.error('Error fetching lead:', error);
