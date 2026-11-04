@@ -9,7 +9,7 @@ import { IconDownload, IconFilter } from '@tabler/icons-react';
 import { CSVLink } from 'react-csv';
 import Swal from 'sweetalert2';
 
-export default function ExportCsvModal({ allAdmins = [] }) {
+export default function ExportCsvModal({ allAdmins = [], buttonProps = {}, label = 'Export CSV' }) {
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
@@ -92,8 +92,9 @@ export default function ExportCsvModal({ allAdmins = [] }) {
         color="blue"
         leftIcon={<IconDownload size={16} />}
         onClick={() => setOpen(true)}
+        {...buttonProps}
       >
-        Export CSV
+        {label}
       </Button>
 
       {/* 📦 Modal */}

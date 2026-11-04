@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import ProductLineSelect from '@/components/customers/ProductLineSelect';
 
 // DB values can be null, a short code ("F"), or a zero date; the inputs need clean strings.
 const normalizeGender = (v) => {
@@ -23,7 +24,7 @@ const toDateInput = (v) => {
   return d.toLocaleDateString('en-CA');
 };
 
-const CustomerForm = ({ customerData, onSubmit }) => {
+const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
   const [formData, setFormData] = useState({
     id: customerData ? customerData.id : Math.floor(Math.random() * 100000000),
     full_name: customerData?.full_name ?? '',
@@ -43,7 +44,9 @@ const CustomerForm = ({ customerData, onSubmit }) => {
     source: customerData?.source ?? '',
     referrer: customerData?.referrer ?? '',
     notes: customerData?.notes ?? '',
+    folder_ids: customerData?.folder_ids ?? [],
   });
+  const [folderError, setFolderError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -52,6 +55,11 @@ const CustomerForm = ({ customerData, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // A new customer must go into at least one product line. Existing ones may be saved without.
+    if (!customerData && !formData.folder_ids.length) {
+      setFolderError('Select at least one product line');
+      return;
+    }
     try {
       await onSubmit(formData);  // Calls the passed onSubmit function with formData
       Swal.fire('Success', 'Customer data processed successfully!', 'success');
@@ -74,6 +82,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
         source: '',
         referrer: '',
         notes: '',
+        folder_ids: [],
       });
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -83,7 +92,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
 
   return (
     <div className="form-container">
-      {!customerData && <h2 className="mb-6 text-xl font-semibold text-gray-800 dark:text-white-light">Add New Customer</h2>}
+      {!customerData && !hideTitle && <h2 className="mb-6 text-xl font-semibold text-gray-800 dark:text-white-light">Add New Customer</h2>}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-6 lg:grid-cols-3 max-sm:[&_.form-input]:!bg-transparent max-sm:[&_.form-select]:!bg-transparent max-sm:[&_.form-textarea]:!bg-transparent">
         <div className="min-w-0 max-sm:col-span-2">
@@ -122,6 +131,22 @@ const CustomerForm = ({ customerData, onSubmit }) => {
             onChange={handleInputChange}
             className="form-input w-full"
             required
+          />
+        </div>
+
+        <div className="min-w-0 max-sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Product Line{!customerData && <span className="text-red-500"> *</span>}
+          </label>
+          <ProductLineSelect
+            label={null}
+            value={formData.folder_ids}
+            onChange={(ids) => {
+              setFormData((prev) => ({ ...prev, folder_ids: ids }));
+              if (ids.length) setFolderError('');
+            }}
+            error={folderError}
+            placeholder="Select product line"
           />
         </div>
 

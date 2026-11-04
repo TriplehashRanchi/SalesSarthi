@@ -17,13 +17,18 @@ export default function CreateCustomer() {
             const auth = getAuth();
             const token = await auth.currentUser?.getIdToken();
 
-            await axios.post(`${API_URL}/api/customers`, data, {
+            const { id, ...body } = data;
+            const res = await axios.post(`${API_URL}/api/customers`, body, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
             });
-            showNotification({ title: 'Success', message: 'Customer created successfully', color: 'green' });
+            showNotification(
+                res.data?.merged
+                    ? { title: 'Merged', message: 'This customer already existed (same phone/email). Added the product line(s) to that customer.', color: 'blue' }
+                    : { title: 'Success', message: 'Customer created successfully', color: 'green' },
+            );
             router.push('/customers');
 
         } catch (error) {
@@ -34,10 +39,13 @@ export default function CreateCustomer() {
 
     return (
         <div>
-            <ActionIcon variant="subtle" color="dark" mb="xs" onClick={() => router.push('/customers')} aria-label="Back">
-                <IconArrowLeft size={22} />
-            </ActionIcon>
-            <CustomerForm  onSubmit={onSubmit} customerData={null}/>
+            <div className="mb-5 flex items-center gap-2 sm:mb-6 sm:gap-3">
+                <ActionIcon variant="subtle" color="dark" size="lg" radius="xl" className="-ml-1.5 shrink-0" onClick={() => router.push('/customers')} aria-label="Back">
+                    <IconArrowLeft size={22} />
+                </ActionIcon>
+                <h2 className="min-w-0 truncate text-lg font-semibold text-gray-800 dark:text-white-light sm:text-xl">Add New Customer</h2>
+            </div>
+            <CustomerForm onSubmit={onSubmit} customerData={null} hideTitle />
         </div>
     );
 }

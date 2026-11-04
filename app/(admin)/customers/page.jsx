@@ -1,5 +1,6 @@
 "use client";
 import Customertable from '@/components/Leadtable/customerTable';
+import CustomerFolders from '@/components/customers/CustomerFolders';
 import React from 'react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -29,7 +30,9 @@ const MultiColumn = () => {
                     <button className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">CSV Bulk Upload</button>
                 </div>
             </div> */}
-            <Customertable profile={profile || null}/>
+            <CustomerFolders isAdmin>
+                <Customertable profile={profile || null}/>
+            </CustomerFolders>
         </div>
     );
 };

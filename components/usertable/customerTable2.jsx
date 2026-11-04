@@ -1,7 +1,7 @@
 'use client';
 
 import { DataTable } from 'mantine-datatable';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
 import { useRouter } from 'next/navigation';
@@ -13,10 +13,11 @@ import IconTrash from '../icon/icon-trash-lines';
 import AppointmentDrawer from './AppointmentDrawer';
 import IconMailDot from '../icon/icon-mail-dot';
 import { getAuth } from 'firebase/auth';
-import { IconDotsVertical, IconFileExport, IconUpload } from '@tabler/icons-react';
+import { IconDotsVertical, IconFileExport, IconUpload, IconPlus } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
 import { Pagination } from '@mantine/core';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
+import { CustomerFolderSelect } from '@/components/customers/CustomerFolders';
 
 const CustomerTable = () => {
     /* ─────────── existing state ─────────── */
@@ -26,9 +27,10 @@ const CustomerTable = () => {
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
     const [recordsData, setRecordsData] = useState(customers);
     const [search, setSearch] = useState('');
+    // Newest first: a customer just added or converted from a lead shows at the top.
     const [sortStatus, setSortStatus] = useState({
-        columnAccessor: 'full_name',
-        direction: 'asc',
+        columnAccessor: 'recent_at',
+        direction: 'desc',
     });
 
     const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -88,26 +90,27 @@ const CustomerTable = () => {
         fetchCustomers();
     }, []);
 
-    useEffect(() => {
+    // Search + sort once, then page through it.
+    const sortedCustomers = useMemo(() => {
+        const q = search.toLowerCase();
         const filtered = customers.filter(
-            (item) =>
-                item.full_name.toLowerCase().includes(search.toLowerCase()) ||
-                item.email.toLowerCase().includes(search.toLowerCase()) ||
-                item.phone_number.toLowerCase().includes(search.toLowerCase()),
+            (item) => (item.full_name || '').toLowerCase().includes(q) || (item.email || '').toLowerCase().includes(q) || (item.phone_number || '').toLowerCase().includes(q),
         );
+        const sorted = sortBy(filtered, (c) => {
+            const v = c[sortStatus.columnAccessor];
+            return typeof v === 'string' ? v.toLowerCase() : v;
+        });
+        return sortStatus.direction === 'desc' ? sorted.reverse() : sorted;
+    }, [customers, search, sortStatus]);
 
-        const sorted = sortBy(filtered, sortStatus.columnAccessor);
-        const finalSorted = sortStatus.direction === 'desc' ? sorted.reverse() : sorted;
-
-        setRecordsData(finalSorted);
+    useEffect(() => {
         setPage(1);
-    }, [search, customers, sortStatus]);
+    }, [search, sortStatus]);
 
     useEffect(() => {
         const from = (page - 1) * pageSize;
-        const to = from + pageSize;
-        setRecordsData(customers.slice(from, to));
-    }, [page, pageSize, customers]);
+        setRecordsData(sortedCustomers.slice(from, from + pageSize));
+    }, [page, pageSize, sortedCustomers]);
 
     const getNextAppointment = (appointments) => {
         if (!appointments || appointments.length === 0) return null;
@@ -124,7 +127,12 @@ const CustomerTable = () => {
 
                 <input type="text" className="form-input w-auto md:ml-4" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
-                <div className="ml-auto flex gap-2">{/* <Button onClick={() => setCsvModalOpen(true)}><IconUpload/>CSV Bulk Upload</Button> */}</div>
+                <div className="ml-auto flex gap-2">
+                    <CustomerFolderSelect className="w-52" />
+                    <Button color="violet" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/useraddcustomer')}>
+                        Add Customer
+                    </Button>
+                </div>
             </div>
 
             {/* ⬇︎ DataTable */}
@@ -188,7 +196,7 @@ const CustomerTable = () => {
                             ),
                         },
                     ]}
-                    totalRecords={customers.length}
+                    totalRecords={sortedCustomers.length}
                     recordsPerPage={pageSize}
                     page={page}
                     onPageChange={(p) => setPage(p)}
@@ -203,8 +211,9 @@ const CustomerTable = () => {
             <div className="block md:hidden">
                 {/* Bulk toolbar (delete + export) */}
                 <Group className="px-3 py-2" position="apart" noWrap>
-                    <Button size="xs" onClick={() => setCsvModalOpen(true)} leftIcon={<IconFileExport size={14} />}>
-                        Upload CSV
+                    <CustomerFolderSelect size="xs" className="min-w-0 flex-1" />
+                    <Button size="xs" color="violet" onClick={() => router.push('/useraddcustomer')} leftIcon={<IconPlus size={14} />}>
+                        Add Customer
                     </Button>
                 </Group>
 
@@ -260,7 +269,7 @@ const CustomerTable = () => {
                     })}
                 </ScrollArea>
                 <Group position="center" spacing="xs" my="xs">
-                    <Pagination page={page} onChange={setPage} total={Math.ceil(customers.length / pageSize)} size="xs" />
+                    <Pagination page={page} onChange={setPage} total={Math.ceil(sortedCustomers.length / pageSize)} size="xs" />
                 </Group>
             </div>
 

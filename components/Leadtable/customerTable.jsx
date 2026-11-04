@@ -19,6 +19,7 @@ import IconCashBanknotes from '../icon/icon-cash-banknotes';
 import IconListCheck from '../icon/icon-list-check';
 import IconHeart from '../icon/icon-heart';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
+import { CustomerFolderSelect } from '@/components/customers/CustomerFolders';
 import { IconEye, IconPlus, IconCalendarPlus, IconArrowLeft, IconSearch, IconDownload } from '@tabler/icons-react';
 
 const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
@@ -31,9 +32,10 @@ const CustomerTable = ({ profile }) => {
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [recordsData, setRecordsData] = useState(customers);
   const [search, setSearch] = useState('');
+  // Newest first: a customer just added, converted from a lead or merged shows at the top.
   const [sortStatus, setSortStatus] = useState({
-    columnAccessor: 'full_name',
-    direction: 'asc',
+    columnAccessor: 'recent_at',
+    direction: 'desc',
   });
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -267,40 +269,34 @@ const CustomerTable = ({ profile }) => {
     fetchCustomers();
   }, []);
 
-  useEffect(() => {
+  // Search + sort once; desktop pages through it, mobile scrolls through it.
+  const sortedCustomers = useMemo(() => {
+    const q = search.toLowerCase();
     const filtered = customers.filter(
-      (item) =>
-        item.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        item.email.toLowerCase().includes(search.toLowerCase()) ||
-        item.phone_number.toLowerCase().includes(search.toLowerCase()),
+      (item) => (item.full_name || '').toLowerCase().includes(q) || (item.email || '').toLowerCase().includes(q) || (item.phone_number || '').toLowerCase().includes(q),
     );
+    const sorted = sortBy(filtered, (c) => {
+      const v = c[sortStatus.columnAccessor];
+      return typeof v === 'string' ? v.toLowerCase() : v;
+    });
+    return sortStatus.direction === 'desc' ? sorted.reverse() : sorted;
+  }, [customers, search, sortStatus]);
 
-    const sorted = sortBy(filtered, sortStatus.columnAccessor);
-    const finalSorted = sortStatus.direction === 'desc' ? sorted.reverse() : sorted;
-
-    setRecordsData(finalSorted);
+  useEffect(() => {
     setPage(1);
-  }, [search, customers, sortStatus]);
+  }, [search, sortStatus]);
 
   useEffect(() => {
     const from = (page - 1) * pageSize;
-    const to = from + pageSize;
-    setRecordsData(customers.slice(from, to));
-  }, [page, pageSize, customers]);
+    setRecordsData(sortedCustomers.slice(from, from + pageSize));
+  }, [page, pageSize, sortedCustomers]);
 
   /* ─────────── mobile infinite scroll ─────────── */
   const MOBILE_BATCH = 10;
   const [mobileCount, setMobileCount] = useState(MOBILE_BATCH);
   const sentinelRef = useRef(null);
 
-  const mobileList = useMemo(() => {
-    const q = search.toLowerCase();
-    const filtered = customers.filter(
-      (item) => (item.full_name || '').toLowerCase().includes(q) || (item.email || '').toLowerCase().includes(q) || (item.phone_number || '').toLowerCase().includes(q),
-    );
-    const sorted = sortBy(filtered, sortStatus.columnAccessor);
-    return sortStatus.direction === 'desc' ? sorted.reverse() : sorted;
-  }, [customers, search, sortStatus]);
+  const mobileList = sortedCustomers;
 
   const hasMore = mobileCount < mobileList.length;
 
@@ -388,6 +384,7 @@ const CustomerTable = ({ profile }) => {
               Delete ({selectedIds.length})
             </Button>
           )}
+          <CustomerFolderSelect className="w-52" />
           <Button variant="light" color="violet" leftIcon={<IconUpload size={16} />} onClick={() => setCsvModalOpen(true)}>
             Upload CSV
           </Button>
@@ -507,7 +504,7 @@ const CustomerTable = ({ profile }) => {
               ),
             },
           ]}
-          totalRecords={customers.length}
+          totalRecords={sortedCustomers.length}
           recordsPerPage={pageSize}
           page={page}
           onPageChange={(p) => setPage(p)}
@@ -531,15 +528,19 @@ const CustomerTable = ({ profile }) => {
         </div>
 
         {/* Search */}
-        <TextInput
-          icon={<IconSearch size={18} />}
-          placeholder="Search by name or phone"
-          radius="xl"
-          size="md"
-          value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-          mb="sm"
-        />
+        {/* Search + folder dropdown in one line */}
+        <div className="mb-2 flex items-center gap-2">
+          <TextInput
+            icon={<IconSearch size={18} />}
+            placeholder="Search"
+            radius="xl"
+            size="md"
+            className="min-w-0 flex-1"
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+          />
+          <CustomerFolderSelect size="md" radius="xl" className="w-[44%] max-w-[190px] shrink-0" />
+        </div>
 
         {selectionMode ? (
           <Group className="px-1 py-2" position="apart" noWrap>

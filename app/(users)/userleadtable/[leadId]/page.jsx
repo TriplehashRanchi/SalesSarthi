@@ -101,6 +101,13 @@ const LeadDetailPage = () => {
                     </Group>
                     <Title order={2} align="center">{lead.full_name}</Title>
                     <Text c="dimmed" size="sm" align="center">Lead from {lead.source || 'Manual Entry'}</Text>
+                    {lead.form_name && (
+                        <div className="mt-1.5 flex justify-center px-4">
+                            <span className="max-w-full truncate rounded-full bg-blue-50 px-3 py-0.5 text-xs font-medium text-blue-600 dark:bg-blue-900/30 dark:text-blue-300" title={lead.form_name}>
+                                Ad: {lead.form_name}
+                            </span>
+                        </div>
+                    )}
                     <Group position="center" mt="xl" spacing="lg">
                         <ActionIcon component="a" href={`tel:${lead.phone_number}`} size="xl" radius="xl" variant="light"><IconPhone /></ActionIcon>
                         <ActionIcon component="a" href={`mailto:${lead.email}`} size="xl" radius="xl" variant="light"><IconMail /></ActionIcon>

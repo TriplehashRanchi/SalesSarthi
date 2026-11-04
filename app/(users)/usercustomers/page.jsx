@@ -1,5 +1,6 @@
 "use client";
 import Customertable from '@/components/usertable/customerTable2';
+import CustomerFolders from '@/components/customers/CustomerFolders';
 import IconBell from '@/components/icon/icon-bell';
 import React from 'react';
 import IconFacebook from '@/components/icon/icon-facebook';
@@ -16,7 +17,9 @@ const MultiColumn = () => {
             </div>
             {/* Action Buttons Bar */}
           
-            <Customertable />
+            <CustomerFolders>
+                <Customertable />
+            </CustomerFolders>
         </div>
     );
 };

@@ -20,6 +20,7 @@ import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import ProductLineSelect from '@/components/customers/ProductLineSelect';
 
 const REQUIRED_HEADERS = ['full_name', 'email', 'phone_number'];
 
@@ -43,8 +44,10 @@ const SAMPLE_SHEET_HEADERS = [
   'notes',
 ];
 
-const CsvCustomersUpload = ({ opened, onClose, onSuccess }) => {
+const CsvCustomersUpload = ({ opened, onClose, onSuccess, defaultFolderIds = [] }) => {
   const [file, setFile] = useState(null);
+  // Product lines for every uploaded customer (optional). Opened from a folder → that folder is pre-picked.
+  const [folderIds, setFolderIds] = useState(defaultFolderIds);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -212,21 +215,22 @@ const CsvCustomersUpload = ({ opened, onClose, onSuccess }) => {
       }
       const token = await user.getIdToken();
 
-      await axios.post(
+      const { data } = await axios.post(
         `${API_URL}/api/customers/bulk`,
-        { customers: rows },
+        { customers: rows, folder_ids: folderIds },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } },
       );
 
       showNotification({
         title: 'Import success',
-        message: `${rows.length} customer record(s) queued`,
+        message: data?.message || `${rows.length} customer record(s) imported`,
         color: 'green',
         icon: <IconCheck size={16} />,
       });
 
       setFile(null);
       setRows([]);
+      setFolderIds(defaultFolderIds);
       onClose();
       onSuccess?.();
     } catch (err) {
@@ -264,6 +268,14 @@ const CsvCustomersUpload = ({ opened, onClose, onSuccess }) => {
           </Group>
         </Anchor>
       </Group>
+
+      <ProductLineSelect
+        value={folderIds}
+        onChange={setFolderIds}
+        label="Product Line (optional)"
+        description="Every customer in this file goes into these folders. Same phone/email as an existing customer → merged."
+        mb="md"
+      />
 
       <FileInput
         label="Select CSV file"

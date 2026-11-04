@@ -1,6 +1,7 @@
 'use client';
 
 import { DataTable } from 'mantine-datatable';
+import ConvertLeadModal from '@/components/customers/ConvertLeadModal';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
@@ -495,39 +496,13 @@ const LeadTable = ({ profile, userId }) => {
         }
     };
 
-    const convertLeadToCustomer = async (lead) => {
-        // No changes needed here
-        if (!lead || !lead.id) return;
-        if (!confirm(`Are you sure you want to convert ${lead.full_name} to a customer? This lead will be removed from this table.`)) return;
-
-        try {
-            const auth = getAuth(); // Added auth check
-            const user = auth.currentUser;
-            if (!user) throw new Error('User not authenticated.');
-            const token = await user.getIdToken(); // Added token
-
-            // IMPORTANT: Ensure your backend handles the conversion logic appropriately
-            await axios.post(
-                `
-            ${API_URL}/api/leads/${lead.id}/convert`,
-                {},
-                {
-                    // Added empty body and headers
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            );
-
-            showNotification({ title: 'success', message: `${lead.full_name} converted successfully!`, color: 'green' });
-            // Remove locally AND refetch for consistency
-            setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
-            // Consider a full fetchLeads() might be safer depending on backend logic
-        } catch (error) {
-            console.error('Error converting lead to customer:', error);
-            showNotification({ title: 'Error', message: error.response?.data?.message || error.message || 'Failed to convert lead.', color: 'red' });
-        }
+    // Opens the "Convert to Customer" modal (details + product line). The modal does the API call.
+    const [convertLead, setConvertLead] = useState(null);
+    const convertLeadToCustomer = (lead) => {
+        if (lead?.id) setConvertLead(lead);
+    };
+    const handleLeadConverted = (lead) => {
+        setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
     };
 
     const exportCSV = () => {
@@ -1379,7 +1354,7 @@ const LeadTable = ({ profile, userId }) => {
                                     {record.phone_number}
                                     {u ? ` · ${u.username}` : ''}
                                 </Text>
-                                <div className="mt-1" onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
+                                <div className="mt-1 flex min-w-0 items-center gap-2" onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
                                     <Menu withinPortal shadow="md" position="bottom-start">
                                         <Menu.Target>
                                             <Badge size="sm" className="cursor-pointer" color={statusColor(record.lead_status)} variant="light">
@@ -1394,6 +1369,22 @@ const LeadTable = ({ profile, userId }) => {
                                             ))}
                                         </Menu.Dropdown>
                                     </Menu>
+                                    {/* Which ad / form the lead came from (tap to see the full form answers) */}
+                                    {record.form_name && (
+                                        <button
+                                            type="button"
+                                            className="min-w-0 truncate text-xs text-blue-600"
+                                            onClick={() =>
+                                                setPayloadViewer({
+                                                    open: true,
+                                                    data: payloadToSections(record.raw_payload),
+                                                    title: record.form_name || 'Unknown Form',
+                                                })
+                                            }
+                                        >
+                                            {record.form_name}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -1498,14 +1489,14 @@ const LeadTable = ({ profile, userId }) => {
                             {!f.is_system && (
                                 <div onClick={(e) => e.stopPropagation()}>
                                     <Menu withinPortal shadow="md" position="bottom-end">
-                                        <Menu.Target>
-                                            <ActionIcon variant="subtle" color="gray" aria-label={`Options for ${f.name}`}><IconDotsVertical size={18} /></ActionIcon>
-                                        </Menu.Target>
-                                        <Menu.Dropdown>
-                                            <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(f)}>Rename</Menu.Item>
-                                            <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(f)}>Delete</Menu.Item>
-                                        </Menu.Dropdown>
-                                    </Menu>
+                                            <Menu.Target>
+                                                <ActionIcon variant="subtle" color="gray" aria-label={`Options for ${f.name}`}><IconDotsVertical size={18} /></ActionIcon>
+                                            </Menu.Target>
+                                            <Menu.Dropdown>
+                                                <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(f)}>Rename</Menu.Item>
+                                                <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(f)}>Delete</Menu.Item>
+                                            </Menu.Dropdown>
+                                        </Menu>
                                 </div>
                             )}
                             <IconChevronRight size={18} className="text-gray-400" />
@@ -1778,6 +1769,7 @@ const LeadTable = ({ profile, userId }) => {
                     </ScrollArea.Autosize>
                 )}
             </Modal>
+            <ConvertLeadModal lead={convertLead} onClose={() => setConvertLead(null)} onConverted={handleLeadConverted} />
         </div>
     );
 };

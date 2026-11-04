@@ -38,7 +38,7 @@ import IconLaptop from '../icon/icon-laptop';
 import IconNotes from '../icon/icon-notes';
 import IconUserPlus from '../icon/icon-user-plus';
 import IconUsersGroup from '../icon/icon-users-group';
-import { IconBadge, IconCommand, IconDiscount2, IconPlant2, IconTransactionRupee } from '@tabler/icons-react';
+import { IconBadge, IconFolder, IconCommand, IconDiscount2, IconPlant2, IconTransactionRupee } from '@tabler/icons-react';
 import IconCode from '../icon/icon-code';
 
 const UserSide = () => {
@@ -156,7 +156,15 @@ const UserSide = () => {
                                         <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customers')}</span>
                                     </div>
                                 </Link>
-                            </li>   
+                            </li>  
+                              <li className="menu nav-item">
+                                <Link href="/superadmin/customer-folders">
+                                    <div className="flex items-center">
+                                        <IconFolder className="shrink-0 group-hover:!text-primary" />
+                                        <span className="text-black ltr:pl-3 rtl:pr-3 dark:text-[#506690] dark:group-hover:text-white-dark">{t('Customer Folders')}</span>
+                                    </div>
+                                </Link>
+                            </li> 
                             {/* <li className="menu nav-item">
                                 <Link href="/calc">
                                     <div className="flex items-center">
@@ -205,6 +213,7 @@ const UserSide = () => {
                                     </div>
                                 </Link>
                             </li>
+                           
                              <li className="menu nav-item">
                                 <Link href="/superadmin/coupons">
                                     <div className="flex items-center">
