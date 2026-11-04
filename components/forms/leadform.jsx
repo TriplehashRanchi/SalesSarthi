@@ -309,95 +309,6 @@ const LeadForm = ({ existingLead }) => {
           </div>
         )}
 
-        {/* Address */}
-        <div className="min-w-0 max-sm:order-[15] max-sm:col-span-2 col-span-1 lg:col-span-3">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Address
-          </label>
-          <textarea
-            name="address"
-            placeholder="Enter Address"
-            value={formData.address}
-            onChange={handleInputChange}
-            className="form-textarea w-full"
-          />
-        </div>
-
-        {/* Insurance Type */}
-        <div className="min-w-0 max-sm:order-[9]">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Insurance Type
-          </label>
-          <input
-            type="text"
-            name="insurance_type"
-            placeholder="Enter Insurance Type"
-            value={formData.insurance_type}
-            onChange={handleInputChange}
-            className="form-input w-full"
-          />
-        </div>
-
-        {/* Policy Number */}
-        <div className="min-w-0 max-sm:order-[10]">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Policy Number
-          </label>
-          <input
-            type="text"
-            name="policy_number"
-            placeholder="Enter Policy Number"
-            value={formData.policy_number}
-            onChange={handleInputChange}
-            className="form-input w-full"
-          />
-        </div>
-
-        {/* Coverage Amount */}
-        <div className="min-w-0 max-sm:order-[11]">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Coverage Amount
-          </label>
-          <input
-            type="number"
-            name="coverage_amount"
-            placeholder="Enter Coverage Amount"
-            value={formData.coverage_amount}
-            onChange={handleInputChange}
-            className="form-input w-full"
-            step="0.01"
-          />
-        </div>
-
-        {/* Preferred Plan */}
-        <div className="min-w-0 max-sm:order-[12]">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Preferred Plan
-          </label>
-          <input
-            type="text"
-            name="preferred_plan"
-            placeholder="Enter Preferred Plan"
-            value={formData.preferred_plan}
-            onChange={handleInputChange}
-            className="form-input w-full"
-          />
-        </div>
-
-        {/* Next Follow-up Date */}
-        <div className="min-w-0 max-sm:order-[16] max-sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Next Follow-up Date Time
-          </label>
-          <input
-            type="datetime-local"
-            name="next_follow_up_date"
-            value={formData.next_follow_up_date}
-            onChange={handleInputChange}
-            className="form-input w-full"
-          />
-        </div>
-
         {/* Source */}
         <div className="min-w-0 max-sm:order-[8]">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -413,45 +324,15 @@ const LeadForm = ({ existingLead }) => {
           />
         </div>
 
-        {/* Company Name */}
-        <div className="min-w-0 max-sm:order-[13]">
+        {/* Address */}
+        <div className="min-w-0 max-sm:order-[15] max-sm:col-span-2 col-span-1 lg:col-span-3">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Company Name
-          </label>
-          <input
-            type="text"
-            name="company_name"
-            placeholder="Enter Company Name"
-            value={formData.company_name}
-            onChange={handleInputChange}
-            className="form-input w-full"
-          />
-        </div>
-
-        {/* Referrer */}
-        <div className="min-w-0 max-sm:order-[14] max-sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Referrer
-          </label>
-          <input
-            type="text"
-            name="referrer"
-            placeholder="Enter Referrer"
-            value={formData.referrer}
-            onChange={handleInputChange}
-            className="form-input w-full"
-          />
-        </div>
-
-        {/* Notes */}
-        <div className="min-w-0 max-sm:order-[17] max-sm:col-span-2 col-span-1 lg:col-span-3">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Notes
+            Address
           </label>
           <textarea
-            name="notes"
-            placeholder="Enter any notes about the lead"
-            value={formData.notes}
+            name="address"
+            placeholder="Enter Address"
+            value={formData.address}
             onChange={handleInputChange}
             className="form-textarea w-full"
           />
