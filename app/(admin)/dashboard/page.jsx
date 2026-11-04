@@ -664,8 +664,8 @@ const ReportingDashboard = () => {
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
                             <IconCoinRupee className="h-5 w-5" />
                         </div>
-                        <div>
-                            <p className="text-xl md:text-2xl font-bold text-indigo-100 truncate">{formatCurrency(dashboardData.totalSalesValue)}</p>
+                        <div className="min-w-0 flex-1 pr-1">
+                            <p className="truncate text-lg font-bold leading-tight text-indigo-100 lg:text-xl 2xl:text-2xl" title={formatCurrency(dashboardData.totalSalesValue)}>{formatCurrency(dashboardData.totalSalesValue)}</p>
                             <p className="text-xs opacity-90">Total Sales Value</p>
                         </div>
                     </div>

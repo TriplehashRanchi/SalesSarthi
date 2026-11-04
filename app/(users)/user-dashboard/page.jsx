@@ -399,8 +399,8 @@ const UserDashboard = () => {
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white dark:bg-warning dark:text-white-light">
                             <IconCoinRupee className="h-5 w-5" />
                         </div>
-                        <div className="font-semibold ltr:ml-3 rtl:mr-3">
-                            <p className="text-2xl text-indigo-100 dark:text-white-light">{formatCurrency(dashboardData.totalSalesValue)}</p>
+                        <div className="min-w-0 flex-1 pr-1 font-semibold ltr:ml-3 rtl:mr-3">
+                            <p className="truncate text-lg text-indigo-100 dark:text-white-light lg:text-xl 2xl:text-2xl" title={formatCurrency(dashboardData.totalSalesValue)}>{formatCurrency(dashboardData.totalSalesValue)}</p>
                             <h5 className="text-xs text-white">My Sales Value</h5>
                         </div>
                     </div>
