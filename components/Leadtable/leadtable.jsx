@@ -41,6 +41,7 @@ import IconPencil from '../icon/icon-pencil';
 import FollowupForm from '@/components/forms/followupform';
 import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUpload';
 import LeadDetailView from './LeadDetailView';
+import { FolderKpis } from './LeadKpis';
 import { fetchFolders, createFolder, renameFolder, deleteFolder, moveLeads, errorMessage, folderIdOf } from './leadFolders';
 
 import { getAuth } from 'firebase/auth';
@@ -580,6 +581,12 @@ const LeadTable = ({ profile, userId }) => {
         });
         return counts;
     }, [baseLeads, folders]);
+    // KPI leads keep converted customers, so conversion can be counted.
+    const kpiAllLeads = useMemo(() => leads.filter((l) => !userId || String(l.user_id) === String(userId)), [leads, userId]);
+    const kpiLeads = useMemo(
+        () => (activeFolder && activeFolder !== 'all' ? kpiAllLeads.filter((l) => folderIdOf(l, folders) === activeFolder) : kpiAllLeads),
+        [kpiAllLeads, activeFolder, folders]
+    );
     const currentFolder = typeof activeFolder === 'number' ? folders.find((f) => f.id === activeFolder) : null;
     const folderTitle = activeFolder === 'all' ? 'All Leads' : currentFolder?.name || 'Leads';
     const FOLDER_TINTS = ['bg-violet-50 border-violet-200', 'bg-amber-50 border-amber-200', 'bg-teal-50 border-teal-200', 'bg-pink-50 border-pink-200', 'bg-orange-50 border-orange-200', 'bg-green-50 border-green-200'];
@@ -856,6 +863,8 @@ const LeadTable = ({ profile, userId }) => {
                     )}
                 </div>
             )}
+
+            {!userId && <FolderKpis key={String(activeFolder)} leads={kpiLeads} title={folderTitle} />}
 
             {/* desktop controls */}
             <div className="mb-4 hidden flex-wrap items-center gap-3 md:flex">
@@ -1696,7 +1705,7 @@ const LeadTable = ({ profile, userId }) => {
                     label="Folder name"
                     placeholder="e.g. Hot Clients, Website, Referrals"
                     value={folderModal.name}
-                    onChange={(e) => setFolderModal((m) => ({ ...m, name: e.currentTarget.value }))}
+                    onChange={(e) => { const name = e.currentTarget.value; setFolderModal((m) => ({ ...m, name })); }}
                     onKeyDown={(e) => e.key === 'Enter' && saveFolder()}
                     maxLength={60}
                     data-autofocus
@@ -1721,7 +1730,7 @@ const LeadTable = ({ profile, userId }) => {
 
             {/* ───────── Notes Modal ───────── */}
             <Modal opened={noteEditor.open} onClose={() => setNoteEditor({ open: false, lead: null, text: '' })} title={`Notes – ${noteEditor.lead?.full_name || ''}`} centered size="md">
-                <Textarea minRows={4} autosize placeholder="Type your note…" value={noteEditor.text} onChange={(e) => setNoteEditor((prev) => ({ ...prev, text: e.target.value }))} />
+                <Textarea minRows={4} autosize placeholder="Type your note…" value={noteEditor.text} onChange={(e) => { const text = e.currentTarget.value; setNoteEditor((prev) => ({ ...prev, text })); }} />
 
                 <Group position="right" mt="md">
                     <Button
