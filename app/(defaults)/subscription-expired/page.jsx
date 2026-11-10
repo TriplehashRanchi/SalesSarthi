@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { releasePushOnLogout } from '@/utils/push';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/utils/firebase';
@@ -51,7 +52,7 @@ export default function SubscriptionExpired() {
     }
   }, [loading, user, router]);
 
-  const handleLogout = () => signOut(auth).then(() => router.replace('/login'));
+  const handleLogout = () => releasePushOnLogout().finally(() => signOut(auth).then(() => router.replace('/login')));
 
   if (loading || localLoading) {
     return (

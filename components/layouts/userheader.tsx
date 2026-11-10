@@ -38,6 +38,8 @@ import UserBottomNav from '@/components/layouts/UserBottomNav'
 
 // --- Firebase Auth Imports ---
 import { getAuth, signOut, User, onAuthStateChanged } from 'firebase/auth';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import { releasePushOnLogout } from '@/utils/push';
 
 // --- Component Definition ---
 const Header = () => {
@@ -68,6 +70,7 @@ const Header = () => {
     const handleSignOut = async () => {
         const auth = getAuth();
         try {
+            await releasePushOnLogout(); // stop this device's pushes for the person logging out
             await signOut(auth);
             router.push('/login'); // Adjust redirect path as needed
         } catch (error) {
@@ -189,6 +192,11 @@ const Header = () => {
                                         </ul>
                                     </Dropdown>
                                 </div> */}
+
+                                {/* Notifications (bell) */}
+                                <div className="shrink-0">
+                                    <NotificationBell pageHref="/usernotifications" />
+                                </div>
 
                                 {/* Profile Dropdown */}
                                 <div className="dropdown flex shrink-0">

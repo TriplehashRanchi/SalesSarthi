@@ -1,8 +1,11 @@
 'use client';
 
-// Lead KPIs, worked out from the leads already loaded on the page.
+// Lead KPIs.
 // <FolderKpis> : KPIs for one folder (or All), as cards or as a status column chart.
+//   Counted by the server (GET /api/lead-list/kpis), so the page never needs every lead loaded.
+//   Pass reloadKey and change it after leads change (status, move, delete, import) to refresh.
 import { useEffect, useMemo, useState } from 'react';
+import { fetchLeadKpis } from './useLeadList';
 import { IconChartBar, IconChevronDown, IconChevronUp, IconLayoutGrid } from '@tabler/icons-react';
 
 const RANGES = [
@@ -12,14 +15,6 @@ const RANGES = [
     { value: '1', label: 'Today' },
 ];
 
-const inRange = (lead, range) => {
-    if (range === 'all') return true;
-    if (!lead.created_at) return false;
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - (Number(range) - 1));
-    return new Date(lead.created_at) >= start;
-};
 
 const st = (l) => (l.lead_status || '').trim().toLowerCase();
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
@@ -231,7 +226,18 @@ const RangePicker = ({ value, onChange }) => (
 );
 
 /* ───────── one folder ───────── */
-export const FolderKpis = ({ leads, title }) => {
+// Start of the range in the user's local time: today, or the last 7 / 30 days including today.
+const sinceFor = (range) => {
+    if (range === 'all') return null;
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (Number(range) - 1));
+    return start.toISOString();
+};
+
+const EMPTY_KPIS = computeKpis([]);
+
+export const FolderKpis = ({ folder, userId, reloadKey, title }) => {
     const [open, setOpen] = useState(true);
     const [range, setRange] = useState('all');
     const [view, setView] = useState('cards');
@@ -248,8 +254,24 @@ export const FolderKpis = ({ leads, title }) => {
         } catch {}
     };
 
-    const scoped = useMemo(() => leads.filter((l) => inRange(l, range)), [leads, range]);
-    const k = useMemo(() => computeKpis(scoped), [scoped]);
+    const [raw, setRaw] = useState(null);
+    useEffect(() => {
+        let alive = true;
+        fetchLeadKpis({ folder, userId, since: sinceFor(range) })
+            .then((d) => alive && setRaw(d))
+            .catch((err) => console.error('KPIs failed:', err));
+        return () => {
+            alive = false;
+        };
+    }, [folder, userId, range, reloadKey]);
+    const k = useMemo(() => {
+        if (!raw) return EMPTY_KPIS;
+        const out = { ...EMPTY_KPIS, ...raw };
+        out.conversion = pct(out.converted, out.total);
+        out.qualifiedRate = pct(out.qualified + out.converted, out.total);
+        out.contacted = pct(out.total - out.untouched, out.total);
+        return out;
+    }, [raw]);
 
     return (
         <div className="mb-4 rounded-2xl border border-gray-200 p-3 dark:border-gray-700 sm:p-4">

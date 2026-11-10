@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { getAuth } from 'firebase/auth'; // 🔐 Firebase auth
-import { fetchFolders, createFolder, folderIdOf, errorMessage } from '@/components/Leadtable/leadFolders';
+import { fetchFolders, fetchFolderAssignments, createFolder, moveLeads, errorMessage } from '@/components/Leadtable/leadFolders';
 
 const LeadForm = ({ existingLead }) => {
   // Define status options for the Lead Status dropdown.
@@ -53,20 +53,31 @@ const LeadForm = ({ existingLead }) => {
     folder_id: field('folder_id'),
   });
 
-  // Folders: only admins can load them, so the field simply stays hidden for anyone else.
+  // Folders are personal: the API returns the signed-in admin's or team member's own folders.
+  // New lead: a folder is required. Existing lead: optional (old leads may have none).
   const [folders, setFolders] = useState([]);
+  const [initialFolderId, setInitialFolderId] = useState('');
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [savingFolder, setSavingFolder] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetchFolders()
-      .then((list) => {
+    Promise.all([fetchFolders(), fetchFolderAssignments().catch(() => [])])
+      .then(([list, assignments]) => {
         if (cancelled) return;
         setFolders(list);
-        // A lead with no folder picked sits in Default (or Facebook if it came from there); show that.
-        setFormData((prev) => (prev.folder_id ? prev : { ...prev, folder_id: existingLead ? folderIdOf(existingLead, list) ?? '' : list.find((f) => f.name === 'Default')?.id ?? '' }));
+        // Admin: leads.folder_id. Team member: their own folder for this lead. New lead: ?folder= from an empty folder.
+        let current = '';
+        if (existingLead) {
+          const mine = assignments.find((a) => Number(a.lead_id) === Number(existingLead.id));
+          current = mine ? mine.folder_id : existingLead.folder_id;
+        } else if (typeof window !== 'undefined') {
+          current = new URLSearchParams(window.location.search).get('folder') || '';
+        }
+        if (!list.some((f) => String(f.id) === String(current))) current = '';
+        setInitialFolderId(String(current));
+        setFormData((prev) => ({ ...prev, folder_id: String(current) }));
       })
       .catch(() => {});
     return () => {
@@ -82,7 +93,7 @@ const LeadForm = ({ existingLead }) => {
     try {
       const created = await createFolder(name);
       setFolders((prev) => [...prev, created]);
-      setFormData((prev) => ({ ...prev, folder_id: created.id }));
+      setFormData((prev) => ({ ...prev, folder_id: String(created.id) }));
       setCreatingFolder(false);
       setNewFolderName('');
     } catch (err) {
@@ -111,6 +122,11 @@ const LeadForm = ({ existingLead }) => {
         return;
       }
 
+      if (!existingLead && !formData.folder_id) {
+        Swal.fire('Folder required', 'Please select a folder for this lead.', 'warning');
+        return;
+      }
+
       const token = await user.getIdToken(); // 🔑 Firebase token
       // Create payload from formData (you may remove fields you don't want to send)
       const payload = { ...formData };
@@ -118,9 +134,14 @@ const LeadForm = ({ existingLead }) => {
       delete payload.admin_id;
 
       if (existingLead) {
+        // The folder is changed through the folder API (works for admin and team member alike).
+        delete payload.folder_id;
         await axios.put(`${API_URL}/api/leads/${formData.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (formData.folder_id && String(formData.folder_id) !== String(initialFolderId)) {
+          await moveLeads([Number(formData.id)], Number(formData.folder_id), 'lead_edit');
+        }
         Swal.fire('Success', 'Lead updated successfully!', 'success').then(() => {
           router.push('/leadtable');
         });
@@ -266,9 +287,11 @@ const LeadForm = ({ existingLead }) => {
         </div>
 
         {/* Folder */}
-        {folders.length > 0 && (
+        {(
           <div className={`min-w-0 max-sm:order-[6] ${creatingFolder ? 'max-sm:col-span-2' : ''}`}>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Folder</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              Folder {!existingLead && <span className="text-red-500">*</span>}
+            </label>
             {creatingFolder ? (
               <div className="flex gap-2">
                 <input
@@ -276,7 +299,7 @@ const LeadForm = ({ existingLead }) => {
                   className="form-input w-full"
                   placeholder="New folder name"
                   value={newFolderName}
-                  maxLength={60}
+                  maxLength={255}
                   autoFocus
                   onChange={(e) => setNewFolderName(e.target.value)}
                   onKeyDown={(e) => {
@@ -299,7 +322,11 @@ const LeadForm = ({ existingLead }) => {
                 value={formData.folder_id ?? ''}
                 onChange={(e) => (e.target.value === '__new__' ? setCreatingFolder(true) : handleInputChange(e))}
                 className="form-select w-full"
+                required={!existingLead}
               >
+                {(!existingLead || !initialFolderId) && (
+                  <option value="" disabled={!existingLead}>{existingLead ? '— No folder —' : 'Select a folder'}</option>
+                )}
                 {folders.map((f) => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}

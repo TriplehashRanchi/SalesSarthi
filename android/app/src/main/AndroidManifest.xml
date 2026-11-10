@@ -23,6 +23,20 @@
 
         </activity>
 
+        <!-- Push notifications (Firebase Cloud Messaging) -->
+        <!-- Small status-bar icon (must be a white-on-transparent shape, not the colourful launcher icon) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notification" />
+        <!-- Accent colour of the icon in the notification shade -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
+        <!-- Channel used when the app is closed. The server sends channelId "crm_alerts" too (see sarthiapi/services/notificationService.js). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="crm_alerts" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -37,4 +51,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+ asks the person before showing notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

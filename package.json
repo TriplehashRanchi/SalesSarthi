@@ -6,7 +6,9 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "check:push": "node scripts/check-push-setup.js",
+        "sync:android": "cap sync android"
     },
     "dependencies": {
         "@capacitor/android": "^7.4.3",
@@ -16,6 +18,7 @@
         "@capacitor/filesystem": "^7.1.4",
         "@capacitor/ios": "^7.4.0",
         "@capacitor/keyboard": "^7.0.2",
+        "@capacitor/push-notifications": "^7.0.7",
         "@capacitor/share": "^7.0.2",
         "@capacitor/status-bar": "^7.0.2",
         "@capawesome/capacitor-file-picker": "^7.2.0",

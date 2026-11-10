@@ -5,6 +5,7 @@ import { ActionIcon, Avatar, Badge, Button, CopyButton, Drawer, Loader, Text, To
 import { useMediaQuery } from '@mantine/hooks';
 import { IconCheck, IconCopy, IconEdit, IconPackage, IconUsers } from '@tabler/icons-react';
 import superAdminAxios from '@/utils/superAdminAxios';
+import LeadFolderSupportAccess from '@/components/superadmin/LeadFolderSupportAccess';
 
 const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
 
@@ -210,6 +211,10 @@ export default function AdminDetailDrawer({ admin, onClose, onEditPlan, onTeamLi
                   )}
                 </>
               )}
+            </Section>
+
+            <Section title="Lead Folders – Support Access">
+              <LeadFolderSupportAccess key={admin.admin_id} adminId={admin.admin_id} bare />
             </Section>
           </div>
 

@@ -4,7 +4,7 @@ import { DataTable } from 'mantine-datatable';
 import ConvertLeadModal from '@/components/customers/ConvertLeadModal';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import sortBy from 'lodash/sortBy';
+import { useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import {
     Menu,
@@ -33,16 +33,18 @@ import {
 import Papa from 'papaparse';
 import { List } from '@mantine/core';
 import { showNotification, updateNotification } from '@mantine/notifications';
-import { IconChevronRight, IconFolder, IconFolderPlus, IconInbox, IconDotsVertical, IconTrash, IconAlertCircle, IconArrowLeft, IconBrandFacebook, IconBrandWhatsapp, IconCalculator, IconDownload, IconHistory, IconListCheck, IconMenu4, IconPhoneCall, IconSearch, IconUpload, IconUserCheck } from '@tabler/icons-react';
+import { IconFolder, IconAlertCircle, IconArrowLeft, IconBrandFacebook, IconBrandWhatsapp, IconCalculator, IconDownload, IconHistory, IconListCheck, IconMenu4, IconPhoneCall, IconSearch, IconUpload, IconUserCheck } from '@tabler/icons-react';
 import IconChatDot from '../icon/icon-chat-dot';
 import IconFacebook from '@/components/icon/icon-facebook';
 import IconPencil from '../icon/icon-pencil';
 
 import FollowupForm from '@/components/forms/followupform';
-import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUpload';
+import LeadImportModal from '@/components/CsvUpload/LeadImportModal';
+import { DeleteFolderModal, EmptyFolderState, FolderNameModal, FolderTabs, MoveReportModal, ReorderFoldersModal } from './FolderUI';
 import LeadDetailView from './LeadDetailView';
 import { FolderKpis } from './LeadKpis';
-import { fetchFolders, createFolder, renameFolder, deleteFolder, moveLeads, errorMessage, folderIdOf } from './leadFolders';
+import { useLeadList, useDebounced, fetchLeadExport } from './useLeadList';
+import { fetchFolders, createFolder, renameFolder, deleteFolder, reorderFolders, moveLeadsWithReport, folderIdOf } from './leadFolders';
 
 import { getAuth } from 'firebase/auth';
 import IconX from '../icon/icon-x';
@@ -53,13 +55,10 @@ import IconPhone from '../icon/icon-phone';
 const LeadTable = ({ profile, userId }) => {
     console.log('profile in leadtable', profile);
     /* ───────────────────── state ───────────────────── */
-    const [leads, setLeads] = useState([]);
     const [page, setPage] = useState(1);
     const PAGE_SIZES = [10, 20, 30, 50, 100];
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
 
-    const [recordsData, setRecordsData] = useState([]);
-    const [totalFilteredRecords, setTotalCount] = useState(0);
     const [search, setSearch] = useState('');
     const [sortStatus, setSortStatus] = useState({ columnAccessor: 'created_at', direction: 'desc' });
 
@@ -77,21 +76,21 @@ const LeadTable = ({ profile, userId }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [statusFilter, setStatusFilter] = useState('');
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const [isPolling, setIsPolling] = useState(false);
     const [hasPolledInitially, setHasPolledInit] = useState(false);
 
-    const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
-    const [filteredLeads, setFilteredLeads] = useState([]);
 
     const [assignedUserFilter, setAssignedUserFilter] = useState(null);
 
     /* ───────── folders ───────── */
     const [folders, setFolders] = useState([]);
-    const [activeFolder, setActiveFolder] = useState(userId ? 'all' : null); // null = folder list, 'all', or a folder id
-    const [folderModal, setFolderModal] = useState({ open: false, folder: null, name: '', saving: false });
+    const [activeFolder, setActiveFolder] = useState('all'); // 'all' or a folder id
+    const [folderModal, setFolderModal] = useState({ open: false, folder: null });
+    const [folderToDelete, setFolderToDelete] = useState(null);
+    const [reorderOpen, setReorderOpen] = useState(false);
+    const [moveReport, setMoveReport] = useState(null);
     const [dragIds, setDragIds] = useState([]); // leads being dragged
     const [dragOverId, setDragOverId] = useState(null);
     const FACEBOOK_POLL_SETUP_ERRORS = new Set([
@@ -100,10 +99,6 @@ const LeadTable = ({ profile, userId }) => {
         'No Facebook page selections found',
     ]);
 
-    const handleLoadMore = () => {
-        // Increase the count by another 20 items
-        setMobileVisibleCount((prevCount) => prevCount + 20);
-    };
 
     const [noteEditor, setNoteEditor] = useState({
         open: false,
@@ -145,29 +140,49 @@ const LeadTable = ({ profile, userId }) => {
         }
     };
 
-    const fetchLeads = async (showOverlay = true) => {
-        if (showOverlay) setLoading(true);
-        try {
-            const auth = getAuth();
-            const user = auth.currentUser;
-            if (!user) throw new Error('User not authenticated.');
-            const token = await user.getIdToken();
+    /* ───────── server-side list: only the rows on screen are loaded ───────── */
+    const isPhone = useMediaQuery('(max-width: 767px)');
+    const debouncedSearch = useDebounced(search.trim(), 300);
+    const listFilters = useMemo(
+        () => ({
+            folder: userId ? 'all' : activeFolder,
+            q: debouncedSearch,
+            status: statusFilter || '',
+            assigned: !userId && assignedUserFilter ? assignedUserFilter : '',
+            userId: userId || '',
+            sort: sortStatus.columnAccessor,
+            dir: sortStatus.direction,
+        }),
+        [userId, activeFolder, debouncedSearch, statusFilter, assignedUserFilter, sortStatus]
+    );
+    const desktopList = useLeadList({ filters: listFilters, page, pageSize, mode: 'page', enabled: isPhone === false });
+    const phoneList = useLeadList({ filters: listFilters, pageSize: 20, mode: 'append', enabled: isPhone === true });
+    const list = isPhone ? phoneList : desktopList;
+    const recordsData = desktopList.rows;
+    const totalFilteredRecords = list.total;
+    const loading = list.loading;
+    const [kpiKey, setKpiKey] = useState(0);
+    const refreshFolders = () => fetchFolders().then(setFolders).catch((err) => console.error('Failed to load folders:', err));
 
-            const { data } = await axios.get(`${API_URL}/api/leads/all`, {
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            });
-            const sorted = (data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            setLeads(sorted);
-        } catch (err) {
-            console.error(err);
-            if (showOverlay) {
-                setError(err.message || 'Failed to load leads.');
-                setLeads([]);
-            }
-        } finally {
-            if (showOverlay) setLoading(false);
-        }
+    // Anything that changes which leads exist / where they are: reload the page, counts and KPIs.
+    const fetchLeads = () => {
+        list.reload();
+        refreshFolders();
+        setKpiKey((k) => k + 1);
     };
+    const patchLead = (id, patch) => {
+        desktopList.patchRow(id, patch);
+        phoneList.patchRow(id, patch);
+    };
+
+    useEffect(() => {
+        if (list.error) setError(list.error);
+    }, [list.error]);
+
+    // Search / filter / sort change -> back to page 1.
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, statusFilter, assignedUserFilter, sortStatus]);
 
     const pollFacebookLeads = async (manual = false) => {
         if (isPolling) return false;
@@ -198,7 +213,7 @@ const LeadTable = ({ profile, userId }) => {
                 },
             );
             const newCount = data?.newLeadsCount ?? data?.newLeads ?? 0;
-            await fetchLeads(false);
+            fetchLeads();
 
             const notify = manual ? updateNotification : showNotification;
             notify({
@@ -264,8 +279,13 @@ const LeadTable = ({ profile, userId }) => {
     }
 
     useEffect(() => {
+        // ?folder=<id> (e.g. from a notification) opens that folder, if it still exists
+        const wanted = Number(new URLSearchParams(window.location.search).get('folder'));
         fetchFolders()
-            .then(setFolders)
+            .then((list) => {
+                setFolders(list);
+                if (!userId && list.some((f) => f.id === wanted)) setActiveFolder(wanted);
+            })
             .catch((err) => console.error('Failed to load folders:', err));
     }, []);
 
@@ -273,15 +293,11 @@ const LeadTable = ({ profile, userId }) => {
     useEffect(() => {
         let mounted = true;
         (async () => {
-            setLoading(true);
             setError(null);
             try {
                 await fetchTeamMembers();
-                await fetchLeads(false);
             } catch (err) {
                 if (mounted) setError(err.message);
-            } finally {
-                if (mounted) setLoading(false);
             }
 
             if (!hasPolledInitially) {
@@ -293,69 +309,10 @@ const LeadTable = ({ profile, userId }) => {
         };
     }, [hasPolledInitially]); // once
 
-    /* ───────────────────── filter / sort / paginate ───────────────────── */
-    useEffect(() => {
-        let data = [...leads];
-
-        data = data.filter((l) => l.lead_status?.toLowerCase() !== 'customer');
-
-        if (activeFolder && activeFolder !== 'all') {
-            data = data.filter((l) => folderIdOf(l, folders) === activeFolder);
-        }
-
-        // when userId is passed from user-performance page,
-        // show only that user's assigned leads
-        if (userId) {
-            data = data.filter((l) => String(l.user_id) === String(userId));
-        }
-
-        if (search) {
-            const q = search.toLowerCase();
-            data = data.filter(
-                (l) =>
-                    l.full_name?.toLowerCase().includes(q) ||
-                    l.email?.toLowerCase().includes(q) ||
-                    l.phone_number?.toLowerCase().includes(q) ||
-                    l.lead_status?.toLowerCase().includes(q) ||
-                    l.source?.toLowerCase().includes(q)
-            );
-        }
-
-        if (statusFilter) {
-            data = data.filter((l) => l.lead_status === statusFilter);
-        }
-
-        // only apply assigned-user dropdown filter when not coming from a fixed user page
-        if (!userId && assignedUserFilter) {
-            if (assignedUserFilter === 'unassigned') {
-                data = data.filter((l) => !l.user_id);
-            } else {
-                data = data.filter((l) => String(l.user_id) === String(assignedUserFilter));
-            }
-        }
-
-        if (sortStatus.columnAccessor) {
-            data = sortBy(data, sortStatus.columnAccessor);
-            if (sortStatus.direction === 'desc') data.reverse();
-        }
-
-        setTotalCount(data.length);
-        setFilteredLeads(data);
-    }, [leads, search, statusFilter, assignedUserFilter, sortStatus, userId, activeFolder, folders]);
-
-
-    useEffect(() => {
-        // This effect only runs when the full list or the page/pageSize changes.
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize;
-        setRecordsData(filteredLeads.slice(from, to)); // Slices the full list for the desktop table
-    }, [filteredLeads, page, pageSize]);
-
     /* pagination safety */
     useEffect(() => {
         const pages = Math.ceil(totalFilteredRecords / pageSize);
         if (page > pages && pages > 0) setPage(pages);
-        else if (pages === 0 && page !== 1) setPage(1);
     }, [totalFilteredRecords, pageSize, page]);
 
     // place this just after fetchTeamMembers (or anywhere before return)
@@ -389,7 +346,7 @@ const LeadTable = ({ profile, userId }) => {
             showNotification({ title: 'Success', message: 'Leads assigned successfully', color: 'green' });
             setSelectedLeads([]);
             setSelectedTM(null);
-            fetchLeads(false); // refresh list silently
+            fetchLeads(); // refresh list silently
         } catch (err) {
             console.error(err);
             showNotification({ title: 'Error', message: err.message, color: 'red' });
@@ -418,7 +375,8 @@ const LeadTable = ({ profile, userId }) => {
             );
 
             // Update local state immediately
-            setLeads((prevLeads) => prevLeads.map((l) => (l.id === lead.id ? { ...l, lead_status: newStatus } : l)));
+            patchLead(lead.id, { lead_status: newStatus });
+            setKpiKey((k) => k + 1);
             showNotification({ title: 'Success', message: 'Lead status updated successfully', color: 'green' });
         } catch (error) {
             console.error('Error updating lead status:', error);
@@ -436,7 +394,7 @@ const LeadTable = ({ profile, userId }) => {
                 { notes: newNote },
                 { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } },
             );
-            setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, notes: newNote } : l)));
+            patchLead(lead.id, { notes: newNote });
             showNotification({ title: 'Success', message: 'Notes updated successfully', color: 'green' });
         } catch (err) {
             console.error(err);
@@ -464,8 +422,8 @@ const LeadTable = ({ profile, userId }) => {
             );
 
             showNotification({ title: 'Deleted', message: 'Selected leads removed', color: 'green' });
-            setLeads((prev) => prev.filter((l) => !selectedLeads.includes(l.id)));
             setSelectedLeads([]);
+            fetchLeads();
         } catch (err) {
             showNotification({ title: 'Error', message: err.message, color: 'red' });
         }
@@ -503,10 +461,18 @@ const LeadTable = ({ profile, userId }) => {
         if (lead?.id) setConvertLead(lead);
     };
     const handleLeadConverted = (lead) => {
-        setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
+        fetchLeads();
     };
 
-    const exportCSV = () => {
+    // Every lead matching the current folder / search / filters (fetched from the server, not just this page).
+    const exportCSV = async () => {
+        let filteredLeads = [];
+        try {
+            filteredLeads = await fetchLeadExport(listFilters);
+        } catch (err) {
+            showNotification({ title: 'Export failed', message: err?.response?.data?.message || err.message, color: 'red' });
+            return;
+        }
         if (!filteredLeads.length) {
             showNotification({
                 title: 'No data',
@@ -572,49 +538,31 @@ const LeadTable = ({ profile, userId }) => {
     const someSel = currentIds.length && currentIds.some((id) => selectedLeads.includes(id));
 
     /* ───────── folder helpers ───────── */
-    const baseLeads = useMemo(() => leads.filter((l) => l.lead_status?.toLowerCase() !== 'customer' && (!userId || String(l.user_id) === String(userId))), [leads, userId]);
-    const folderCounts = useMemo(() => {
-        const counts = {};
-        baseLeads.forEach((l) => {
-            const id = folderIdOf(l, folders);
-            if (id) counts[id] = (counts[id] || 0) + 1;
-        });
-        return counts;
-    }, [baseLeads, folders]);
-    // KPI leads keep converted customers, so conversion can be counted.
-    const kpiAllLeads = useMemo(() => leads.filter((l) => !userId || String(l.user_id) === String(userId)), [leads, userId]);
-    const kpiLeads = useMemo(
-        () => (activeFolder && activeFolder !== 'all' ? kpiAllLeads.filter((l) => folderIdOf(l, folders) === activeFolder) : kpiAllLeads),
-        [kpiAllLeads, activeFolder, folders]
-    );
+    // Lead counts per folder come from the server (refreshed after every change).
+    const folderCounts = useMemo(() => Object.fromEntries(folders.map((f) => [f.id, f.lead_count || 0])), [folders]);
     const currentFolder = typeof activeFolder === 'number' ? folders.find((f) => f.id === activeFolder) : null;
     const folderTitle = activeFolder === 'all' ? 'All Leads' : currentFolder?.name || 'Leads';
-    const FOLDER_TINTS = ['bg-violet-50 border-violet-200', 'bg-amber-50 border-amber-200', 'bg-teal-50 border-teal-200', 'bg-pink-50 border-pink-200', 'bg-orange-50 border-orange-200', 'bg-green-50 border-green-200'];
-    const folderLook = (f, i) => {
-        if (f.is_system && f.name === 'Facebook') return { tint: 'bg-blue-50 border-blue-200', icon: <IconBrandFacebook size={22} className="text-blue-600" /> };
-        if (f.is_system) return { tint: 'bg-gray-50 border-gray-200', icon: <IconInbox size={22} className="text-gray-600" /> };
-        return { tint: FOLDER_TINTS[i % FOLDER_TINTS.length], icon: <IconFolder size={22} className="text-violet-600" /> };
-    };
-
+    const folderIsEmpty = !userId && !!currentFolder && !loading && !(folderCounts[currentFolder.id] > 0) && !debouncedSearch && !statusFilter && !assignedUserFilter;
     const openFolder = (id) => {
         setActiveFolder(id);
         setPage(1);
         setSelectedLeads([]);
         setSelectionMode(false);
-        setMobileVisibleCount(20);
     };
-    const handleBack = () => (!userId && activeFolder !== null ? openFolder(null) : router.back());
+    const handleBack = () => router.back();
 
+    // Moves in batches; if some fail they stay where they were and a report (with Retry) opens.
     const moveTo = async (ids, folderId) => {
         if (!ids.length) return;
-        try {
-            await moveLeads(ids, folderId);
-            setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, folder_id: folderId } : l)));
-            setSelectedLeads((prev) => prev.filter((id) => !ids.includes(id)));
-            showNotification({ title: 'Moved', message: `${ids.length} lead${ids.length === 1 ? '' : 's'} moved to ${folders.find((f) => f.id === folderId)?.name || 'folder'}`, color: 'green' });
-        } catch (err) {
-            showNotification({ title: 'Error', message: errorMessage(err, 'Failed to move leads.'), color: 'red' });
+        const folderName = folders.find((f) => f.id === folderId)?.name || 'folder';
+        const res = await moveLeadsWithReport(ids, folderId);
+        const moved = new Set(res.movedIds.map(Number));
+        if (moved.size) {
+            setSelectedLeads((prev) => prev.filter((id) => !moved.has(Number(id))));
+            fetchLeads();
         }
+        if (res.failed.length) setMoveReport({ ...res, folderId, folderName });
+        else showNotification({ title: 'Moved', message: `${moved.size} lead${moved.size === 1 ? '' : 's'} moved to ${folderName}`, color: 'green' });
     };
 
     // Drag a lead (or all selected leads) onto a folder chip.
@@ -635,37 +583,27 @@ const LeadTable = ({ profile, userId }) => {
         moveTo(ids, folderId);
     };
 
-    const openCreateFolder = () => setFolderModal({ open: true, folder: null, name: '', saving: false });
-    const openRenameFolder = (folder) => setFolderModal({ open: true, folder, name: folder.name, saving: false });
-    const saveFolder = async () => {
-        const name = folderModal.name.trim();
-        if (!name) return;
-        setFolderModal((m) => ({ ...m, saving: true }));
-        try {
-            if (folderModal.folder) {
-                const updated = await renameFolder(folderModal.folder.id, name);
-                setFolders((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
-            } else {
-                const created = await createFolder(name);
-                setFolders((prev) => [...prev, created]);
-            }
-            setFolderModal({ open: false, folder: null, name: '', saving: false });
-        } catch (err) {
-            showNotification({ title: 'Error', message: errorMessage(err, 'Could not save the folder.'), color: 'red' });
-            setFolderModal((m) => ({ ...m, saving: false }));
+    const openCreateFolder = () => setFolderModal({ open: true, folder: null });
+    const openRenameFolder = (folder) => setFolderModal({ open: true, folder });
+    // Throws on API error so the popup can show it (e.g. "Folder name already exists...").
+    const saveFolder = async (folder, name) => {
+        if (folder) {
+            const updated = await renameFolder(folder.id, name);
+            setFolders((prev) => prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f)));
+        } else {
+            const created = await createFolder(name);
+            setFolders((prev) => [...prev, created]);
         }
     };
-    const removeFolder = async (folder) => {
-        if (!confirm(`Delete the folder "${folder.name}"? Its leads are not deleted; they go back to Default / Facebook.`)) return;
-        try {
-            await deleteFolder(folder.id);
-            setFolders((prev) => prev.filter((f) => f.id !== folder.id));
-            setLeads((prev) => prev.map((l) => (l.folder_id === folder.id ? { ...l, folder_id: null } : l)));
-            if (activeFolder === folder.id) setActiveFolder(null);
-        } catch (err) {
-            showNotification({ title: 'Error', message: errorMessage(err, 'Could not delete the folder.'), color: 'red' });
-        }
+    // Leads move to targetId first (server, one transaction), then the folder is deleted.
+    const removeFolder = async (folder, targetId) => {
+        await deleteFolder(folder.id, targetId);
+        setFolders((prev) => prev.filter((f) => f.id !== folder.id));
+        if (activeFolder === folder.id) setActiveFolder(targetId || 'all');
+        fetchLeads();
+        showNotification({ title: 'Folder deleted', message: `“${folder.name}” deleted.`, color: 'green' });
     };
+    const saveFolderOrder = async (ids) => setFolders(await reorderFolders(ids));
 
     // "Move to folder" entries for a lead's menu (every folder except the one it is already in).
     const moveMenuItems = (record) => (
@@ -673,7 +611,7 @@ const LeadTable = ({ profile, userId }) => {
             <Menu.Divider />
             <Menu.Label>Move to folder</Menu.Label>
             {folders
-                .filter((f) => f.id !== folderIdOf(record, folders))
+                .filter((f) => f.id !== (record.my_folder_id ?? folderIdOf(record)))
                 .map((f) => (
                     <Menu.Item key={f.id} icon={<IconFolder size={14} />} onClick={() => moveTo([record.id], f.id)}>
                         <Text size="xs">{f.name}</Text>
@@ -722,14 +660,15 @@ const LeadTable = ({ profile, userId }) => {
         if (selectionMode && selectedLeads.length === 0) setSelectionMode(false);
     }, [selectionMode, selectedLeads]);
 
-    const hasMoreMobile = mobileVisibleCount < filteredLeads.length;
+    // Phone: next 20 leads are fetched when the bottom comes into view.
+    const hasMoreMobile = phoneList.hasMore;
     useEffect(() => {
         const node = sentinelRef.current;
         if (!node || !hasMoreMobile) return;
-        const observer = new IntersectionObserver((entries) => entries[0].isIntersecting && setMobileVisibleCount((c) => c + 20), { rootMargin: '300px' });
+        const observer = new IntersectionObserver((entries) => entries[0].isIntersecting && phoneList.loadMore(), { rootMargin: '300px' });
         observer.observe(node);
         return () => observer.disconnect();
-    }, [hasMoreMobile, mobileVisibleCount]);
+    }, [hasMoreMobile, phoneList.rows.length, phoneList.loadMore]);
 
     const openWhatsApp = (record) => {
         const digits = (record.phone_number || '').replace(/\D/g, '');
@@ -794,7 +733,6 @@ const LeadTable = ({ profile, userId }) => {
                 </Alert>
             )}
 
-            {activeFolder !== null || userId ? (
                 <>
             {/* header */}
             <div className="mb-4 flex items-center gap-2">
@@ -804,67 +742,44 @@ const LeadTable = ({ profile, userId }) => {
                 <div className="min-w-0 flex-1">
                     <h1 className="truncate text-xl font-bold leading-tight sm:text-2xl">{folderTitle}</h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {filteredLeads.length} {filteredLeads.length === 1 ? 'Lead' : 'Leads'}
-                        {filteredLeads.length !== baseLeads.length && activeFolder === 'all' ? ` of ${baseLeads.length}` : ''}
+                        {totalFilteredRecords} {totalFilteredRecords === 1 ? 'Lead' : 'Leads'}
+                        {totalFilteredRecords !== list.allCount && activeFolder === 'all' ? ` of ${list.allCount}` : ''}
                     </p>
                 </div>
-                {!userId && currentFolder && !currentFolder.is_system && (
-                    <Menu withinPortal shadow="md" position="bottom-end">
-                        <Menu.Target>
-                            <ActionIcon variant="subtle" color="gray" aria-label="Folder options"><IconDotsVertical size={20} /></ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                            <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(currentFolder)}>Rename folder</Menu.Item>
-                            <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(currentFolder)}>Delete folder</Menu.Item>
-                        </Menu.Dropdown>
-                    </Menu>
-                )}
             </div>
 
-            {/* folder chips: switch folder, or drop dragged leads on one to move them */}
+            {/* folder tabs: switch folder, or drop dragged leads on one to move them */}
             {!userId && (
-                <div className="mb-4">
-                    <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                        <button
-                            type="button"
-                            onClick={() => openFolder('all')}
-                            className={`flex flex-shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${activeFolder === 'all' ? 'border-violet-600 bg-violet-600 text-white' : 'border-gray-300 text-gray-700 hover:border-violet-400 dark:border-gray-600 dark:text-gray-200'}`}
-                        >
-                            All <span className="text-xs opacity-70">{baseLeads.length}</span>
-                        </button>
-                        {folders.map((f) => {
-                            const active = activeFolder === f.id;
-                            const over = dragOverId === f.id;
-                            return (
-                                <button
-                                    key={f.id}
-                                    type="button"
-                                    onClick={() => openFolder(f.id)}
-                                    onDragOver={(e) => {
-                                        if (!dragIds.length) return;
-                                        e.preventDefault();
-                                        setDragOverId(f.id);
-                                    }}
-                                    onDragLeave={() => setDragOverId(null)}
-                                    onDrop={(e) => dropOn(e, f.id)}
-                                    className={`flex flex-shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${over ? 'scale-105 border-violet-600 bg-violet-100 text-violet-800' : active ? 'border-violet-600 bg-violet-600 text-white' : 'border-gray-300 text-gray-700 hover:border-violet-400 dark:border-gray-600 dark:text-gray-200'}`}
-                                >
-                                    <IconFolder size={15} />
-                                    {f.name} <span className="text-xs opacity-70">{folderCounts[f.id] || 0}</span>
-                                </button>
-                            );
+                <>
+                    <FolderTabs
+                        folders={folders}
+                        counts={folderCounts}
+                        allCount={list.allCount}
+                        active={activeFolder}
+                        onSelect={openFolder}
+                        onCreate={openCreateFolder}
+                        onRename={openRenameFolder}
+                        onDelete={setFolderToDelete}
+                        onReorder={() => setReorderOpen(true)}
+                        onActivity={(f) => router.push(`/leadtable/folder-activity${f ? `?folder=${encodeURIComponent(f.name)}` : ''}`)}
+                        highlightId={dragOverId}
+                        tabProps={(f) => ({
+                            onDragOver: (e) => {
+                                if (!dragIds.length) return;
+                                e.preventDefault();
+                                setDragOverId(f.id);
+                            },
+                            onDragLeave: () => setDragOverId(null),
+                            onDrop: (e) => dropOn(e, f.id),
                         })}
-                        <button type="button" onClick={openCreateFolder} className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-dashed border-gray-300 px-3.5 py-1.5 text-sm text-gray-500 hover:border-violet-400 hover:text-violet-600">
-                            <IconFolderPlus size={15} /> New
-                        </button>
-                    </div>
+                    />
                     {dragIds.length > 0 && (
-                        <p className="mt-2 text-xs font-medium text-violet-600">Drop on a folder to move {dragIds.length} lead{dragIds.length === 1 ? '' : 's'}</p>
+                        <p className="-mt-2 mb-3 text-xs font-medium text-violet-600">Drop on a folder to move {dragIds.length} lead{dragIds.length === 1 ? '' : 's'}</p>
                     )}
-                </div>
+                </>
             )}
 
-            {!userId && <FolderKpis key={String(activeFolder)} leads={kpiLeads} title={folderTitle} />}
+            {!userId && <FolderKpis key={String(activeFolder)} folder={activeFolder} reloadKey={kpiKey} title={folderTitle} />}
 
             {/* desktop controls */}
             <div className="mb-4 hidden flex-wrap items-center gap-3 md:flex">
@@ -916,6 +831,9 @@ const LeadTable = ({ profile, userId }) => {
                 <div className="ml-auto flex items-center gap-2">
                     <Button variant="light" color="violet" radius="xl" leftIcon={<IconUpload size={16} />} onClick={() => setCsvOpen(true)}>
                         Upload CSV
+                    </Button>
+                    <Button variant="subtle" color="violet" radius="xl" leftIcon={<IconHistory size={16} />} onClick={() => router.push('/leadtable/import-history')}>
+                        Import History
                     </Button>
                     <Button variant="light" color="violet" radius="xl" leftIcon={<IconDownload size={16} />} onClick={exportCSV}>
                         Export
@@ -983,14 +901,22 @@ const LeadTable = ({ profile, userId }) => {
                         Upload CSV
                     </Button>
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconHistory size={18} />} onClick={() => router.push('/leadtable/import-history')}>
+                        History
+                    </Button>
+                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
                     <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconDownload size={18} />} onClick={exportCSV}>
                         Export
                     </Button>
                 </div>
             </div>
 
+            {folderIsEmpty && (
+                <EmptyFolderState folderName={currentFolder.name} onAddLead={() => router.push(`/addlead?folder=${currentFolder.id}`)} onImport={() => setCsvOpen(true)} />
+            )}
+
             {/* table */}
-            <div className="datatables hidden dark:bg-gray-800 dark:text-gray-200 md:block [&_table]:!w-full [&_table]:!min-w-0 [&_table]:table-fixed [&_thead]:!bg-transparent [&_th]:!border-b [&_th]:!border-gray-200 [&_th]:!bg-transparent [&_th]:!py-3 [&_th]:!text-xs [&_th]:!font-semibold [&_th]:!uppercase [&_th]:!tracking-wide [&_th]:!text-gray-500 [&_td]:!border-gray-100 [&_tbody_tr:hover]:!bg-violet-50/60 [&_tbody_tr]:!bg-transparent">
+            <div className={`datatables hidden dark:bg-gray-800 dark:text-gray-200 ${folderIsEmpty ? '' : 'md:block'} [&_table]:!w-full [&_table]:!min-w-0 [&_table]:table-fixed [&_thead]:!bg-transparent [&_th]:!border-b [&_th]:!border-gray-200 [&_th]:!bg-transparent [&_th]:!py-3 [&_th]:!text-xs [&_th]:!font-semibold [&_th]:!uppercase [&_th]:!tracking-wide [&_th]:!text-gray-500 [&_td]:!border-gray-100 [&_tbody_tr:hover]:!bg-violet-50/60 [&_tbody_tr]:!bg-transparent`}>
                 <DataTable
                     // className="dark:bg-gray-800 dark:text-gray-100"
                     highlightOnHover
@@ -1327,14 +1253,14 @@ const LeadTable = ({ profile, userId }) => {
                     }}
                 />
             </div>
-            <div className="block md:hidden">
+            <div className={folderIsEmpty ? 'hidden' : 'block md:hidden'}>
                 {selectionMode && (
                     <div className="mb-2 flex items-center justify-between">
                         <Text size="sm" weight={600}>{selectedLeads.length} selected</Text>
                         <Button size="xs" radius="xl" variant="default" onClick={exitSelection}>Cancel</Button>
                     </div>
                 )}
-                {filteredLeads.slice(0, mobileVisibleCount).map((record) => {
+                {phoneList.rows.map((record) => {
                     const isSelected = selectedLeads.includes(record.id);
                     const u = teamMembers.find((t) => t.id === record.user_id);
                     return (
@@ -1446,7 +1372,7 @@ const LeadTable = ({ profile, userId }) => {
                     );
                 })}
 
-                {filteredLeads.length === 0 && !loading && (
+                {phoneList.rows.length === 0 && !loading && (
                     <Text align="center" color="dimmed" py={40}>No leads found</Text>
                 )}
 
@@ -1457,118 +1383,6 @@ const LeadTable = ({ profile, userId }) => {
                 )}
             </div>
                 </>
-            ) : (
-                <>
-            {/* Folder list: the first thing you see on the Leads page */}
-            <div className="mb-5 flex items-center gap-2">
-                <ActionIcon className="md:hidden" variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
-                    <IconArrowLeft size={22} />
-                </ActionIcon>
-                <div className="min-w-0 flex-1">
-                    <h1 className="text-xl font-bold leading-tight sm:text-2xl">Leads</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {baseLeads.length} {baseLeads.length === 1 ? 'lead' : 'leads'} in {folders.length} {folders.length === 1 ? 'folder' : 'folders'}
-                    </p>
-                </div>
-                <Button color="violet" radius="xl" leftIcon={<IconFolderPlus size={16} />} onClick={openCreateFolder}>
-                    <span className="sm:hidden">New</span>
-                    <span className="hidden sm:inline">New folder</span>
-                </Button>
-            </div>
-
-            {/* Phone: a simple list */}
-            <div className="md:hidden">
-                <div onClick={() => openFolder('all')} className="flex cursor-pointer items-center gap-3 border-b border-gray-200 py-3 dark:border-gray-700">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-white"><IconFolder size={22} /></div>
-                    <div className="min-w-0 flex-1">
-                        <div className="font-medium">All Leads</div>
-                        <div className="text-xs text-gray-500">{baseLeads.length} {baseLeads.length === 1 ? 'lead' : 'leads'}</div>
-                    </div>
-                    <IconChevronRight size={18} className="text-gray-400" />
-                </div>
-                {folders.map((f, i) => {
-                    const look = folderLook(f, i);
-                    return (
-                        <div key={f.id} onClick={() => openFolder(f.id)} className="flex cursor-pointer items-center gap-3 border-b border-gray-200 py-3 last:border-b-0 dark:border-gray-700">
-                            <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border ${look.tint}`}>{look.icon}</div>
-                            <div className="min-w-0 flex-1">
-                                <div className="truncate font-medium">{f.name}</div>
-                                <div className="text-xs text-gray-500">{folderCounts[f.id] || 0} {(folderCounts[f.id] || 0) === 1 ? 'lead' : 'leads'}</div>
-                            </div>
-                            {!f.is_system && (
-                                <div onClick={(e) => e.stopPropagation()}>
-                                    <Menu withinPortal shadow="md" position="bottom-end">
-                                            <Menu.Target>
-                                                <ActionIcon variant="subtle" color="gray" aria-label={`Options for ${f.name}`}><IconDotsVertical size={18} /></ActionIcon>
-                                            </Menu.Target>
-                                            <Menu.Dropdown>
-                                                <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(f)}>Rename</Menu.Item>
-                                                <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(f)}>Delete</Menu.Item>
-                                            </Menu.Dropdown>
-                                        </Menu>
-                                </div>
-                            )}
-                            <IconChevronRight size={18} className="text-gray-400" />
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Desktop: cards */}
-            <div className="hidden grid-cols-2 gap-3 sm:gap-4 md:grid md:grid-cols-3 lg:grid-cols-4">
-                <div
-                    onClick={() => openFolder('all')}
-                    className="flex min-h-[120px] cursor-pointer flex-col justify-between rounded-2xl border border-violet-300 bg-violet-600 p-4 text-white shadow-sm transition active:scale-95"
-                >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20"><IconFolder size={22} /></div>
-                    <div>
-                        <div className="font-semibold">All Leads</div>
-                        <div className="text-xs opacity-80">{baseLeads.length} leads</div>
-                    </div>
-                </div>
-
-                {folders.map((f, i) => {
-                    const look = folderLook(f, i);
-                    return (
-                        <div
-                            key={f.id}
-                            onClick={() => openFolder(f.id)}
-                            className={`relative flex min-h-[120px] cursor-pointer flex-col justify-between rounded-2xl border p-4 shadow-sm transition active:scale-95 ${look.tint}`}
-                        >
-                            <div className="flex items-start justify-between">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm">{look.icon}</div>
-                                {!f.is_system && (
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <Menu withinPortal shadow="md" position="bottom-end">
-                                            <Menu.Target>
-                                                <ActionIcon variant="subtle" color="gray" aria-label={`Options for ${f.name}`}><IconDotsVertical size={18} /></ActionIcon>
-                                            </Menu.Target>
-                                            <Menu.Dropdown>
-                                                <Menu.Item icon={<IconPencil size={14} />} onClick={() => openRenameFolder(f)}>Rename</Menu.Item>
-                                                <Menu.Item color="red" icon={<IconTrash size={14} />} onClick={() => removeFolder(f)}>Delete</Menu.Item>
-                                            </Menu.Dropdown>
-                                        </Menu>
-                                    </div>
-                                )}
-                            </div>
-                            <div>
-                                <div className="truncate font-semibold text-gray-900">{f.name}</div>
-                                <div className="text-xs text-gray-500">{folderCounts[f.id] || 0} {(folderCounts[f.id] || 0) === 1 ? 'lead' : 'leads'}</div>
-                            </div>
-                        </div>
-                    );
-                })}
-
-                <div
-                    onClick={openCreateFolder}
-                    className="flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 text-gray-500 transition hover:border-violet-400 hover:text-violet-600 active:scale-95"
-                >
-                    <IconFolderPlus size={26} />
-                    <span className="text-sm font-medium">New folder</span>
-                </div>
-            </div>
-                </>
-            )}
 
             {/* Desktop: click a lead to see it in a side panel */}
             <Drawer opened={viewLeadId !== null} onClose={() => setViewLeadId(null)} position="right" size={460} padding={0} withCloseButton={false} shadow="md" zIndex={1000}>
@@ -1692,39 +1506,36 @@ const LeadTable = ({ profile, userId }) => {
                 ) : null}
             </Drawer>
 
-            {/* folder create / rename */}
-            <Modal
-                opened={folderModal.open}
-                onClose={() => !folderModal.saving && setFolderModal({ open: false, folder: null, name: '', saving: false })}
-                title={<Text weight={700} size="lg">{folderModal.folder ? 'Rename folder' : 'New folder'}</Text>}
-                centered
-                radius="lg"
-                size="sm"
-            >
-                <TextInput
-                    label="Folder name"
-                    placeholder="e.g. Hot Clients, Website, Referrals"
-                    value={folderModal.name}
-                    onChange={(e) => { const name = e.currentTarget.value; setFolderModal((m) => ({ ...m, name })); }}
-                    onKeyDown={(e) => e.key === 'Enter' && saveFolder()}
-                    maxLength={60}
-                    data-autofocus
-                />
-                <Group position="right" mt="lg">
-                    <Button variant="default" radius="xl" onClick={() => setFolderModal({ open: false, folder: null, name: '', saving: false })} disabled={folderModal.saving}>Cancel</Button>
-                    <Button color="violet" radius="xl" onClick={saveFolder} loading={folderModal.saving} disabled={!folderModal.name.trim()}>
-                        {folderModal.folder ? 'Save' : 'Create'}
-                    </Button>
-                </Group>
-            </Modal>
+            {/* folder popups */}
+            <FolderNameModal state={folderModal} onClose={() => setFolderModal({ open: false, folder: null })} onSave={saveFolder} />
+            <DeleteFolderModal
+                folder={folderToDelete}
+                folders={folders}
+                count={folderToDelete ? folderCounts[folderToDelete.id] || 0 : 0}
+                onClose={() => setFolderToDelete(null)}
+                onConfirm={(targetId) => removeFolder(folderToDelete, targetId)}
+            />
+            <ReorderFoldersModal opened={reorderOpen} folders={folders} onClose={() => setReorderOpen(false)} onSave={saveFolderOrder} />
+            <MoveReportModal
+                report={moveReport}
+                onClose={() => setMoveReport(null)}
+                onRetry={async (ids) => {
+                    const folderId = moveReport.folderId;
+                    setMoveReport(null);
+                    await moveTo(ids, folderId);
+                }}
+            />
 
-            {/* csv modal */}
-            <CsvBulkUpload
+            {/* csv import */}
+            <LeadImportModal
                 opened={csvOpen}
                 onClose={() => setCsvOpen(false)}
-                onSuccess={() => {
-                    setCsvOpen(false);
+                folders={folders}
+                defaultFolderId={typeof activeFolder === 'number' ? activeFolder : null}
+                historyHref="/leadtable/import-history"
+                onDone={() => {
                     fetchLeads();
+                    fetchFolders().then(setFolders).catch(() => {});
                 }}
             />
 

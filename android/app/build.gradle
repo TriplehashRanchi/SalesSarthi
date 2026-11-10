@@ -7,8 +7,8 @@ android {
         applicationId "com.dgsarthi.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "1.12"
+        versionCode 7
+        versionName "1.13"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -44,11 +44,12 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+// Firebase (push notifications). The file comes from Firebase Console -> Project settings -> Your apps -> Android
+// (package com.dgsarthi.app). Without it the app still builds, but push notifications cannot work.
+def servicesJSON = file('google-services.json')
+if (servicesJSON.exists() && servicesJSON.length() > 0) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.warn("\n⚠️  android/app/google-services.json is missing: push notifications will NOT work in this build.\n" +
+                "    Add it (Firebase Console -> Project settings -> Your apps -> Android, package com.dgsarthi.app).\n")
 }

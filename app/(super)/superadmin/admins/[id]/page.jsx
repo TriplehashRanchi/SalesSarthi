@@ -7,6 +7,7 @@ import {
   Title, Text, Badge, Card, Grid, Loader, Switch, Group, Table, Button, Stack
 } from '@mantine/core';
 import { IconLockOpen, IconLock } from '@tabler/icons-react';
+import LeadFolderSupportAccess from '@/components/superadmin/LeadFolderSupportAccess';
 
 
 const ADD_ONS = [
@@ -193,6 +194,8 @@ const toggleAccess = async () => {
           </Stack>
         )}
       </Card>
+
+      <LeadFolderSupportAccess adminId={admin.admin_id} />
 
       {/* 📊 Metrics */}
       <Grid>

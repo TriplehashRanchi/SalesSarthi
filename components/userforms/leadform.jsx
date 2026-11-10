@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2'; 
 import { getAuth } from "firebase/auth"; // 🔐 Firebase auth
+import { fetchFolders, createFolder, errorMessage } from '@/components/Leadtable/leadFolders';
 
 const LeadForm = ({ existingLead }) => {
 
@@ -38,6 +39,36 @@ const LeadForm = ({ existingLead }) => {
     notes: existingLead ? existingLead.notes : '',
   });
 
+  // My personal folders. A new lead must go into one (?folder= preselects it, e.g. from an empty folder).
+  const [folders, setFolders] = useState([]);
+  const [folderId, setFolderId] = useState('');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [creatingFolder, setCreatingFolder] = useState(false);
+
+  useEffect(() => {
+    fetchFolders()
+      .then((list) => {
+        setFolders(list);
+        const wanted = new URLSearchParams(window.location.search).get('folder');
+        if (wanted && list.some((f) => String(f.id) === wanted)) setFolderId(wanted);
+      })
+      .catch(() => {});
+  }, []);
+
+  const addFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name) return;
+    try {
+      const created = await createFolder(name);
+      setFolders((prev) => [...prev, created]);
+      setFolderId(String(created.id));
+      setCreatingFolder(false);
+      setNewFolderName('');
+    } catch (err) {
+      Swal.fire('Error', errorMessage(err, 'Could not create the folder.'), 'error');
+    }
+  };
+
   const router = useRouter();
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'; // Replace with your actual API URL
@@ -60,9 +91,15 @@ const LeadForm = ({ existingLead }) => {
         return;
       }
   
+      if (!existingLead && !folderId) {
+        Swal.fire('Folder required', 'Please select a folder for this lead.', 'warning');
+        return;
+      }
+
       const token = await user.getIdToken(); // 🔑 Firebase token
   
       const payload = { ...formData };
+      if (!existingLead) payload.folder_id = Number(folderId);
       delete payload.admin_id; // ❌ Remove hardcoded ID
   
       if (existingLead) {
@@ -107,7 +144,7 @@ const LeadForm = ({ existingLead }) => {
   
     } catch (error) {
       console.error('Error submitting form:', error);
-      Swal.fire('Error', 'There was an error submitting the form. Please try again later.', 'error');
+      Swal.fire('Error', errorMessage(error, 'There was an error submitting the form. Please try again later.'), 'error');
     }
   };
 
@@ -132,6 +169,50 @@ const LeadForm = ({ existingLead }) => {
           required
         />
       </div>
+
+      {/* Folder (required for a new lead) */}
+      {!existingLead && (
+        <div className="min-w-0">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Folder <span className="text-red-500">*</span>
+          </label>
+          {creatingFolder ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className="form-input w-full min-w-0"
+                placeholder="New folder name"
+                value={newFolderName}
+                maxLength={255}
+                autoFocus
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addFolder();
+                  }
+                }}
+              />
+              <button type="button" className="btn btn-primary" onClick={addFolder} disabled={!newFolderName.trim()}>Add</button>
+              <button type="button" className="btn btn-outline-secondary" onClick={() => { setCreatingFolder(false); setNewFolderName(''); }}>Cancel</button>
+            </div>
+          ) : (
+            <select
+              name="folder_id"
+              value={folderId}
+              onChange={(e) => (e.target.value === '__new__' ? setCreatingFolder(true) : setFolderId(e.target.value))}
+              className="form-select w-full"
+              required
+            >
+              <option value="" disabled>Select a folder</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+              <option value="__new__">+ Create new folder…</option>
+            </select>
+          )}
+        </div>
+      )}
 
       {/* Email */}
       <div>

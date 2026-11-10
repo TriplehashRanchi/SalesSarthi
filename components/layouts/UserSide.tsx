@@ -1,5 +1,6 @@
 'use client';
 import PerfectScrollbar from 'react-perfect-scrollbar';
+import { releasePushOnLogout } from '@/utils/push';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { toggleSidebar } from '@/store/themeConfigSlice';
@@ -97,6 +98,7 @@ const UserSide = () => {
     const handleSignOut = async () => {
         const auth = getAuth();
         try {
+            await releasePushOnLogout(); // stop this device's pushes for the person logging out
             await signOut(auth);
             router.push('/login'); // Adjust redirect path as needed
         } catch (error) {

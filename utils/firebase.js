@@ -15,4 +15,5 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
-export { auth, googleProvider };
+// firebaseConfig + app are also used for push notifications (utils/push.js, public/firebase-messaging-sw.js).
+export { auth, googleProvider, app, firebaseConfig };

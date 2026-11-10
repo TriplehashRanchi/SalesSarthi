@@ -2,9 +2,10 @@
 
 import { DataTable } from 'mantine-datatable';
 import ConvertLeadModal from '@/components/customers/ConvertLeadModal';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import sortBy from 'lodash/sortBy';
+import { useMediaQuery } from '@mantine/hooks';
+import { useLeadList, useDebounced } from '@/components/Leadtable/useLeadList';
 import { useRouter } from 'next/navigation';
 import {
   Menu, Button, Drawer, Timeline, Divider, Text, ScrollArea,
@@ -22,7 +23,9 @@ import { IconAlertCircle, IconBrandWhatsapp, IconCalculator, IconDots, IconDotsV
 import IconPencil    from '../icon/icon-pencil';
 
 import FollowupForm  from '@/components/forms/followupform';
-import CsvBulkUpload from '@/components/CsvUpload/CsvBulkUploadUser';
+import LeadImportModal from '@/components/CsvUpload/LeadImportModal';
+import { EmptyFolderState } from '@/components/Leadtable/FolderUI';
+import { usePersonalFolders, PersonalFolderBar, MoveToFolderItems } from '@/components/Leadtable/PersonalFolders';
 
 import { getAuth } from 'firebase/auth';
 import IconChecks from '../icon/icon-checks';
@@ -34,13 +37,10 @@ import IconPhone from '../icon/icon-phone';
 
 const LeadTable = ({ userId }) => {
   /* ───────────────────── state ───────────────────── */
-  const [leads, setLeads] = useState([]);
   const [page, setPage] = useState(1);
   const PAGE_SIZES      = [10, 20, 30, 50, 100];
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
 
-  const [recordsData, setRecordsData]         = useState([]);
-  const [totalFilteredRecords, setTotalCount] = useState(0);
   const [search, setSearch]                   = useState('');
   const [sortStatus, setSortStatus]           = useState({ columnAccessor: 'created_at', direction: 'desc' });
 
@@ -56,17 +56,7 @@ const LeadTable = ({ userId }) => {
   const [csvOpen, setCsvOpen] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState('');
-  const [loading, setLoading]           = useState(true);
   const [error,   setError]             = useState(null);
-
-    const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
-    const [filteredLeads, setFilteredLeads] = useState([]);
-  
-    const handleLoadMore = () => {
-      // Increase the count by another 20 items
-      setMobileVisibleCount(prevCount => prevCount + 20); 
-  };
-
 
   const [noteEditor, setNoteEditor] = useState({
     open : false,
@@ -74,6 +64,35 @@ const LeadTable = ({ userId }) => {
     text : '',       // working text
   });
   
+
+  // Personal folders (private to this team member).
+  const reloadRows = useRef(() => {});
+  const pf = usePersonalFolders({ onLeadsChanged: () => reloadRows.current() });
+
+  /* ───────── server-side list: only the rows on screen are loaded ───────── */
+  const isPhone = useMediaQuery('(max-width: 767px)');
+  const debouncedSearch = useDebounced(search.trim(), 300);
+  const listFilters = useMemo(
+    () => ({ folder: pf.activeFolder, q: debouncedSearch, status: statusFilter || '', sort: sortStatus.columnAccessor, dir: sortStatus.direction }),
+    [pf.activeFolder, debouncedSearch, statusFilter, sortStatus]
+  );
+  const desktopList = useLeadList({ filters: listFilters, page, pageSize, mode: 'page', enabled: isPhone === false });
+  const phoneList = useLeadList({ filters: listFilters, pageSize: 20, mode: 'append', enabled: isPhone === true });
+  const list = isPhone ? phoneList : desktopList;
+  const recordsData = desktopList.rows;
+  const totalFilteredRecords = list.total;
+  const loading = list.loading;
+  reloadRows.current = list.reload;
+  const patchLead = (id, patch) => {
+    desktopList.patchRow(id, patch);
+    phoneList.patchRow(id, patch);
+  };
+  useEffect(() => {
+    if (list.error) setError(list.error);
+  }, [list.error]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, sortStatus]);
 
   const router   = useRouter();
   const API_URL  = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -88,76 +107,11 @@ const LeadTable = ({ userId }) => {
     { value:'Fin Health Checkup Done', label:'Fin Health Checkup Done' },
   ];
 
-  const fetchLeads = async (showOverlay = true) => {
-    if (showOverlay) setLoading(true);
-    try {
-      const auth = getAuth(); const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated.');
-      const token = await user.getIdToken();
-
-      const { data } = await axios.get(`${API_URL}/api/users/leads`, {
-        headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
-      });
-      const sorted = (data || []).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-      setLeads(sorted);
-    } catch (err) {
-      console.error(err);
-      if (showOverlay) { setError(err.message || 'Failed to load leads.'); setLeads([]); }
-    } finally { if (showOverlay) setLoading(false); }
+  // Leads changed (import, delete, convert): reload rows and folder counts.
+  const fetchLeads = () => {
+    list.reload();
+    pf.reload();
   };
-
-
-  /* ───────────────────── initial load ───────────────────── */
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true); setError(null);
-      try {
-        await fetchLeads(false);
-      } catch (err) {
-        if (mounted) setError(err.message);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []); // once
-
-  /* ───────────────────── filter / sort / paginate ───────────────────── */
-  useEffect(() => {
-    let data = [...leads];
-    if (userId) data = data.filter(l => l.user_id === userId);
-    data = data.filter(l => l.lead_status?.toLowerCase() !== 'customer');
-
-    if (search) {
-      const q = search.toLowerCase();
-      data = data.filter(
-        l =>
-          l.full_name?.toLowerCase().includes(q) ||
-          l.email?.toLowerCase().includes(q) ||
-          l.phone_number?.toLowerCase().includes(q) ||
-          l.lead_status?.toLowerCase().includes(q) ||
-          l.source?.toLowerCase().includes(q)
-      );
-    }
-    if (statusFilter) data = data.filter(l => l.lead_status === statusFilter);
-
-    if (sortStatus.columnAccessor) {
-      data = sortBy(data, sortStatus.columnAccessor);
-      if (sortStatus.direction === 'desc') data.reverse();
-    }
-
-    setTotalCount(data.length);
-    setFilteredLeads(data);
-  }, [leads, search, statusFilter, sortStatus, userId]);
-
-    useEffect(() => {
-    // This effect only runs when the full list or the page/pageSize changes.
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize;
-    setRecordsData(filteredLeads.slice(from, to)); // Slices the full list for the desktop table
-
-}, [filteredLeads, page, pageSize]);
 
   /* pagination safety */
   useEffect(() => {
@@ -189,7 +143,7 @@ const LeadTable = ({ userId }) => {
         );
 
         // Update local state immediately
-        setLeads((prevLeads) => prevLeads.map((l) => (l.id === lead.id ? { ...l, lead_status: newStatus } : l)));
+        patchLead(lead.id, { lead_status: newStatus });
         showNotification({ title:'Success', message:'Lead status updated successfully', color:'green' });
     } catch (error) {
         console.error('Error updating lead status:', error);
@@ -207,9 +161,7 @@ const updateLeadNotes = async (lead, newNote) => {
         { notes: newNote },
         { headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json'} }
       );
-      setLeads(prev =>
-        prev.map(l => (l.id === lead.id ? { ...l, notes: newNote } : l))
-      );
+      patchLead(lead.id, { notes: newNote });
       showNotification({ title:'Success', message:'Notes updated successfully', color:'green' });
     } catch (err) {
       console.error(err);
@@ -240,8 +192,8 @@ const deleteLeads = async () => {
     );
 
     showNotification({ title:'Deleted', message:'Selected leads removed', color:'green' });
-    setLeads(prev => prev.filter(l => !selectedLeads.includes(l.id)));
     setSelectedLeads([]);
+    fetchLeads();
   } catch (err) {
     showNotification({ title:'Error', message: err.message, color:'red' });
   }
@@ -280,7 +232,7 @@ const fetchFollowupHistory = async (leadId) => {
       if (lead?.id) setConvertLead(lead);
   };
   const handleLeadConverted = (lead) => {
-      setLeads((prevLeads) => prevLeads.filter((l) => l.id !== lead.id));
+      fetchLeads();
   };
 
 
@@ -312,6 +264,8 @@ function formatDateWithOrdinal(dateString) {
   const currentIds = recordsData.map(l => l.id);
   const allSel  = currentIds.length && currentIds.every(id => selectedLeads.includes(id));
   const someSel = currentIds.length && currentIds.some(id => selectedLeads.includes(id));
+  const openFolder = pf.folders.find(f => f.id === pf.activeFolder);
+  const folderIsEmpty = !!openFolder && !loading && !(openFolder.lead_count > 0) && !debouncedSearch && !statusFilter;
 
   return (
       <div className="panel mt-6 relative">
@@ -320,6 +274,16 @@ function formatDateWithOrdinal(dateString) {
                   {error}
               </Alert>
           )}
+
+          {/* personal folders */}
+          <PersonalFolderBar
+              pf={pf}
+              allCount={list.allCount}
+              onChange={() => {
+                  setPage(1);
+                  setSelectedLeads([]);
+              }}
+          />
 
           {/* top controls */}
           <div className="mb-5 hidden md:flex flex-col gap-5 md:flex-row md:items-center">
@@ -351,6 +315,9 @@ function formatDateWithOrdinal(dateString) {
 
               <button onClick={() => setCsvOpen(true)} className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">
                   CSV Bulk Upload
+              </button>
+              <button onClick={() => router.push('/userleadtable/import-history')} className="px-4 py-2 rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-gray-600 dark:text-violet-300">
+                  Import History
               </button>
           </div>
 
@@ -391,9 +358,39 @@ function formatDateWithOrdinal(dateString) {
                   >
                       CSV
                   </button>
+                  <button
+                      onClick={() => router.push('/userleadtable/import-history')}
+                      className="rounded-md border border-violet-200 px-3 py-1 text-sm text-violet-700 dark:border-gray-600 dark:text-violet-300"
+                  >
+                      History
+                  </button>
               </div>
           
           </div>
+
+          {/* selected leads: move to one of my folders */}
+          {selectedLeads.length > 0 && pf.folders.length > 0 && (
+              <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 dark:bg-gray-800">
+                  <Text size="sm" weight={600}>{selectedLeads.length} selected</Text>
+                  <Select
+                      data={pf.folders.map((f) => ({ value: String(f.id), label: f.name }))}
+                      value={null}
+                      onChange={async (v) => {
+                          if (!v) return;
+                          const moved = await pf.moveTo(selectedLeads, Number(v));
+                          setSelectedLeads((prev) => prev.filter((id) => !moved.includes(id))); // failed ones stay selected
+                      }}
+                      placeholder="Move to folder..."
+                      size="xs"
+                      radius="xl"
+                      searchable
+                      style={{ minWidth: 170 }}
+                  />
+                  <Button size="xs" radius="xl" variant="default" className="ml-auto" onClick={() => setSelectedLeads([])}>
+                      Clear
+                  </Button>
+              </div>
+          )}
 
           {/* assign dropdown */}
           {teamMembers.length > 0 && (
@@ -416,8 +413,16 @@ function formatDateWithOrdinal(dateString) {
               </div>
           )}
 
+          {folderIsEmpty && (
+              <EmptyFolderState
+                  folderName={openFolder.name}
+                  onAddLead={() => router.push(`/useraddlead?folder=${openFolder.id}`)}
+                  onImport={() => setCsvOpen(true)}
+              />
+          )}
+
           {/* table */}
-          <div className="hidden md:block datatables">
+          <div className={folderIsEmpty ? 'hidden' : 'hidden md:block datatables'}>
               <DataTable
                   withBorder
                   striped
@@ -611,6 +616,8 @@ function formatDateWithOrdinal(dateString) {
             <Text size="xs">Convert to Customer</Text>
         </Menu.Item>
 
+        <MoveToFolderItems pf={pf} lead={record} />
+
     </Menu.Dropdown>
 </Menu>
                           ),
@@ -634,9 +641,9 @@ function formatDateWithOrdinal(dateString) {
               />
           </div>
 
-           <div className="block md:hidden">
+           <div className={folderIsEmpty ? 'hidden' : 'block md:hidden'}>
               <div className="md:hidden flex flex-col gap-4">
-                {filteredLeads.slice(0, mobileVisibleCount).map((record) => {
+                {phoneList.rows.map((record) => {
                   const isSelected = selectedLeads.includes(record.id);
                   const u = teamMembers.find((t) => t.id === record.user_id);
           
@@ -766,11 +773,12 @@ function formatDateWithOrdinal(dateString) {
                   );
                 })}
           
-                {mobileVisibleCount < filteredLeads.length && (
+                {phoneList.hasMore && (
                   <div className="mt-6 text-center">
                       <Button
                           variant="default"
-                          onClick={handleLoadMore}
+                          onClick={phoneList.loadMore}
+                          loading={phoneList.loading}
                       >
                           Load More
                       </Button>
@@ -903,11 +911,13 @@ function formatDateWithOrdinal(dateString) {
           </Drawer>
 
           {/* csv modal */}
-          <CsvBulkUpload
+          <LeadImportModal
               opened={csvOpen}
               onClose={() => setCsvOpen(false)}
-              onSuccess={() => {
-                  setCsvOpen(false);
+              folders={pf.folders}
+              defaultFolderId={pf.activeFolder !== 'all' ? pf.activeFolder : null}
+              historyHref="/userleadtable/import-history"
+              onDone={() => {
                   fetchLeads();
               }}
           />
