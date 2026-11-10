@@ -22,7 +22,7 @@ import CustomerQuickActions from '@/components/common/CustomerQuickActions';
 import { CustomerFolderSelect } from '@/components/customers/CustomerFolders';
 import { IconEye, IconPlus, IconCalendarPlus, IconArrowLeft, IconSearch, IconDownload } from '@tabler/icons-react';
 
-const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+const AVATAR_COLORS = ['blue', 'cyan', 'orange', 'teal', 'pink', 'green'];
 
 const CustomerTable = ({ profile }) => {
   /* ─────────── existing state ─────────── */
@@ -385,13 +385,13 @@ const CustomerTable = ({ profile }) => {
             </Button>
           )}
           <CustomerFolderSelect className="w-52" />
-          <Button variant="light" color="violet" leftIcon={<IconUpload size={16} />} onClick={() => setCsvModalOpen(true)}>
+          <Button variant="light" color="blue" leftIcon={<IconUpload size={16} />} onClick={() => setCsvModalOpen(true)}>
             Upload CSV
           </Button>
-          <Button variant="light" color="violet" leftIcon={<IconDownload size={16} />} onClick={handleExportData}>
+          <Button variant="light" color="blue" leftIcon={<IconDownload size={16} />} onClick={handleExportData}>
             Export
           </Button>
-          <Button color="violet" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/create-customer')}>
+          <Button color="blue" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/create-customer')}>
             Add Customer
           </Button>
         </div>
@@ -450,7 +450,7 @@ const CustomerTable = ({ profile }) => {
               render: (record) => {
                 const nextAppt = getNextAppointment(record.appointments);
                 return nextAppt ? (
-                  <Badge color="violet" variant="light">
+                  <Badge color="blue" variant="light">
                     {new Date(nextAppt.appointment_date).toLocaleString()} - {nextAppt.appointment_type}
                   </Badge>
                 ) : (
@@ -556,15 +556,15 @@ const CustomerTable = ({ profile }) => {
           </Group>
         ) : (
           <div className="flex items-center py-2 mb-2">
-            <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconPlus size={18} />} onClick={() => router.push('/create-customer')}>
+            <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconPlus size={18} />} onClick={() => router.push('/create-customer')}>
               Add
             </Button>
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-            <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconUpload size={18} />} onClick={() => setCsvModalOpen(true)}>
+            <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconUpload size={18} />} onClick={() => setCsvModalOpen(true)}>
               Upload CSV
             </Button>
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-            <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconDownload size={18} />} onClick={handleExportData}>
+            <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={handleExportData}>
               Export
             </Button>
           </div>
@@ -672,7 +672,7 @@ const CustomerTable = ({ profile }) => {
             size={56}
             radius="xl"
             variant="filled"
-            color="violet"
+            color="blue"
             className="shadow-lg"
             style={{ position: 'fixed', right: 'max(16px, env(safe-area-inset-right))', bottom: 'calc(80px + env(safe-area-inset-bottom))', zIndex: 50 }}
             onClick={() => router.push('/create-customer')}

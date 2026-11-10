@@ -48,7 +48,7 @@ const EditCustomer = () => {
                 <ActionIcon variant="subtle" color="dark" onClick={() => router.push('/customers')} aria-label="Back">
                     <IconArrowLeft size={22} />
                 </ActionIcon>
-                <Avatar color="violet" variant="light" radius="xl" size="lg">
+                <Avatar color="blue" variant="light" radius="xl" size="lg">
                     {(customerData.full_name || '?').trim().charAt(0).toUpperCase()}
                 </Avatar>
                 <div className="min-w-0 flex-1">

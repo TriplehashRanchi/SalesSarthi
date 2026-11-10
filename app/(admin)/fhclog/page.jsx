@@ -256,7 +256,7 @@ const CheckupHistory = () => {
 
   const CheckupCard = ({ checkup }) => (
     <div className="flex items-center gap-3 border-b border-gray-200 py-3 last:border-b-0 dark:border-gray-700">
-      <Avatar color="violet" variant="light" radius="xl" size="lg">
+      <Avatar color="blue" variant="light" radius="xl" size="lg">
         {(checkup.clientName || '?').trim().charAt(0).toUpperCase()}
       </Avatar>
       <div className="min-w-0 flex-1">
@@ -267,7 +267,7 @@ const CheckupHistory = () => {
           {formatDate(checkup.checkupDate)} · {checkup.financialDoctorName || 'N/A'}
         </Text>
       </div>
-      <Button variant="light" color="violet" size="xs" onClick={() => handleViewReport(checkup)}>
+      <Button variant="light" color="blue" size="xs" onClick={() => handleViewReport(checkup)}>
         View
       </Button>
     </div>

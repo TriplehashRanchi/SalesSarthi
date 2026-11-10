@@ -77,7 +77,7 @@ const ViewCustomer = () => {
                 <ActionIcon variant="subtle" color="dark" onClick={() => router.push('/customers')} aria-label="Back">
                     <IconArrowLeft size={22} />
                 </ActionIcon>
-                <Avatar color="violet" variant="light" radius="xl" size="lg">
+                <Avatar color="blue" variant="light" radius="xl" size="lg">
                     {(customer.full_name || '?').trim().charAt(0).toUpperCase()}
                 </Avatar>
                 <div className="min-w-0 flex-1">
@@ -86,19 +86,19 @@ const ViewCustomer = () => {
                 </div>
                 <CustomerQuickActions customer={customer} onAppointment={() => setOpenDrawer(true)} size="xl" plain />
                 <div className="hidden items-center gap-2 md:flex">
-                    <Button variant="light" color="violet" onClick={openFinCheckup}>
+                    <Button variant="light" color="blue" onClick={openFinCheckup}>
                         Fin-Health Checkup
                     </Button>
-                    <Button color="violet" onClick={() => router.push(`/edit-customer/${customer.id}`)}>
+                    <Button color="blue" onClick={() => router.push(`/edit-customer/${customer.id}`)}>
                         Edit Customer
                     </Button>
                 </div>
             </div>
             <div className="flex gap-2 pb-4 md:hidden">
-                <Button className="flex-1" variant="light" color="violet" onClick={openFinCheckup}>
+                <Button className="flex-1" variant="light" color="blue" onClick={openFinCheckup}>
                     Fin-Health Checkup
                 </Button>
-                <Button className="flex-1" color="violet" onClick={() => router.push(`/edit-customer/${customer.id}`)}>
+                <Button className="flex-1" color="blue" onClick={() => router.push(`/edit-customer/${customer.id}`)}>
                     Edit Customer
                 </Button>
             </div>

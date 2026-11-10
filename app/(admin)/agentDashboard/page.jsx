@@ -308,7 +308,7 @@ export default function AgentDashboard() {
                                 let barColor = 'bg-slate-400';
                                 if (milestoneTab === 'tier5') barColor = 'bg-gradient-to-r from-pink-500 to-rose-600';
                                 else if (milestoneTab === 'tier4') barColor = 'bg-gradient-to-r from-purple-500 to-fuchsia-600';
-                                else if (milestoneTab === 'tier3') barColor = 'bg-gradient-to-r from-indigo-500 to-violet-600';
+                                else if (milestoneTab === 'tier3') barColor = 'bg-gradient-to-r from-indigo-500 to-blue-600';
                                 else if (milestoneTab === 'tier2') barColor = 'bg-gradient-to-r from-blue-500 to-cyan-600';
                                 else barColor = 'bg-gradient-to-r from-slate-400 to-slate-500';
 

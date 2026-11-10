@@ -436,7 +436,7 @@ const ComponentsDashboardFinance = () => {
                     </div>
 
                     {/* Sessions */}
-                    <div className="panel bg-gradient-to-r from-violet-500 to-violet-400">
+                    <div className="panel bg-gradient-to-r from-blue-500 to-blue-400">
                         <div className="flex justify-between">
                             <div className="text-md font-semibold ltr:mr-1 rtl:ml-1">Fresh Leads</div>
                             <div className="dropdown">

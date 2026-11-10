@@ -83,14 +83,13 @@ const useFollowupData = (events) => {
 };
 
 const STAT_TINTS = {
-    violet: { card: 'bg-violet-50 border-violet-300', icon: 'text-violet-600', value: 'text-violet-700' },
     orange: { card: 'bg-orange-50 border-orange-300', icon: 'text-orange-500', value: 'text-orange-600' },
     green: { card: 'bg-green-50 border-green-300', icon: 'text-green-600', value: 'text-green-700' },
     blue: { card: 'bg-blue-50 border-blue-300', icon: 'text-blue-600', value: 'text-blue-700' },
 };
 
-function StatCard({ title, value, icon, color = 'violet', hint }) {
-    const t = STAT_TINTS[color] || STAT_TINTS.violet;
+function StatCard({ title, value, icon, color = 'blue', hint }) {
+    const t = STAT_TINTS[color] || STAT_TINTS.blue;
     return (
         <div className={`flex items-center gap-4 rounded-2xl border p-5 max-md:gap-3 max-md:p-3 ${t.card}`}>
             <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white shadow-sm max-md:h-9 max-md:w-9 ${t.icon}`}>{icon}</div>
@@ -258,13 +257,13 @@ export default function FollowupsCalendar() {
             <Group position="apart" mb="xl" className="max-md:!mb-4">
                 <Title order={2} className="max-md:!text-xl">Follow-ups Dashboard</Title>
                 {narrow && (
-                    <Button color="violet" radius="xl" size="xs" leftIcon={<IconPlus size={14} />} onClick={handleAddNewClick}>
+                    <Button color="blue" radius="xl" size="xs" leftIcon={<IconPlus size={14} />} onClick={handleAddNewClick}>
                         Add
                     </Button>
                 )}
                 <Group spacing="sm" align="center" sx={narrow ? { width: '100%' } : undefined}>
                     <SegmentedControl
-                        color="violet"
+                        color="blue"
                         radius="xl"
                         fullWidth={narrow}
                         sx={narrow ? { width: '100%' } : undefined}
@@ -296,7 +295,7 @@ export default function FollowupsCalendar() {
                         ]}
                     />
                     {!narrow && (
-                        <Button color="violet" radius="xl" style={{ height: HEADER_CONTROL_HEIGHT }} leftIcon={<IconPlus size={16} />} onClick={handleAddNewClick}>
+                        <Button color="blue" radius="xl" style={{ height: HEADER_CONTROL_HEIGHT }} leftIcon={<IconPlus size={16} />} onClick={handleAddNewClick}>
                             Add Follow-up
                         </Button>
                     )}
@@ -305,7 +304,7 @@ export default function FollowupsCalendar() {
 
             <Grid gutter={narrow ? 'xs' : 'xl'} mb={narrow ? 'md' : 'xl'}>
                 <Grid.Col span={6} md={6} lg={3}>
-                    <StatCard hint="follow-ups for today" title="Due Today" value={stats.dueToday} icon={<IconCalendarEvent size={narrow ? 18 : 24} />} color="violet" />
+                    <StatCard hint="follow-ups for today" title="Due Today" value={stats.dueToday} icon={<IconCalendarEvent size={narrow ? 18 : 24} />} color="blue" />
                 </Grid.Col>
                 <Grid.Col span={6} md={6} lg={3}>
                     <StatCard hint="waiting to be done" title="Pending" value={stats.pending} icon={<IconClock size={narrow ? 18 : 24} />} color="orange" />
@@ -330,7 +329,7 @@ export default function FollowupsCalendar() {
                             '& .fc-daygrid-day, & .fc-timegrid-col, & .fc-timegrid-slot, & .fc-event, & .fc-list-event, & .fc-button, & .fc-daygrid-more-link': {
                                 cursor: 'pointer',
                             },
-                            // Calendar look, all sizes: soft grid, violet buttons, today highlighted, tidy event pills.
+                            // Calendar look, all sizes: soft grid, blue buttons, today highlighted, tidy event pills.
                             '& .fc .fc-toolbar-title': { fontWeight: 700 },
                             // Toolbar: round arrows, a soft "Today", and Month/Week as one switch.
                             '& .fc .fc-toolbar-chunk': { display: 'flex', alignItems: 'center', gap: 8 },
@@ -461,7 +460,7 @@ export default function FollowupsCalendar() {
                                             size="xs"
                                             radius="xl"
                                             variant="light"
-                                            color="violet"
+                                            color="blue"
                                             leftIcon={<IconPlus size={14} />}
                                             onClick={() => {
                                                 setSelectedDate(`${selectedDay}T09:00:00`);
@@ -505,14 +504,14 @@ export default function FollowupsCalendar() {
                     <Paper withBorder={!narrow} p={narrow ? 0 : 'md'} radius="lg" style={{ height: '100%', ...(narrow ? { background: 'transparent', marginTop: 20 } : {}) }}>
                         <div className="mb-3 flex items-center justify-between">
                             <Title order={4}>Upcoming Follow-ups</Title>
-                            {upcoming.length > 0 && <Badge color="violet" variant="light">{upcoming.length}</Badge>}
+                            {upcoming.length > 0 && <Badge color="blue" variant="light">{upcoming.length}</Badge>}
                         </div>
                         <div style={narrow ? undefined : { height: 'calc(70vh - 60px)', overflowY: 'auto' }}>
                             {upcoming.length > 0 ? (
                                 upcoming.map((event) => (
                                     <div
                                         key={event.id}
-                                        className="flex cursor-pointer items-start gap-3 rounded-lg border-b border-gray-100 px-2 py-3 transition last:border-b-0 hover:bg-violet-50/60 dark:border-gray-700 dark:hover:bg-gray-700"
+                                        className="flex cursor-pointer items-start gap-3 rounded-lg border-b border-gray-100 px-2 py-3 transition last:border-b-0 hover:bg-blue-50/60 dark:border-gray-700 dark:hover:bg-gray-700"
                                         onClick={() => {
                                             const e = events.find((x) => String(x.id) === String(event.id));
                                             if (e) openEventDetails({ id: e.id, ...e.extendedProps, title: e.title, follow_up_date: e.start });
@@ -530,7 +529,7 @@ export default function FollowupsCalendar() {
                                 ))
                             ) : (
                                 <Stack align="center" spacing={6} mt={40}>
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-50 text-3xl dark:bg-gray-700">🗓️</div>
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-3xl dark:bg-gray-700">🗓️</div>
                                     <Text weight={600} size="sm">Nothing coming up</Text>
                                     <Text color="dimmed" size="xs" align="center">New follow-ups will appear here.</Text>
                                 </Stack>
@@ -589,7 +588,7 @@ export default function FollowupsCalendar() {
                                             setTargetType(o.value);
                                             setSelectedLeadForNewFollowup(null);
                                         }}
-                                        className={`h-8 flex-1 rounded-full text-sm font-semibold transition ${active ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300'}`}
+                                        className={`h-8 flex-1 rounded-full text-sm font-semibold transition ${active ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300'}`}
                                     >
                                         {o.label}
                                     </button>

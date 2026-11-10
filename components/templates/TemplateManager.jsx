@@ -15,7 +15,7 @@ const MessagePreview = ({ message }) => (
   <p className="mt-1.5 line-clamp-2 whitespace-pre-line break-words text-sm text-gray-600 dark:text-gray-300">
     {String(message || '').split(/(\{[a-z_]+\})/g).map((part, i) =>
       /^\{[a-z_]+\}$/.test(part) ? (
-        <span key={i} className="font-medium text-violet-600 dark:text-violet-400">{part.slice(1, -1).replace(/_/g, ' ')}</span>
+        <span key={i} className="font-medium text-blue-600 dark:text-blue-400">{part.slice(1, -1).replace(/_/g, ' ')}</span>
       ) : (
         <span key={i}>{part}</span>
       )
@@ -126,7 +126,7 @@ const TemplateManagementPage = () => {
             {loading ? 'Your message and timing for each reminder' : `${types.length} ${types.length === 1 ? 'type' : 'types'} · message and timing for each`}
           </p>
         </div>
-        <Button color="violet" radius="xl" leftIcon={<IconPlus size={16} />} onClick={openAdd}>
+        <Button color="blue" radius="xl" leftIcon={<IconPlus size={16} />} onClick={openAdd}>
           <span className="sm:hidden">Add</span>
           <span className="hidden sm:inline">Add reminder type</span>
         </Button>
@@ -136,10 +136,10 @@ const TemplateManagementPage = () => {
         <div className="mt-10 flex justify-center"><Loader /></div>
       ) : types.length === 0 ? (
         <Stack align="center" spacing="xs" mt={56}>
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-violet-50 text-4xl dark:bg-gray-700">🔔</div>
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-4xl dark:bg-gray-700">🔔</div>
           <Text weight={600}>No reminder types yet</Text>
           <Text size="sm" color="dimmed">Create one to start sending timely WhatsApp reminders.</Text>
-          <Button color="violet" radius="xl" leftIcon={<IconPlus size={16} />} onClick={openAdd}>Add your first reminder type</Button>
+          <Button color="blue" radius="xl" leftIcon={<IconPlus size={16} />} onClick={openAdd}>Add your first reminder type</Button>
         </Stack>
       ) : (
         <div className="max-w-4xl divide-y divide-gray-200 dark:divide-gray-700">

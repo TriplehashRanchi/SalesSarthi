@@ -22,7 +22,7 @@ const DEFAULT_WINDOW = { recent: 7, recurring: 2, upcoming: 7 };
 const StepTitle = ({ n, children, hint }) => (
   <div className="mb-3">
     <Group spacing={10} noWrap align="center">
-      <Badge variant="light" color="violet" radius="xl" sx={{ width: 24, height: 24, padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n}</Badge>
+      <Badge variant="light" color="blue" radius="xl" sx={{ width: 24, height: 24, padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n}</Badge>
       <Text weight={600}>{children}</Text>
     </Group>
     {hint && <Text size="xs" color="dimmed" mt={2} ml={34}>{hint}</Text>}
@@ -135,7 +135,7 @@ const ReminderTypeForm = ({ type, dateFields, onSave, apiUrl, token }) => {
                 role="radio"
                 aria-checked={active}
                 onClick={() => setAudience(o.value)}
-                className={`h-8 flex-1 rounded-full text-sm font-semibold transition ${active ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300'}`}
+                className={`h-8 flex-1 rounded-full text-sm font-semibold transition ${active ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300'}`}
               >
                 {o.label}
               </button>
@@ -188,10 +188,10 @@ const ReminderTypeForm = ({ type, dateFields, onSave, apiUrl, token }) => {
                     fontSize: theme.fontSizes.xs,
                     fontWeight: 500,
                     cursor: 'pointer',
-                    border: `1px solid ${active ? theme.colors.violet[5] : theme.colorScheme === 'dark' ? theme.colors.dark[3] : theme.colors.gray[3]}`,
-                    background: active ? (theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.violet[0]) : 'transparent',
-                    color: active ? theme.colors.violet[7] : 'inherit',
-                    '&:hover': { borderColor: theme.colors.violet[4] },
+                    border: `1px solid ${active ? theme.colors.blue[5] : theme.colorScheme === 'dark' ? theme.colors.dark[3] : theme.colors.gray[3]}`,
+                    background: active ? (theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.blue[0]) : 'transparent',
+                    color: active ? theme.colors.blue[7] : 'inherit',
+                    '&:hover': { borderColor: theme.colors.blue[4] },
                   })}
                 >
                   <Group spacing={6} noWrap>
@@ -217,7 +217,7 @@ const ReminderTypeForm = ({ type, dateFields, onSave, apiUrl, token }) => {
         <Group spacing={6} mt="sm" align="center">
           <Text size="xs" color="dimmed" mr={4}>Tap to add:</Text>
           {availableVariables.map((variable) => (
-            <Button key={variable.value} type="button" size="xs" compact variant="light" color="violet" radius="xl" leftIcon={<IconPlus size={12} />} onClick={() => handleInsertVariable(variable.value)}>
+            <Button key={variable.value} type="button" size="xs" compact variant="light" color="blue" radius="xl" leftIcon={<IconPlus size={12} />} onClick={() => handleInsertVariable(variable.value)}>
               {variable.label}
             </Button>
           ))}
@@ -234,7 +234,7 @@ const ReminderTypeForm = ({ type, dateFields, onSave, apiUrl, token }) => {
 
       {/* Stays at the bottom of the screen on phones so Save is always reachable */}
       <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
-        <Button type="submit" fullWidth loading={loading} size="md" color="violet" radius="xl">
+        <Button type="submit" fullWidth loading={loading} size="md" color="blue" radius="xl">
           {type ? 'Save changes' : 'Add reminder type'}
         </Button>
       </div>

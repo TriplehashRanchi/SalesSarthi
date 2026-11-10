@@ -28,14 +28,14 @@ const CustomerQuickActions = ({ customer, onAppointment, size = 'md', hideAppoin
 
     return (
         <Group spacing={6} noWrap onClick={(e) => e.stopPropagation()}>
-            <ActionIcon title="Call" size={size} variant={plain ? 'subtle' : 'light'} color={plain ? 'violet' : 'blue'} aria-label="Call customer" onClick={handleCall}>
+            <ActionIcon title="Call" size={size} variant={plain ? 'subtle' : 'light'} color={plain ? 'blue' : 'blue'} aria-label="Call customer" onClick={handleCall}>
                 <IconPhoneCall size={plain ? 24 : 16} />
             </ActionIcon>
             <ActionIcon title="WhatsApp message" size={size} variant={plain ? 'subtle' : 'light'} color="green" aria-label="Message customer on WhatsApp" onClick={handleMessage}>
                 <IconBrandWhatsapp size={plain ? 24 : 16} />
             </ActionIcon>
             {!hideAppointment && (
-            <ActionIcon title="Appointments" size={size} variant={plain ? 'subtle' : 'light'} color="violet" aria-label="Manage appointments" onClick={() => onAppointment(customer)}>
+            <ActionIcon title="Appointments" size={size} variant={plain ? 'subtle' : 'light'} color="blue" aria-label="Manage appointments" onClick={() => onAppointment(customer)}>
                 <IconCalendarPlus size={plain ? 24 : 16} />
             </ActionIcon>
             )}

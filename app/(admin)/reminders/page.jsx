@@ -72,7 +72,7 @@ const ActionIconBack = ({ onClick }) => (
   </button>
 );
 
-const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+const AVATAR_COLORS = ['blue', 'blue', 'orange', 'teal', 'pink', 'green'];
 const colorFor = (name) => AVATAR_COLORS[((name || '?').trim().charCodeAt(0) || 0) % AVATAR_COLORS.length];
 
 const authHeaders = async () => {
@@ -254,7 +254,7 @@ const RemindersPage = () => {
 
   const emptyState = (
     <Stack align="center" spacing={6} mt={56} px="md">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-violet-50 text-4xl dark:bg-gray-700">{search ? '🔍' : '🎉'}</div>
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-4xl dark:bg-gray-700">{search ? '🔍' : '🎉'}</div>
       <Text weight={600} align="center" className="mt-2 text-base text-gray-800 dark:text-gray-100 sm:text-lg">
         {search ? 'No matches found' : 'All caught up!'}
       </Text>
@@ -275,7 +275,7 @@ const RemindersPage = () => {
             {activeType && !loading ? `${shownRecords.length} pending in ${activeType.name}` : 'Send timely WhatsApp follow-ups'}
           </p>
         </div>
-        <Button variant="light" color="violet" radius="xl" size="xs" leftIcon={<IconSettings size={14} />} onClick={() => router.push('/template')}>
+        <Button variant="light" color="blue" radius="xl" size="xs" leftIcon={<IconSettings size={14} />} onClick={() => router.push('/template')}>
           <span className="sm:hidden">Manage</span>
           <span className="hidden sm:inline">Manage reminder types</span>
         </Button>
@@ -296,10 +296,10 @@ const RemindersPage = () => {
       ) : types.length === 0 ? (
         <Stack align="center" mt="xl" spacing="xs">
           <Text className="text-lg text-gray-500 dark:text-gray-400">You have no reminder types yet.</Text>
-          <Button color="violet" onClick={() => router.push('/template')}>Add a reminder type</Button>
+          <Button color="blue" onClick={() => router.push('/template')}>Add a reminder type</Button>
         </Stack>
       ) : (
-        <Tabs value={activeTab} onTabChange={setActiveTab} variant="pills" radius="xl" color="violet">
+        <Tabs value={activeTab} onTabChange={setActiveTab} variant="pills" radius="xl" color="blue">
           {/* Scrolls sideways when there are more types than fit, so tabs never squash or wrap on phones. */}
           <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }} className="-mx-1 px-1 pb-1">
             <Tabs.List sx={{ flexWrap: 'nowrap', minWidth: 'max-content', gap: 8 }}>
@@ -352,7 +352,7 @@ const RemindersPage = () => {
                     </thead>
                     <tbody>
                       {shownRecords.map((record) => (
-                        <tr key={record.id} className="border-b border-gray-100 last:border-b-0 hover:bg-violet-50/40 dark:border-gray-700 dark:hover:bg-gray-700">
+                        <tr key={record.id} className="border-b border-gray-100 last:border-b-0 hover:bg-blue-50/40 dark:border-gray-700 dark:hover:bg-gray-700">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               <Avatar color={colorFor(record.full_name)} variant="light" radius="xl">

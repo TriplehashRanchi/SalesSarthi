@@ -129,7 +129,7 @@ const CustomerTable = () => {
 
                 <div className="ml-auto flex gap-2">
                     <CustomerFolderSelect className="w-52" />
-                    <Button color="violet" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/useraddcustomer')}>
+                    <Button color="blue" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/useraddcustomer')}>
                         Add Customer
                     </Button>
                 </div>
@@ -212,7 +212,7 @@ const CustomerTable = () => {
                 {/* Bulk toolbar (delete + export) */}
                 <Group className="px-3 py-2" position="apart" noWrap>
                     <CustomerFolderSelect size="xs" className="min-w-0 flex-1" />
-                    <Button size="xs" color="violet" onClick={() => router.push('/useraddcustomer')} leftIcon={<IconPlus size={14} />}>
+                    <Button size="xs" color="blue" onClick={() => router.push('/useraddcustomer')} leftIcon={<IconPlus size={14} />}>
                         Add Customer
                     </Button>
                 </Group>

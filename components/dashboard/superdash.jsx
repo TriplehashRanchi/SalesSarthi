@@ -34,7 +34,7 @@ const Superdash = () => {
 
   const statsData = [
     { title: 'Total Admins', count: stats.totals.admins, bg: 'from-cyan-500 to-cyan-400' },
-    { title: 'Total Users', count: stats.totals.users, bg: 'from-violet-500 to-violet-400' },
+    { title: 'Total Users', count: stats.totals.users, bg: 'from-blue-500 to-blue-400' },
     { title: 'Total Customers', count: stats.totals.customers, bg: 'from-blue-500 to-blue-400' },
     { title: 'Total Leads', count: stats.totals.leads, bg: 'from-fuchsia-500 to-fuchsia-400' },
     { title: 'Total Appointments', count: stats.totals.appointments, bg: 'from-green-500 to-green-400' },

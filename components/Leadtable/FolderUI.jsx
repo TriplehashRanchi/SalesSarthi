@@ -57,14 +57,14 @@ export const FolderTabs = ({ folders, counts, allCount, active, onSelect, onCrea
 
     const scrollBy = (dir) => scroller.current?.scrollBy({ left: dir * Math.max(200, (scroller.current.clientWidth || 400) * 0.7), behavior: 'smooth' });
 
-    // Pill tabs on a soft track; the open folder is a solid violet pill.
+    // Pill tabs on a soft track; the open folder is a solid blue pill.
     const chip = (isActive, isOver) =>
         `group flex h-8 flex-shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-full py-1 pl-3 text-sm font-medium transition ${
             isOver
-                ? 'scale-105 bg-violet-100 text-violet-800 ring-2 ring-violet-500'
+                ? 'scale-105 bg-blue-100 text-blue-800 ring-2 ring-blue-500'
                 : isActive
-                ? 'bg-violet-600 text-white shadow-sm'
-                : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:ring-violet-300 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-700'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:ring-blue-300 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-700'
         }`;
     const countBadge = (isActive) =>
         `rounded-full px-1.5 text-[11px] font-semibold leading-5 ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`;
@@ -167,7 +167,7 @@ export const FolderTabs = ({ folders, counts, allCount, active, onSelect, onCrea
                         </ActionIcon>
                     </Tooltip>
                 )}
-                <Button size="xs" color="violet" radius="xl" className="flex-shrink-0" leftIcon={<IconFolderPlus size={15} />} onClick={onCreate}>
+                <Button size="xs" color="blue" radius="xl" className="flex-shrink-0" leftIcon={<IconFolderPlus size={15} />} onClick={onCreate}>
                     Create Folder
                 </Button>
             </div>
@@ -221,7 +221,7 @@ export const FolderNameModal = ({ state, onClose, onSave }) => {
             />
             <Group position="right" mt="lg">
                 <Button variant="default" radius="xl" onClick={onClose} disabled={saving}>Cancel</Button>
-                <Button color="violet" radius="xl" onClick={submit} loading={saving} disabled={!name.trim()}>
+                <Button color="blue" radius="xl" onClick={submit} loading={saving} disabled={!name.trim()}>
                     {state.folder ? 'Save' : 'Create'}
                 </Button>
             </Group>
@@ -361,7 +361,7 @@ export const ReorderFoldersModal = ({ opened, folders, onClose, onSave }) => {
                                             {...drag.draggableProps}
                                             {...drag.dragHandleProps}
                                             className={`mb-1.5 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                                                snap.isDragging ? 'border-violet-400 bg-violet-50 shadow-md dark:bg-gray-800' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
+                                                snap.isDragging ? 'border-blue-400 bg-blue-50 shadow-md dark:bg-gray-800' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
                                             }`}
                                         >
                                             <IconGripVertical size={16} className="flex-shrink-0 text-gray-400" />
@@ -379,7 +379,7 @@ export const ReorderFoldersModal = ({ opened, folders, onClose, onSave }) => {
             {error && <Text size="sm" color="red" mt="sm">{error}</Text>}
             <Group position="right" mt="lg">
                 <Button variant="default" radius="xl" onClick={onClose} disabled={saving}>Cancel</Button>
-                <Button color="violet" radius="xl" onClick={submit} loading={saving}>Save order</Button>
+                <Button color="blue" radius="xl" onClick={submit} loading={saving}>Save order</Button>
             </Group>
         </Modal>
     );
@@ -418,7 +418,7 @@ export const MoveReportModal = ({ report, onClose, onRetry }) => {
                 <Button variant="default" radius="xl" onClick={onClose}>Close</Button>
                 {report.failed.length > 0 && (
                     <Button
-                        color="violet"
+                        color="blue"
                         radius="xl"
                         loading={retrying}
                         onClick={async () => {
@@ -439,7 +439,7 @@ export const MoveReportModal = ({ report, onClose, onRetry }) => {
 
 export const EmptyFolderState = ({ folderName, onAddLead, onImport }) => (
     <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700">
-        <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-gray-800">
+        <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-gray-800">
             <IconFolder size={28} />
         </div>
         <Text weight={700} size="lg" className="break-words">{folderName}</Text>
@@ -447,7 +447,7 @@ export const EmptyFolderState = ({ folderName, onAddLead, onImport }) => (
         <Text size="sm" mt="sm" weight={600}>No leads in this folder yet.</Text>
         <Text size="sm" color="dimmed" mb="md" className="max-w-sm">Start organizing your leads by adding individual leads or importing a CSV file.</Text>
         <div className="flex w-full max-w-xs flex-col gap-2 sm:w-auto sm:max-w-none sm:flex-row">
-            <Button color="violet" radius="xl" leftIcon={<IconPlus size={16} />} onClick={onAddLead}>Add Lead</Button>
+            <Button color="blue" radius="xl" leftIcon={<IconPlus size={16} />} onClick={onAddLead}>Add Lead</Button>
             <Button variant="default" radius="xl" leftIcon={<IconUpload size={16} />} onClick={onImport}>Import Leads</Button>
         </div>
     </div>

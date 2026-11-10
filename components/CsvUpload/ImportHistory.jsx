@@ -230,7 +230,7 @@ const ImportHistory = ({ backHref }) => {
     const folderCell = (r) =>
         r.folder_name ? (
             <span className="inline-flex min-w-0 items-center gap-1">
-                <IconFolder size={14} className="flex-shrink-0 text-violet-500" />
+                <IconFolder size={14} className="flex-shrink-0 text-blue-500" />
                 <span className="truncate">{r.folder_name}</span>
                 {!r.folder_exists && <Badge size="xs" color="gray" variant="light">deleted</Badge>}
             </span>
@@ -246,7 +246,7 @@ const ImportHistory = ({ backHref }) => {
                 {r.has_original && (
                     <Menu withinPortal shadow="md" position="bottom-end">
                         <Menu.Target>
-                            <Button size="xs" compact variant="light" color="violet" leftIcon={<IconFileText size={13} />}>CSV</Button>
+                            <Button size="xs" compact variant="light" color="blue" leftIcon={<IconFileText size={13} />}>CSV</Button>
                         </Menu.Target>
                         <Menu.Dropdown>
                             <Menu.Item icon={<IconDownload size={14} />} onClick={() => download(r, 'original')}>Download original CSV</Menu.Item>
@@ -304,7 +304,7 @@ const ImportHistory = ({ backHref }) => {
                 </ActionIcon>
                 <div className="min-w-0 flex-1">
                     <h1 className="flex items-center gap-2 text-xl font-bold leading-tight sm:text-2xl">
-                        <IconHistory size={22} className="text-violet-600" /> Import History
+                        <IconHistory size={22} className="text-blue-600" /> Import History
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Your CSV uploads</p>
                 </div>
@@ -417,7 +417,7 @@ const ImportHistory = ({ backHref }) => {
                 )}
                 <div className="flex flex-col gap-2">
                     {rows.map((r) => (
-                        <div key={r.id} className={`rounded-xl border p-3 ${selected.includes(r.id) ? 'border-violet-400 bg-violet-50/60 dark:bg-gray-800' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'}`}>
+                        <div key={r.id} className={`rounded-xl border p-3 ${selected.includes(r.id) ? 'border-blue-400 bg-blue-50/60 dark:bg-gray-800' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'}`}>
                             <div className="flex items-start gap-2">
                                 <Checkbox size="xs" mt={2} checked={selected.includes(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.file_name}`} />
                                 <div className="min-w-0 flex-1">

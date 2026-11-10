@@ -59,7 +59,7 @@ const NotificationBell = ({ pageHref = '/notifications' }) => {
                 showNotification({
                     title: n.title,
                     message: n.body,
-                    color: SEVERITY_TOAST[n.severity] || 'violet',
+                    color: SEVERITY_TOAST[n.severity] || 'blue',
                     autoClose: 7000,
                     onClick: () => n.link && router.push(n.link),
                     style: { cursor: n.link ? 'pointer' : 'default' },
@@ -117,7 +117,7 @@ const NotificationBell = ({ pageHref = '/notifications' }) => {
                 <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800">
                     <div className="flex items-center gap-2">
                         <Text weight={700}>Notifications</Text>
-                        {count > 0 && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">{count} new</span>}
+                        {count > 0 && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{count} new</span>}
                     </div>
                     <div className="flex items-center gap-1">
                         <Tooltip label="Mark all as read" withinPortal>
@@ -150,13 +150,13 @@ const NotificationBell = ({ pageHref = '/notifications' }) => {
                             <UnstyledButton
                                 key={n.id}
                                 onClick={() => openItem(n)}
-                                className={`flex w-full items-start gap-3 border-b border-gray-50 px-4 py-3 text-left transition last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/60 ${n.is_read ? '' : 'bg-violet-50/60 dark:bg-violet-900/10'}`}
+                                className={`flex w-full items-start gap-3 border-b border-gray-50 px-4 py-3 text-left transition last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/60 ${n.is_read ? '' : 'bg-blue-50/60 dark:bg-blue-900/10'}`}
                             >
                                 <NotificationIcon n={n} />
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-start justify-between gap-2">
                                         <span className={`text-sm leading-snug ${n.is_read ? 'font-medium text-gray-700 dark:text-gray-200' : 'font-semibold text-gray-900 dark:text-white'}`}>{n.title}</span>
-                                        {!n.is_read && <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-violet-600" aria-label="Unread" />}
+                                        {!n.is_read && <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-600" aria-label="Unread" />}
                                     </div>
                                     <p className="mt-0.5 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">{n.message}</p>
                                     <span className="mt-1 block text-[11px] text-gray-400">{timeAgo(n.created_at)}</span>
@@ -178,7 +178,7 @@ const NotificationBell = ({ pageHref = '/notifications' }) => {
                         setOpened(false);
                         router.push(pageHref);
                     }}
-                    className="block w-full border-t border-gray-100 py-2.5 text-center text-sm font-semibold text-violet-600 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/60"
+                    className="block w-full border-t border-gray-100 py-2.5 text-center text-sm font-semibold text-blue-600 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/60"
                 >
                     View all notifications
                 </UnstyledButton>

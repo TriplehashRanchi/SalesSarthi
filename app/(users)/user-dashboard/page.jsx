@@ -434,7 +434,7 @@ const UserDashboard = () => {
                         </p>
                     </div>
                 </div>
-                <div className="bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 rounded-lg shadow text-white flex items-center gap-1 min-h-[50px]">
                     <div className="flex h-8 w-8 items-center justify-center rounded-md">
                         <IconChecks className="h-4 w-4" />
                     </div>

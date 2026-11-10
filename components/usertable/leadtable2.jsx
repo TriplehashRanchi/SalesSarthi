@@ -25,6 +25,7 @@ import IconPencil    from '../icon/icon-pencil';
 import FollowupForm  from '@/components/forms/followupform';
 import LeadImportModal from '@/components/CsvUpload/LeadImportModal';
 import { EmptyFolderState } from '@/components/Leadtable/FolderUI';
+import SortSelect from '@/components/Leadtable/SortSelect';
 import { usePersonalFolders, PersonalFolderBar, MoveToFolderItems } from '@/components/Leadtable/PersonalFolders';
 
 import { getAuth } from 'firebase/auth';
@@ -311,12 +312,13 @@ function formatDateWithOrdinal(dateString) {
                       clearable
                       searchable
                   />
+                  <SortSelect sortStatus={sortStatus} onChange={setSortStatus} style={{ minWidth: 210 }} />
               </div>
 
               <button onClick={() => setCsvOpen(true)} className="px-4 py-2 bg-green-500 hover:bg-green-700 text-white rounded-lg">
                   CSV Bulk Upload
               </button>
-              <button onClick={() => router.push('/userleadtable/import-history')} className="px-4 py-2 rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-gray-600 dark:text-violet-300">
+              <button onClick={() => router.push('/userleadtable/import-history')} className="px-4 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-gray-600 dark:text-blue-300">
                   Import History
               </button>
           </div>
@@ -334,6 +336,9 @@ function formatDateWithOrdinal(dateString) {
                   }}
               />
           
+              {/* Sort */}
+              <SortSelect sortStatus={sortStatus} onChange={setSortStatus} />
+
               {/* Line 2: Filter + Facebook + CSV */}
               <div className="flex gap-2 items-center">
                   <div className="flex-1">
@@ -360,7 +365,7 @@ function formatDateWithOrdinal(dateString) {
                   </button>
                   <button
                       onClick={() => router.push('/userleadtable/import-history')}
-                      className="rounded-md border border-violet-200 px-3 py-1 text-sm text-violet-700 dark:border-gray-600 dark:text-violet-300"
+                      className="rounded-md border border-blue-200 px-3 py-1 text-sm text-blue-700 dark:border-gray-600 dark:text-blue-300"
                   >
                       History
                   </button>
@@ -370,7 +375,7 @@ function formatDateWithOrdinal(dateString) {
 
           {/* selected leads: move to one of my folders */}
           {selectedLeads.length > 0 && pf.folders.length > 0 && (
-              <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 dark:bg-gray-800">
+              <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 dark:bg-gray-800">
                   <Text size="sm" weight={600}>{selectedLeads.length} selected</Text>
                   <Select
                       data={pf.folders.map((f) => ({ value: String(f.id), label: f.name }))}

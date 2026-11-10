@@ -288,7 +288,7 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
                                     <Group spacing={6}>
                                         <Text size="xs" color="dimmed">Apply to all:</Text>
                                         {ACTIONS.map((a) => (
-                                            <Button key={a.value} size="xs" compact variant="light" color={a.value === 'replace' ? 'red' : 'violet'} onClick={() => applyToAll(a.value)}>{a.label}</Button>
+                                            <Button key={a.value} size="xs" compact variant="light" color={a.value === 'replace' ? 'red' : 'blue'} onClick={() => applyToAll(a.value)}>{a.label}</Button>
                                         ))}
                                     </Group>
                                 </div>
@@ -340,7 +340,7 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
 
                         <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
                             <Button variant="default" onClick={close} disabled={busy}>Cancel (import nothing)</Button>
-                            <Button color="violet" onClick={startImport} loading={busy} disabled={!canImport}>
+                            <Button color="blue" onClick={startImport} loading={busy} disabled={!canImport}>
                                 {folderName ? `Import into “${folderName}”` : 'Select a folder to import'}
                             </Button>
                         </div>
@@ -379,7 +379,7 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
                             {historyHref && (
                                 <Button component={Link} href={historyHref} variant="default">View Import History</Button>
                             )}
-                            <Button color="violet" onClick={close}>Done</Button>
+                            <Button color="blue" onClick={close}>Done</Button>
                         </Group>
                     </>
                 )}

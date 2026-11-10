@@ -19,7 +19,7 @@ const MAIN_CATEGORIES = ['Facebook Ads', 'Daily Motivation', 'Concepts', 'Life I
 const CATEGORY_TINTS = {
   'Facebook Ads': 'bg-blue-50 border-blue-100 hover:bg-blue-100 hover:border-blue-300',
   'Daily Motivation': 'bg-amber-50 border-amber-100 hover:bg-amber-100 hover:border-amber-300',
-  Concepts: 'bg-violet-50 border-violet-100 hover:bg-violet-100 hover:border-violet-300',
+  Concepts: 'bg-blue-50 border-blue-100 hover:bg-blue-100 hover:border-blue-300',
   'Life Insurance': 'bg-pink-50 border-pink-100 hover:bg-pink-100 hover:border-pink-300',
   'Health Insurance': 'bg-teal-50 border-teal-100 hover:bg-teal-100 hover:border-teal-300',
   'Motor Insurance': 'bg-orange-50 border-orange-100 hover:bg-orange-100 hover:border-orange-300',
@@ -263,7 +263,7 @@ const ProfessionalBannerMaker = () => {
                   <button
                     key={cat}
                     onClick={() => setCategory(cat)}
-                    className={`flex min-h-[116px] flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl border p-4 text-center text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 active:translate-y-0 active:scale-95 sm:min-h-[140px] sm:p-6 ${CATEGORY_TINTS[cat] || 'bg-gray-50 border-gray-200'}`}
+                    className={`flex min-h-[116px] flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl border p-4 text-center text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 active:translate-y-0 active:scale-95 sm:min-h-[140px] sm:p-6 ${CATEGORY_TINTS[cat] || 'bg-gray-50 border-gray-200'}`}
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl sm:h-14 sm:w-14 sm:text-3xl">{CATEGORY_ICONS[cat]}</div>
                     <span className="text-center">{cat}</span>

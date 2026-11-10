@@ -209,7 +209,7 @@ const AdminTable = () => {
     };
 
     /* ───────── table cells (shared by desktop table and phone cards) ───────── */
-    const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+    const AVATAR_COLORS = ['blue', 'cyan', 'orange', 'teal', 'pink', 'green'];
     const initialOf = (name) => (name || '?').trim().charAt(0).toUpperCase();
 
     const isActive = (a) => !!a.expires_at && new Date(a.expires_at).getTime() >= Date.now();
@@ -336,9 +336,9 @@ const AdminTable = () => {
                     <ExportCsvModal
                         allAdmins={admins}
                         label={<span className="hidden sm:inline">Export</span>}
-                        buttonProps={{ variant: 'light', color: 'violet', radius: 'xl', className: 'px-3 sm:px-4' }}
+                        buttonProps={{ variant: 'light', color: 'blue', radius: 'xl', className: 'px-3 sm:px-4' }}
                     />
-                    <Button color="violet" radius="xl" leftIcon={<IconPlus size={16} />} onClick={() => setOpenModal(true)}>
+                    <Button color="blue" radius="xl" leftIcon={<IconPlus size={16} />} onClick={() => setOpenModal(true)}>
                         <span className="sm:hidden">New</span>
                         <span className="hidden sm:inline">New admin</span>
                     </Button>
@@ -348,7 +348,7 @@ const AdminTable = () => {
             {/* Quick status tiles: click to filter */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
                 {[
-                    { key: 'all', label: 'All admins', icon: IconUsers, tone: 'text-violet-600 bg-violet-50 dark:bg-violet-500/10' },
+                    { key: 'all', label: 'All admins', icon: IconUsers, tone: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10' },
                     { key: 'active', label: 'Active', icon: IconCircleCheck, tone: 'text-green-600 bg-green-50 dark:bg-green-500/10' },
                     { key: 'expiring', label: 'Expiring in 7 days', icon: IconAlertTriangle, tone: 'text-orange-500 bg-orange-50 dark:bg-orange-500/10' },
                     { key: 'expired', label: 'Expired', icon: IconCircleX, tone: 'text-red-500 bg-red-50 dark:bg-red-500/10' },
@@ -363,7 +363,7 @@ const AdminTable = () => {
                                 setPage(1);
                             }}
                             className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
-                                on ? 'border-violet-500 ring-1 ring-violet-500' : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
+                                on ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
                             } bg-white dark:bg-gray-900`}
                         >
                             <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${tone}`}>
@@ -444,10 +444,10 @@ const AdminTable = () => {
             {(loading || filteredTotal === 0) && (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 px-4 py-14 text-center dark:border-gray-700">
                     {loading ? (
-                        <Loader size="sm" color="violet" />
+                        <Loader size="sm" color="blue" />
                     ) : (
                         <>
-                            <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-500/10">
+                            <span className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10">
                                 {hasFilters ? <IconSearch size={22} /> : <IconUsers size={22} />}
                             </span>
                             <p className="font-medium">{hasFilters ? 'No admins match these filters' : 'No admins yet'}</p>
@@ -455,11 +455,11 @@ const AdminTable = () => {
                                 {hasFilters ? 'Try a different search, plan or date range.' : 'Create the first admin to get started.'}
                             </p>
                             {hasFilters ? (
-                                <Button mt="md" variant="light" color="violet" radius="xl" leftIcon={<IconX size={14} />} onClick={clearFilters}>
+                                <Button mt="md" variant="light" color="blue" radius="xl" leftIcon={<IconX size={14} />} onClick={clearFilters}>
                                     Clear filters
                                 </Button>
                             ) : (
-                                <Button mt="md" color="violet" radius="xl" leftIcon={<IconPlus size={16} />} onClick={() => setOpenModal(true)}>
+                                <Button mt="md" color="blue" radius="xl" leftIcon={<IconPlus size={16} />} onClick={() => setOpenModal(true)}>
                                     New admin
                                 </Button>
                             )}
@@ -488,7 +488,7 @@ const AdminTable = () => {
                     sortStatus={sortStatus}
                     onSortStatusChange={setSortStatus}
                     recordsPerPageOptions={[10, 20, 50, 100]}
-                    paginationColor="violet"
+                    paginationColor="blue"
                 />
             </div>
 

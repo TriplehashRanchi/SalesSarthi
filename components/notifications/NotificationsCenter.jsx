@@ -14,7 +14,6 @@ import {
     IconChecks,
     IconDeviceDesktop,
     IconDeviceMobile,
-    IconSend,
     IconSettings,
 } from '@tabler/icons-react';
 import {
@@ -25,7 +24,6 @@ import {
     markRead,
     NOTIFICATIONS_CHANGED,
     saveSettings,
-    sendTest,
 } from './notificationsApi';
 import { dayGroup, fullTime, NotificationIcon, SEVERITY_LABEL, timeAgo } from './notificationUi';
 import { userMessage } from '@/utils/userMessage';
@@ -128,7 +126,7 @@ const NotificationList = () => {
                     <Text size="sm" weight={600}>
                         {data.total} new notification{data.total === 1 ? '' : 's'}
                     </Text>
-                    <Button size="xs" radius="xl" variant="light" color="violet" leftIcon={<IconChecks size={15} />} loading={busy} onClick={readAll}>
+                    <Button size="xs" radius="xl" variant="light" color="blue" leftIcon={<IconChecks size={15} />} loading={busy} onClick={readAll}>
                         Mark all as read
                     </Button>
                 </div>
@@ -144,7 +142,7 @@ const NotificationList = () => {
                             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
                                 {g.items.map((n) => (
                                     <div key={n.id} className="group flex items-start gap-3 border-b border-gray-100 px-3 py-3 last:border-b-0 dark:border-gray-800 sm:px-4">
-                                        <button type="button" onClick={() => open(n)} className="flex min-w-0 flex-1 items-start gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+                                        <button type="button" onClick={() => open(n)} className="flex min-w-0 flex-1 items-start gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
                                             <NotificationIcon n={n} size={40} />
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -160,7 +158,7 @@ const NotificationList = () => {
                                             </div>
                                         </button>
                                         <Tooltip label="Mark as read" withinPortal>
-                                            <ActionIcon variant="subtle" color="violet" radius="xl" onClick={() => readOne(n)} aria-label="Mark as read" className="mt-1 flex-shrink-0">
+                                            <ActionIcon variant="subtle" color="blue" radius="xl" onClick={() => readOne(n)} aria-label="Mark as read" className="mt-1 flex-shrink-0">
                                                 <IconCheck size={17} />
                                             </ActionIcon>
                                         </Tooltip>
@@ -196,7 +194,6 @@ const NotificationSettings = () => {
     const [saving, setSaving] = useState(null);
     const [push, setPush] = useState({ checking: true, support: null, on: false, permission: 'default', busy: false });
     const [devices, setDevices] = useState([]);
-    const [testing, setTesting] = useState(false);
 
     const loadDevices = () => listDevices().then(setDevices).catch(() => {});
     useEffect(() => {
@@ -248,23 +245,6 @@ const NotificationSettings = () => {
         }
     };
 
-    const test = async () => {
-        setTesting(true);
-        try {
-            const r = await sendTest();
-            announceChange();
-            showNotification({
-                title: 'Test sent',
-                message: r.devices ? `Check the bell and your ${r.devices} device${r.devices === 1 ? '' : 's'} with push on.` : 'Check the bell. Turn on push to also get it on this device.',
-                color: 'green',
-            });
-        } catch (err) {
-            showNotification({ title: 'Error', message: errMsg(err, 'Could not send'), color: 'red' });
-        } finally {
-            setTesting(false);
-        }
-    };
-
     if (!settings) return <div className="flex justify-center py-16"><Loader /></div>;
 
     const platform = pushPlatform();
@@ -281,7 +261,7 @@ const NotificationSettings = () => {
                                 <Text size="sm" weight={600}>{labels[key] || key}</Text>
                                 <Text size="xs" color="dimmed">{SETTING_HELP[key]}</Text>
                             </div>
-                            <Switch size="md" color="violet" checked={!!settings[key]} disabled={saving === key} onChange={(e) => toggle(key, e.currentTarget.checked)} aria-label={labels[key] || key} />
+                            <Switch size="md" color="blue" checked={!!settings[key]} disabled={saving === key} onChange={(e) => toggle(key, e.currentTarget.checked)} aria-label={labels[key] || key} />
                         </div>
                     ))}
                 </div>
@@ -300,7 +280,7 @@ const NotificationSettings = () => {
                     {push.checking ? (
                         <Loader size="sm" />
                     ) : (
-                        <Switch size="md" color="violet" checked={push.on} disabled={!push.support?.ok || push.busy} onChange={(e) => togglePush(e.currentTarget.checked)} aria-label="Push notifications on this device" />
+                        <Switch size="md" color="blue" checked={push.on} disabled={!push.support?.ok || push.busy} onChange={(e) => togglePush(e.currentTarget.checked)} aria-label="Push notifications on this device" />
                     )}
                 </div>
                 {!push.checking && !push.support?.ok && (
@@ -318,10 +298,6 @@ const NotificationSettings = () => {
                         <IconBellRinging size={18} /> Push is on for this {platform === 'web' ? 'browser' : 'phone'}.
                     </div>
                 )}
-
-                <Button mt="md" size="sm" radius="xl" variant="default" leftIcon={<IconSend size={15} />} loading={testing} onClick={test}>
-                    Send a test notification
-                </Button>
 
                 <Text size="sm" weight={600} mt="lg" mb={6}>Devices with push on ({devices.length})</Text>
                 {devices.length ? (
@@ -359,12 +335,12 @@ const NotificationsCenter = () => {
                 </ActionIcon>
                 <div className="min-w-0 flex-1">
                     <h1 className="flex items-center gap-2 text-xl font-bold leading-tight sm:text-2xl">
-                        <IconBell size={22} className="text-violet-600" /> Notifications
+                        <IconBell size={22} className="text-blue-600" /> Notifications
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Your latest updates</p>
                 </div>
             </div>
-            <Tabs value={tab} onTabChange={setTab} color="violet" keepMounted={false}>
+            <Tabs value={tab} onTabChange={setTab} color="blue" keepMounted={false}>
                 <Tabs.List mb="md">
                     <Tabs.Tab value="all" icon={<IconBell size={15} />}>Notifications</Tabs.Tab>
                     <Tabs.Tab value="settings" icon={<IconSettings size={15} />}>Settings</Tabs.Tab>

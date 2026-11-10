@@ -120,7 +120,7 @@ const FollowupForm = ({ leadId, customerId, existingFollowUp, onFollowupChange, 
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${active ? 'border-violet-600 bg-violet-600 text-white' : 'border-gray-300 text-gray-700 hover:border-violet-400 dark:border-gray-600 dark:text-gray-200'}`}
+      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${active ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 text-gray-700 hover:border-blue-400 dark:border-gray-600 dark:text-gray-200'}`}
     >
       {children}
     </button>
@@ -175,7 +175,7 @@ const FollowupForm = ({ leadId, customerId, existingFollowUp, onFollowupChange, 
           }
         >
           <Button variant="default" radius="xl" onClick={onCancel} disabled={submitting}>Cancel</Button>
-          <Button type="submit" color="violet" radius="xl" loading={submitting}>
+          <Button type="submit" color="blue" radius="xl" loading={submitting}>
             {isUpdating ? 'Update' : 'Create'}
           </Button>
         </div>

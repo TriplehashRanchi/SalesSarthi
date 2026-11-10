@@ -67,26 +67,35 @@
 
     .sidebar .nav-item > button,
     .sidebar .nav-item > a {
-        @apply mb-1 flex w-full items-center justify-between overflow-hidden whitespace-nowrap rounded-md p-2.5 text-[#506690] hover:bg-[#000]/[0.08] hover:text-black dark:hover:bg-[#181f32] dark:hover:text-white-dark;
+        @apply mb-1 flex w-full items-center justify-between overflow-hidden whitespace-nowrap rounded-lg p-2.5 text-[#506690] transition-colors hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-[#181f32] dark:hover:text-white-dark;
     }
     .sidebar .nav-item > button.active,
     .sidebar .nav-item > a.active {
-        @apply bg-[#000]/[0.08] text-black dark:bg-[#181f32] dark:text-white-dark;
+        @apply bg-blue-100/70 text-blue-700 dark:bg-[#181f32] dark:text-white-dark;
     }
 
+    /* label + icon follow the hover / active blue */
+    .sidebar .nav-item > button:hover > div > span,
+    .sidebar .nav-item > a:hover > div > span,
     .sidebar .nav-item > button.active > div > span,
     .sidebar .nav-item > a.active > div > span {
-        @apply dark:!text-white-dark;
+        @apply !text-blue-700 dark:!text-white-dark;
+    }
+    .sidebar .nav-item > button:hover div:first-child svg,
+    .sidebar .nav-item > a:hover div:first-child svg,
+    .sidebar .nav-item > button.active div:first-child svg,
+    .sidebar .nav-item > a.active div:first-child svg {
+        @apply !text-blue-600;
     }
 
     .sidebar ul.sub-menu li button,
     .sidebar ul.sub-menu li a {
-        @apply flex w-full items-center px-9 py-2.5 before:h-0.5 before:w-2 before:rounded before:bg-gray-300 hover:bg-gray-100
-hover:text-primary hover:before:!bg-primary ltr:before:mr-2 rtl:before:ml-2 dark:before:bg-gray-500 dark:hover:bg-gray-900 dark:hover:text-primary;
+        @apply flex w-full items-center px-9 py-2.5 before:h-0.5 before:w-2 before:rounded before:bg-gray-300 hover:bg-blue-50
+hover:text-blue-700 hover:before:!bg-blue-600 ltr:before:mr-2 rtl:before:ml-2 dark:before:bg-gray-500 dark:hover:bg-gray-900 dark:hover:text-primary;
     }
     .sidebar ul.sub-menu li button.active,
     .sidebar ul.sub-menu li a.active {
-        @apply text-primary before:bg-primary;
+        @apply bg-blue-50 font-semibold text-blue-700 before:bg-blue-600;
     }
 
     .sidebar .nav-item a div:first-child svg,

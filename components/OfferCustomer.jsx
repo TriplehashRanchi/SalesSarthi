@@ -112,9 +112,9 @@ export default function OfferPopupBanner() {
             className="cursor-pointer bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden"
           >
             {/* Background Gradient Animation */}
-            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-pink-500 to-violet-600"></div>
+            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-pink-500 to-blue-600"></div>
             
-            <div className="bg-gradient-to-br from-pink-100 to-violet-100 dark:from-pink-900/30 dark:to-violet-900/30 p-3 rounded-full text-pink-600 dark:text-pink-400 shrink-0">
+            <div className="bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/30 dark:to-blue-900/30 p-3 rounded-full text-pink-600 dark:text-pink-400 shrink-0">
               <IconGift size={24} className="animate-bounce-slow" />
             </div>
 
@@ -146,7 +146,7 @@ export default function OfferPopupBanner() {
           <div className="relative bg-white dark:bg-gray-900 w-full max-w-[550px] rounded-3xl shadow-2xl overflow-hidden animate-scaleIn">
             
             {/* Header */}
-            <div className="relative bg-gradient-to-r from-violet-600 to-pink-500 p-6 text-white overflow-hidden">
+            <div className="relative bg-gradient-to-r from-blue-600 to-pink-500 p-6 text-white overflow-hidden">
                <div className="absolute -right-6 -top-6 text-white/10 rotate-12">
                  <IconSparkles size={120} />
                </div>

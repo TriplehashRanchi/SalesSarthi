@@ -60,7 +60,7 @@ export default function TeamKpi({ basePath }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Calls made" value={total.calls} sub={`${members.length} team members`} tone="blue" icon={<IconPhoneCall size={18} />} />
         <StatCard label="Connected" value={total.connected} sub={`${total.rate}% connect rate`} tone="green" icon={<IconPhoneCheck size={18} />} />
-        <StatCard label="Talk time" value={fmtDuration(total.talk)} sub={`${fmtDuration(total.avg)} avg / connected`} tone="violet" icon={<IconClock size={18} />} />
+        <StatCard label="Talk time" value={fmtDuration(total.talk)} sub={`${fmtDuration(total.avg)} avg / connected`} tone="blue" icon={<IconClock size={18} />} />
         <StatCard label="Follow-ups pending" value={total.pending} sub={`${total.overdue} overdue`} tone={total.overdue ? 'red' : 'amber'} icon={<IconCalendarDue size={18} />} />
       </div>
 

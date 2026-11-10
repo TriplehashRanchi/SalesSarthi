@@ -106,7 +106,7 @@ const StatusChart = ({ k }) => {
                                     aria-label={`${s.label}: ${v} leads (${pct(v, k.total)}%)`}
                                 >
                                     {/* hover column wash */}
-                                    <div className={`absolute inset-x-0 bottom-0 top-0 rounded-md bg-violet-100/50 transition-opacity dark:bg-white/5 ${hover === s.key ? 'opacity-100' : 'opacity-0'}`} />
+                                    <div className={`absolute inset-x-0 bottom-0 top-0 rounded-md bg-blue-100/50 transition-opacity dark:bg-white/5 ${hover === s.key ? 'opacity-100' : 'opacity-0'}`} />
                                     <div
                                         className={`relative w-full max-w-[44px] rounded-t-[4px] transition-all duration-700 ease-out ${s.cls} ${dim ? 'opacity-30' : ''}`}
                                         style={{ height: grown ? `${v ? Math.max(h, 2) : 0}%` : '0%' }}
@@ -159,7 +159,6 @@ const Stat = ({ label, value, sub, warn }) => (
 const Card = ({ label, value, sub, tone = 'gray' }) => {
     const tones = {
         gray: 'bg-gray-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100',
-        violet: 'bg-violet-50 text-violet-800 dark:bg-violet-900/30 dark:text-violet-200',
         red: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200',
         green: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-200',
         amber: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
@@ -180,7 +179,7 @@ const VIEWS = [
     { value: 'graph', label: 'Graph', Icon: IconChartBar },
 ];
 const ViewToggle = ({ value, onChange }) => (
-    <div role="radiogroup" aria-label="View" className="inline-flex flex-shrink-0 gap-1 rounded-full bg-violet-50 p-1 dark:bg-gray-800">
+    <div role="radiogroup" aria-label="View" className="inline-flex flex-shrink-0 gap-1 rounded-full bg-blue-50 p-1 dark:bg-gray-800">
         {VIEWS.map(({ value: v, label, Icon }) => {
             const active = value === v;
             return (
@@ -191,8 +190,8 @@ const ViewToggle = ({ value, onChange }) => (
                     aria-checked={active}
                     aria-label={label}
                     onClick={() => onChange(v)}
-                    className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 sm:text-[13px] ${
-                        active ? 'bg-violet-600 text-white shadow-sm shadow-violet-300 dark:shadow-none' : 'text-violet-700/70 hover:bg-white hover:text-violet-700 dark:text-gray-300 dark:hover:bg-gray-700'
+                    className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 sm:text-[13px] ${
+                        active ? 'bg-blue-600 text-white shadow-sm shadow-blue-300 dark:shadow-none' : 'text-blue-700/70 hover:bg-white hover:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-700'
                     }`}
                 >
                     <Icon size={15} />
@@ -204,7 +203,7 @@ const ViewToggle = ({ value, onChange }) => (
 );
 
 const RangePicker = ({ value, onChange }) => (
-    <div role="radiogroup" aria-label="Time range" className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full bg-violet-50 p-1 dark:bg-gray-800" style={{ scrollbarWidth: 'none' }}>
+    <div role="radiogroup" aria-label="Time range" className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full bg-blue-50 p-1 dark:bg-gray-800" style={{ scrollbarWidth: 'none' }}>
         {RANGES.map((r) => {
             const active = value === r.value;
             return (
@@ -214,8 +213,8 @@ const RangePicker = ({ value, onChange }) => (
                     role="radio"
                     aria-checked={active}
                     onClick={() => onChange(r.value)}
-                    className={`flex-shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 sm:px-3.5 sm:text-[13px] ${
-                        active ? 'bg-violet-600 text-white shadow-sm shadow-violet-300 dark:shadow-none' : 'text-violet-700/70 hover:bg-white hover:text-violet-700 dark:text-gray-300 dark:hover:bg-gray-700'
+                    className={`flex-shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 sm:px-3.5 sm:text-[13px] ${
+                        active ? 'bg-blue-600 text-white shadow-sm shadow-blue-300 dark:shadow-none' : 'text-blue-700/70 hover:bg-white hover:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-700'
                     }`}
                 >
                     {r.label}
@@ -279,7 +278,7 @@ export const FolderKpis = ({ folder, userId, reloadKey, title }) => {
                 <button
                     type="button"
                     onClick={() => setOpen((o) => !o)}
-                    className="flex items-center gap-1.5 rounded-md text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                    className="flex items-center gap-1.5 rounded-md text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                 >
                     {open ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                     {title} KPIs
@@ -295,7 +294,7 @@ export const FolderKpis = ({ folder, userId, reloadKey, title }) => {
 
             {open && view === 'cards' && (
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
-                    <Card label="Total leads" value={k.total} tone="violet" />
+                    <Card label="Total leads" value={k.total} tone="blue" />
                     <Card label="Untouched" value={k.untouched} sub={`${pct(k.untouched, k.total)}% not worked`} tone="amber" />
                     <Card label="Hot" value={k.hot} sub={`${pct(k.hot, k.total)}%`} tone="red" />
                     <Card label="Qualified" value={k.qualified} sub={`${pct(k.qualified, k.total)}%`} tone="blue" />

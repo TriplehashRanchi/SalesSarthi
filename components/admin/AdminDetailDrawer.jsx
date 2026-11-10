@@ -7,7 +7,7 @@ import { IconCheck, IconCopy, IconEdit, IconPackage, IconUsers } from '@tabler/i
 import superAdminAxios from '@/utils/superAdminAxios';
 import LeadFolderSupportAccess from '@/components/superadmin/LeadFolderSupportAccess';
 
-const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+const AVATAR_COLORS = ['blue', 'blue', 'orange', 'teal', 'pink', 'green'];
 
 const fmtDate = (v, withTime = false) => {
   if (!v) return '—';
@@ -117,7 +117,7 @@ export default function AdminDetailDrawer({ admin, onClose, onEditPlan, onTeamLi
               <h3 className="truncate text-lg font-semibold">{a.name || '—'}</h3>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <Badge size="sm" variant="light" color={expired ? 'red' : 'green'}>{expired ? 'Expired' : 'Active'}</Badge>
-                <Badge size="sm" variant="light" color="violet">{a.subscription_plan || 'Basic'}</Badge>
+                <Badge size="sm" variant="light" color="blue">{a.subscription_plan || 'Basic'}</Badge>
               </div>
             </div>
             <ActionIcon variant="subtle" onClick={onClose} aria-label="Close" size="lg">
@@ -129,13 +129,13 @@ export default function AdminDetailDrawer({ admin, onClose, onEditPlan, onTeamLi
             <Section title="Contact">
               <Row label="Email">
                 <span className="inline-flex items-center gap-1">
-                  {a.email ? <a href={`mailto:${a.email}`} className="break-all text-violet-600">{a.email}</a> : '—'}
+                  {a.email ? <a href={`mailto:${a.email}`} className="break-all text-blue-600">{a.email}</a> : '—'}
                   <Copyable value={a.email} />
                 </span>
               </Row>
               <Row label="Phone">
                 <span className="inline-flex items-center gap-1">
-                  {a.phone ? <a href={`tel:${a.phone}`} className="text-violet-600">{a.phone}</a> : '—'}
+                  {a.phone ? <a href={`tel:${a.phone}`} className="text-blue-600">{a.phone}</a> : '—'}
                   <Copyable value={a.phone} />
                 </span>
               </Row>
@@ -220,7 +220,7 @@ export default function AdminDetailDrawer({ admin, onClose, onEditPlan, onTeamLi
 
           {/* Actions */}
           <div className="grid shrink-0 grid-cols-3 gap-2 border-t border-gray-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-gray-800">
-            <Button variant="light" color="violet" size="xs" leftIcon={<IconEdit size={14} />} onClick={() => onEditPlan(admin)}>
+            <Button variant="light" color="blue" size="xs" leftIcon={<IconEdit size={14} />} onClick={() => onEditPlan(admin)}>
               Edit plan
             </Button>
             <Button variant="light" color="teal" size="xs" leftIcon={<IconUsers size={14} />} onClick={() => onTeamLimit(admin)}>

@@ -633,13 +633,13 @@ const ReportingDashboard = () => {
                 </div>
 
                 {/* Conversions */}
-                <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 dark:from-violet-700 dark:to-violet-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
+                <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 dark:from-blue-700 dark:to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between h-[120px]">
                     <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/30 text-white">
                             <IconSquareCheck className="h-5 w-5" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-violet-100">{dashboardData.customerConversions}</p>
+                            <p className="text-2xl font-bold text-blue-100">{dashboardData.customerConversions}</p>
                             <p className="text-xs opacity-90">Conversions</p>
                         </div>
                     </div>
@@ -785,7 +785,7 @@ const ReportingDashboard = () => {
                         {[
                             { href: '/automation', label: 'WhatsApp', Icon: IconBrandWhatsapp, bg: 'bg-green-50', color: 'text-green-500' },
                             { href: '/emails', label: 'Emails', Icon: IconMail, bg: 'bg-blue-50', color: 'text-blue-600' },
-                            { href: '/adduser', label: 'Add Team', Icon: IconUserPlus, bg: 'bg-violet-50', color: 'text-violet-600' },
+                            { href: '/adduser', label: 'Add Team', Icon: IconUserPlus, bg: 'bg-blue-50', color: 'text-blue-600' },
                             { href: '/view-user', label: 'My Team', Icon: IconUsers, bg: 'bg-slate-100', color: 'text-slate-600' },
                         ].map((item) => (
                             <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1.5">
@@ -821,7 +821,7 @@ const ReportingDashboard = () => {
                             { href: '/history',          label: 'Business kundali History',   description: '',                          Icon: IconFileAnalytics, bg: 'bg-orange-50', color: 'text-orange-400' },
                         ] : []),
                         ...(hasRag ? [
-                            { href: '/agentDashboard',   label: 'RAG System',                 description: 'AI-powered knowledge base', Icon: IconRobot,        bg: 'bg-violet-50',  color: 'text-violet-600' },
+                            { href: '/agentDashboard',   label: 'RAG System',                 description: 'AI-powered knowledge base', Icon: IconRobot,        bg: 'bg-blue-50',  color: 'text-blue-600' },
                             { href: '/policy-review',       label: 'Policy Review',              description: 'AI policy analysis',        Icon: IconFileAnalytics, bg: 'bg-blue-50',   color: 'text-blue-500', disabled: true },
                         ] : []),
                     ];
@@ -839,7 +839,7 @@ const ReportingDashboard = () => {
                             <div className="mb-3 flex items-center gap-2">
                                 <h3 className="text-[0.95rem] font-bold text-slate-900">Premium Tools</h3>
                                 {hasSuperAdvance ? (
-                                    <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-[10px] font-bold text-white">Super Advance</span>
+                                    <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-bold text-white">Super Advance</span>
                                 ) : (
                                     <span className="rounded-full bg-green-500 px-2.5 py-0.5 text-[10px] font-bold text-white">Advance</span>
                                 )}
@@ -866,7 +866,7 @@ const ReportingDashboard = () => {
                     const lockedTools = [
                         { label: 'Financial Kundali',  description: 'Deep financial profiling',  Icon: IconCash,          bg: 'bg-yellow-50',  color: 'text-yellow-600', hasIt: hasFinancial },
                         { label: 'Business kundali',   description: 'Business health analysis',  Icon: IconBolt,          bg: 'bg-orange-50',  color: 'text-orange-500', hasIt: hasBusiness  },
-                        { label: 'RAG System',         description: 'AI-powered knowledge base', Icon: IconRobot,         bg: 'bg-violet-50',  color: 'text-violet-600', hasIt: hasRag       },
+                        { label: 'RAG System',         description: 'AI-powered knowledge base', Icon: IconRobot,         bg: 'bg-blue-50',  color: 'text-blue-600', hasIt: hasRag       },
                         { label: 'Policy Review',      description: 'AI policy analysis',        Icon: IconFileAnalytics, bg: 'bg-blue-50',    color: 'text-blue-500',   hasIt: false        },
                     ].filter((t) => !t.hasIt);
 

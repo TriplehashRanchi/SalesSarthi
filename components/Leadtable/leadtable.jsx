@@ -43,6 +43,7 @@ import LeadImportModal from '@/components/CsvUpload/LeadImportModal';
 import { DeleteFolderModal, EmptyFolderState, FolderNameModal, FolderTabs, MoveReportModal, ReorderFoldersModal } from './FolderUI';
 import LeadDetailView from './LeadDetailView';
 import { FolderKpis } from './LeadKpis';
+import SortSelect from './SortSelect';
 import { useLeadList, useDebounced, fetchLeadExport } from './useLeadList';
 import { fetchFolders, createFolder, renameFolder, deleteFolder, reorderFolders, moveLeadsWithReport, folderIdOf } from './leadFolders';
 
@@ -626,7 +627,7 @@ const LeadTable = ({ profile, userId }) => {
     const pressTimer = useRef(null);
     const longPressed = useRef(false);
     const sentinelRef = useRef(null);
-    const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+    const AVATAR_COLORS = ['blue', 'cyan', 'orange', 'teal', 'pink', 'green'];
     const colorFor = (name) => AVATAR_COLORS[((name || '?').trim().charCodeAt(0) || 0) % AVATAR_COLORS.length];
     const statusColor = (st) =>
         st === 'Hot Lead' ? 'red' : st === 'Cold Lead' ? 'blue' : st === 'Qualified Lead' ? 'green' : st === 'Lost Lead' ? 'gray' : st === 'Follow-up' ? 'lime' : st === 'Fin Health Checkup Done' ? 'teal' : 'orange';
@@ -683,7 +684,7 @@ const LeadTable = ({ profile, userId }) => {
     };
 
     const bulkBar = (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 dark:bg-gray-800">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 dark:bg-gray-800">
             <Text size="sm" weight={600}>{selectedLeads.length} selected</Text>
             {teamMembers.length > 0 && (
                 <>
@@ -698,7 +699,7 @@ const LeadTable = ({ profile, userId }) => {
                         radius="xl"
                         style={{ minWidth: 170 }}
                     />
-                    <Button size="xs" radius="xl" color="violet" onClick={() => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
+                    <Button size="xs" radius="xl" color="blue" onClick={() => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
                         Assign
                     </Button>
                 </>
@@ -774,7 +775,7 @@ const LeadTable = ({ profile, userId }) => {
                         })}
                     />
                     {dragIds.length > 0 && (
-                        <p className="-mt-2 mb-3 text-xs font-medium text-violet-600">Drop on a folder to move {dragIds.length} lead{dragIds.length === 1 ? '' : 's'}</p>
+                        <p className="-mt-2 mb-3 text-xs font-medium text-blue-600">Drop on a folder to move {dragIds.length} lead{dragIds.length === 1 ? '' : 's'}</p>
                     )}
                 </>
             )}
@@ -828,14 +829,15 @@ const LeadTable = ({ profile, userId }) => {
                         style={{ minWidth: 200 }}
                     />
                 )}
+                <SortSelect sortStatus={sortStatus} onChange={setSortStatus} style={{ minWidth: 210 }} />
                 <div className="ml-auto flex items-center gap-2">
-                    <Button variant="light" color="violet" radius="xl" leftIcon={<IconUpload size={16} />} onClick={() => setCsvOpen(true)}>
+                    <Button variant="light" color="blue" radius="xl" leftIcon={<IconUpload size={16} />} onClick={() => setCsvOpen(true)}>
                         Upload CSV
                     </Button>
-                    <Button variant="subtle" color="violet" radius="xl" leftIcon={<IconHistory size={16} />} onClick={() => router.push('/leadtable/import-history')}>
+                    <Button variant="subtle" color="blue" radius="xl" leftIcon={<IconHistory size={16} />} onClick={() => router.push('/leadtable/import-history')}>
                         Import History
                     </Button>
-                    <Button variant="light" color="violet" radius="xl" leftIcon={<IconDownload size={16} />} onClick={exportCSV}>
+                    <Button variant="light" color="blue" radius="xl" leftIcon={<IconDownload size={16} />} onClick={exportCSV}>
                         Export
                     </Button>
                 </div>
@@ -892,20 +894,21 @@ const LeadTable = ({ profile, userId }) => {
                         />
                     )}
                 </div>
+                <SortSelect sortStatus={sortStatus} onChange={setSortStatus} className="mb-2" />
                 <div className="flex items-center py-1">
-                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconBrandFacebook size={18} />} onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
+                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconBrandFacebook size={18} />} onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
                         Facebook
                     </Button>
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconUpload size={18} />} onClick={() => setCsvOpen(true)}>
+                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconUpload size={18} />} onClick={() => setCsvOpen(true)}>
                         Upload CSV
                     </Button>
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconHistory size={18} />} onClick={() => router.push('/leadtable/import-history')}>
+                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconHistory size={18} />} onClick={() => router.push('/leadtable/import-history')}>
                         History
                     </Button>
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconDownload size={18} />} onClick={exportCSV}>
+                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={exportCSV}>
                         Export
                     </Button>
                 </div>
@@ -916,7 +919,7 @@ const LeadTable = ({ profile, userId }) => {
             )}
 
             {/* table */}
-            <div className={`datatables hidden dark:bg-gray-800 dark:text-gray-200 ${folderIsEmpty ? '' : 'md:block'} [&_table]:!w-full [&_table]:!min-w-0 [&_table]:table-fixed [&_thead]:!bg-transparent [&_th]:!border-b [&_th]:!border-gray-200 [&_th]:!bg-transparent [&_th]:!py-3 [&_th]:!text-xs [&_th]:!font-semibold [&_th]:!uppercase [&_th]:!tracking-wide [&_th]:!text-gray-500 [&_td]:!border-gray-100 [&_tbody_tr:hover]:!bg-violet-50/60 [&_tbody_tr]:!bg-transparent`}>
+            <div className={`datatables hidden dark:bg-gray-800 dark:text-gray-200 ${folderIsEmpty ? '' : 'md:block'} [&_table]:!w-full [&_table]:!min-w-0 [&_table]:table-fixed [&_thead]:!bg-transparent [&_th]:!border-b [&_th]:!border-gray-200 [&_th]:!bg-transparent [&_th]:!py-3 [&_th]:!text-xs [&_th]:!font-semibold [&_th]:!uppercase [&_th]:!tracking-wide [&_th]:!text-gray-500 [&_td]:!border-gray-100 [&_tbody_tr:hover]:!bg-blue-50/60 [&_tbody_tr]:!bg-transparent`}>
                 <DataTable
                     // className="dark:bg-gray-800 dark:text-gray-100"
                     highlightOnHover
@@ -925,7 +928,7 @@ const LeadTable = ({ profile, userId }) => {
                     className="whitespace-nowrap"
                     onRowClick={(record) => setViewLeadId(record.id)}
                     rowStyle={() => ({ cursor: 'pointer' })}
-                    paginationColor="violet"
+                    paginationColor="blue"
                     records={recordsData}
                     columns={[
                         {
@@ -1325,7 +1328,7 @@ const LeadTable = ({ profile, userId }) => {
 
                             {!selectionMode && (
                                 <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
-                                    <ActionIcon size="xl" variant="subtle" color="violet" aria-label="Call" onClick={() => callLead(record)}>
+                                    <ActionIcon size="xl" variant="subtle" color="blue" aria-label="Call" onClick={() => callLead(record)}>
                                         <IconPhoneCall size={24} />
                                     </ActionIcon>
                                     <ActionIcon size="xl" variant="subtle" color="green" aria-label="WhatsApp" onClick={() => openWhatsApp(record)}>

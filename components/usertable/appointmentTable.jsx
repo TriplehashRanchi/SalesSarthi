@@ -158,7 +158,7 @@ const AppointmentTable = () => {
         const name = appointment.full_name || appointment.appointment_type || 'Appointment';
         return (
             <div className="flex items-start gap-3 border-b border-gray-200 py-3 last:border-b-0 dark:border-gray-700">
-                <Avatar color="violet" variant="light" radius="xl" size="lg">{name.trim().charAt(0).toUpperCase()}</Avatar>
+                <Avatar color="blue" variant="light" radius="xl" size="lg">{name.trim().charAt(0).toUpperCase()}</Avatar>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                         <Text weight={500} lineClamp={1} className="dark:text-white">{name}</Text>
@@ -195,7 +195,7 @@ const AppointmentTable = () => {
                 </Alert>
             )}
 
-            <Tabs value={activeTab} onTabChange={handleTabChange} variant="pills" radius="xl" color="violet">
+            <Tabs value={activeTab} onTabChange={handleTabChange} variant="pills" radius="xl" color="blue">
                 <div className="pb-1">
                     <Tabs.List
                         sx={{
@@ -232,7 +232,7 @@ const AppointmentTable = () => {
                         {upcomingAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No upcoming appointments</Text>}
                     </div>
                     <div className="hidden md:block">
-                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedUpcoming} columns={commonColumns} totalRecords={upcomingAppointments.length} recordsPerPage={upcomingPageSize} page={upcomingPage} onPageChange={setUpcomingPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setUpcomingPageSize, setUpcomingPage)} sortStatus={upcomingSortStatus} onSortStatusChange={setUpcomingSortStatus} minHeight={120} paginationColor="violet" noRecordsText="No upcoming appointments found" fetching={loading} />
+                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedUpcoming} columns={commonColumns} totalRecords={upcomingAppointments.length} recordsPerPage={upcomingPageSize} page={upcomingPage} onPageChange={setUpcomingPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setUpcomingPageSize, setUpcomingPage)} sortStatus={upcomingSortStatus} onSortStatusChange={setUpcomingSortStatus} minHeight={120} paginationColor="blue" noRecordsText="No upcoming appointments found" fetching={loading} />
                     </div>
                 </Tabs.Panel>
 
@@ -243,7 +243,7 @@ const AppointmentTable = () => {
                          {completedAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No completed appointments</Text>}
                     </div>
                     <div className="hidden md:block">
-                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedCompleted} columns={commonColumns} totalRecords={completedAppointments.length} recordsPerPage={completedPageSize} page={completedPage} onPageChange={setCompletedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setCompletedPageSize, setCompletedPage)} sortStatus={completedSortStatus} onSortStatusChange={setCompletedSortStatus} minHeight={120} paginationColor="violet" noRecordsText="No completed appointments found" fetching={loading} />
+                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedCompleted} columns={commonColumns} totalRecords={completedAppointments.length} recordsPerPage={completedPageSize} page={completedPage} onPageChange={setCompletedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setCompletedPageSize, setCompletedPage)} sortStatus={completedSortStatus} onSortStatusChange={setCompletedSortStatus} minHeight={120} paginationColor="blue" noRecordsText="No completed appointments found" fetching={loading} />
                     </div>
                 </Tabs.Panel>
 
@@ -254,7 +254,7 @@ const AppointmentTable = () => {
                          {pastMissedAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No past or missed appointments</Text>}
                     </div>
                     <div className="hidden md:block">
-                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedPastMissed} columns={commonColumns} totalRecords={pastMissedAppointments.length} recordsPerPage={pastMissedPageSize} page={pastMissedPage} onPageChange={setPastMissedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setPastMissedPageSize, setPastMissedPage)} sortStatus={pastMissedSortStatus} onSortStatusChange={setPastMissedSortStatus} minHeight={120} paginationColor="violet" noRecordsText="No past due or missed appointments found" fetching={loading} />
+                        <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedPastMissed} columns={commonColumns} totalRecords={pastMissedAppointments.length} recordsPerPage={pastMissedPageSize} page={pastMissedPage} onPageChange={setPastMissedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setPastMissedPageSize, setPastMissedPage)} sortStatus={pastMissedSortStatus} onSortStatusChange={setPastMissedSortStatus} minHeight={120} paginationColor="blue" noRecordsText="No past due or missed appointments found" fetching={loading} />
                     </div>
                 </Tabs.Panel>
             </Tabs>

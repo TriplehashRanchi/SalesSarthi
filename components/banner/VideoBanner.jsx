@@ -71,7 +71,7 @@
     const TILE_STYLES = [
     'bg-blue-50 border-blue-100 hover:bg-blue-100 hover:border-blue-300',
     'bg-amber-50 border-amber-100 hover:bg-amber-100 hover:border-amber-300',
-    'bg-violet-50 border-violet-100 hover:bg-violet-100 hover:border-violet-300',
+    'bg-blue-50 border-blue-100 hover:bg-blue-100 hover:border-blue-300',
     'bg-pink-50 border-pink-100 hover:bg-pink-100 hover:border-pink-300',
     'bg-teal-50 border-teal-100 hover:bg-teal-100 hover:border-teal-300',
     'bg-orange-50 border-orange-100 hover:bg-orange-100 hover:border-orange-300',
@@ -79,7 +79,7 @@
     'bg-rose-50 border-rose-100 hover:bg-rose-100 hover:border-rose-300',
     ];
 
-    const TILE_BASE = 'flex min-h-[116px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 active:translate-y-0 active:scale-95 sm:min-h-[140px] sm:p-6';
+    const TILE_BASE = 'flex min-h-[116px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 active:translate-y-0 active:scale-95 sm:min-h-[140px] sm:p-6';
 
     const Tile = ({ icon, label, index, onClick }) => (
     <button onClick={onClick} className={`${TILE_BASE} ${TILE_STYLES[index % TILE_STYLES.length]}`}>
@@ -230,7 +230,7 @@
                     fullWidth
                     size="xs"
                     variant="light"
-                    color="violet"
+                    color="blue"
                     onClick={() => handleVideoDownload(video)}
                 >
                     Download

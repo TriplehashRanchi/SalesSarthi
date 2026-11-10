@@ -98,7 +98,7 @@ const LinkedFinHealthCheckups = ({ type, entity, doctorName = '' }) => {
                     <IconHeartbeat size={18} />
                     <Text weight={600}>Fin-Health Checkup</Text>
                 </Group>
-                <Button size="xs" variant="light" color="violet" leftIcon={<IconPlus size={14} />} onClick={createNew}>
+                <Button size="xs" variant="light" color="blue" leftIcon={<IconPlus size={14} />} onClick={createNew}>
                     New
                 </Button>
             </Group>
@@ -117,7 +117,7 @@ const LinkedFinHealthCheckups = ({ type, entity, doctorName = '' }) => {
                 <>
                     {checkups.slice(0, PREVIEW).map(row)}
                     {checkups.length > PREVIEW && (
-                        <Button fullWidth mt="xs" size="xs" variant="light" color="violet" onClick={() => setShowAll(true)}>
+                        <Button fullWidth mt="xs" size="xs" variant="light" color="blue" onClick={() => setShowAll(true)}>
                             View all ({checkups.length})
                         </Button>
                     )}

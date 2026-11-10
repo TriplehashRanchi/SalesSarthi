@@ -28,7 +28,7 @@ const PLANET_THEMES = {
   CHANDRA: { label: 'Chandra',name: 'Client Behaviour Graha', trait: 'Engagement', icon: '🌙', color: '#94A3B8', bg: 'bg-slate-500/10', border: 'border-slate-500/20' },
   BUDHA: { label: 'Budha', name: 'Client Behaviour Graha', trait: 'Positioning', icon: '☿', color: '#10B981', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
   MANGAL: { label: 'Mangal', name: 'Competition Graha', trait: 'Execution', icon: '♂', color: '#EF4444', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-  SHANI: { label: 'Shani', name: 'Technology Graha', trait: 'Systems', icon: '♄', color: '#8B5CF6', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+  SHANI: { label: 'Shani', name: 'Technology Graha', trait: 'Systems', icon: '♄', color: '#8B5CF6', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
   GURU: { label: 'Guru', name: 'Compliance Graha', trait: 'Process', icon: '♃', color: '#EAB308', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
   SHUKRA: { label: 'Shukra', name: 'Branding and Social Media Graha', trait: 'Branding', icon: '♀', color: '#EC4899', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
 };

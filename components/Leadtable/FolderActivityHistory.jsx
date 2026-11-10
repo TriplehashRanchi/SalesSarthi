@@ -43,8 +43,8 @@ export const ACTIVITY = {
     folder_created: { label: 'Folder Created', color: 'green', icon: IconFolderPlus },
     folder_renamed: { label: 'Folder Renamed', color: 'blue', icon: IconPencil },
     lead_added: { label: 'Lead Added', color: 'teal', icon: IconUserPlus },
-    lead_moved: { label: 'Lead Moved', color: 'violet', icon: IconArrowsExchange },
-    bulk_moved: { label: 'Bulk Movement', color: 'indigo', icon: IconStack2 },
+    lead_moved: { label: 'Lead Moved', color: 'cyan', icon: IconArrowsExchange },
+    bulk_moved: { label: 'Bulk Movement', color: 'orange', icon: IconStack2 },
     folder_deleted: { label: 'Folder Deleted', color: 'red', icon: IconTrash },
 };
 // Static class names (Tailwind only keeps classes it can see written out in full).
@@ -52,8 +52,8 @@ const DOT = {
     green: 'ring-green-300 text-green-600',
     blue: 'ring-blue-300 text-blue-600',
     teal: 'ring-teal-300 text-teal-600',
-    violet: 'ring-violet-300 text-violet-600',
-    indigo: 'ring-indigo-300 text-indigo-600',
+    cyan: 'ring-cyan-300 text-cyan-600',
+    orange: 'ring-orange-300 text-orange-600',
     red: 'ring-red-300 text-red-600',
     gray: 'ring-gray-300 text-gray-600',
 };
@@ -238,7 +238,7 @@ const FolderActivityHistory = ({ backHref }) => {
                 </ActionIcon>
                 <div className="min-w-0 flex-1">
                     <h1 className="flex items-center gap-2 text-xl font-bold leading-tight sm:text-2xl">
-                        <IconTimeline size={22} className="text-violet-600" /> Folder Activity
+                        <IconTimeline size={22} className="text-blue-600" /> Folder Activity
                     </h1>
                     <p className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                         <IconLock size={13} /> Private to you · cannot be edited
@@ -349,7 +349,7 @@ const FolderActivityHistory = ({ backHref }) => {
                                 <span className={`absolute -left-[27px] top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-2 dark:bg-gray-900 ${DOT[a.color] || DOT.gray}`}>
                                     <Icon size={12} />
                                 </span>
-                                <div className={`rounded-xl border p-3 ${selected.includes(r.id) ? 'border-violet-400 bg-violet-50/60 dark:bg-gray-800' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'}`}>
+                                <div className={`rounded-xl border p-3 ${selected.includes(r.id) ? 'border-blue-400 bg-blue-50/60 dark:bg-gray-800' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'}`}>
                                     <div className="flex items-start gap-2">
                                         <Checkbox size="xs" mt={2} checked={selected.includes(r.id)} onChange={() => toggle(r.id)} aria-label="Select activity" />
                                         <div className="min-w-0 flex-1">

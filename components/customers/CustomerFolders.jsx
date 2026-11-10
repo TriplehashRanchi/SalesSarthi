@@ -11,7 +11,7 @@ import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
 import { fetchFolderCustomers, removeFromFolder, saveFolderResponse, useCustomerFolders } from './customerFolderApi';
 
 const RESPONSE_SUGGESTIONS = ['Interested', 'Not Interested', 'Call Back', 'Purchased', 'Renewal Due', 'Documents Pending'];
-const AVATAR_COLORS = ['violet', 'blue', 'orange', 'teal', 'pink', 'green'];
+const AVATAR_COLORS = ['blue', 'blue', 'orange', 'teal', 'pink', 'green'];
 const PAGE_SIZES = [10, 20, 30, 50, 100];
 
 const formatDate = (v) => {
@@ -87,7 +87,7 @@ function ResponseField({ row, folderId, editable, onSaved }) {
         setEditing(true);
       }}
       className={`group inline-flex max-w-[220px] items-center gap-1.5 truncate rounded-md text-sm ${
-        row.response ? 'text-gray-800 dark:text-white-light' : 'text-violet-600'
+        row.response ? 'text-gray-800 dark:text-white-light' : 'text-blue-600'
       }`}
     >
       {row.response ? (
@@ -253,14 +253,14 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <CustomerFolderSelect className="w-52" />
           {isAdmin && (
-            <Button variant="light" color="violet" leftIcon={<IconUpload size={16} />} onClick={() => setCsvOpen(true)}>
+            <Button variant="light" color="blue" leftIcon={<IconUpload size={16} />} onClick={() => setCsvOpen(true)}>
               Upload CSV
             </Button>
           )}
-          <Button variant="light" color="violet" leftIcon={<IconDownload size={16} />} onClick={exportCsv}>
+          <Button variant="light" color="blue" leftIcon={<IconDownload size={16} />} onClick={exportCsv}>
             Export
           </Button>
-          <Button color="violet" leftIcon={<IconPlus size={16} />} onClick={addCustomer}>
+          <Button color="blue" leftIcon={<IconPlus size={16} />} onClick={addCustomer}>
             Add Customer
           </Button>
         </div>
@@ -340,19 +340,19 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
         </div>
 
         <div className="mb-2 flex items-center py-2">
-          <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconPlus size={18} />} onClick={addCustomer}>
+          <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconPlus size={18} />} onClick={addCustomer}>
             Add
           </Button>
           {isAdmin && (
             <>
               <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-              <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconUpload size={18} />} onClick={() => setCsvOpen(true)}>
+              <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconUpload size={18} />} onClick={() => setCsvOpen(true)}>
                 Upload CSV
               </Button>
             </>
           )}
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-          <Button className="flex-1" variant="subtle" color="violet" leftIcon={<IconDownload size={18} />} onClick={exportCsv}>
+          <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={exportCsv}>
             Export
           </Button>
         </div>
@@ -394,7 +394,7 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
           size={56}
           radius="xl"
           variant="filled"
-          color="violet"
+          color="blue"
           className="shadow-lg"
           style={{ position: 'fixed', right: 'max(16px, env(safe-area-inset-right))', bottom: 'calc(80px + env(safe-area-inset-bottom))', zIndex: 50 }}
           onClick={addCustomer}
