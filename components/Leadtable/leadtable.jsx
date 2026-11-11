@@ -39,6 +39,7 @@ import IconFacebook from '@/components/icon/icon-facebook';
 import IconPencil from '../icon/icon-pencil';
 
 import FollowupForm from '@/components/forms/followupform';
+import BulkAssignModal from '@/components/assign/BulkAssignModal';
 import LeadImportModal from '@/components/CsvUpload/LeadImportModal';
 import { DeleteFolderModal, EmptyFolderState, FolderNameModal, FolderTabs, MoveReportModal, ReorderFoldersModal } from './FolderUI';
 import LeadDetailView from './LeadDetailView';
@@ -317,40 +318,31 @@ const LeadTable = ({ profile, userId }) => {
     }, [totalFilteredRecords, pageSize, page]);
 
     // place this just after fetchTeamMembers (or anywhere before return)
-    // ───────── assign selected leads to a team member ─────────
-    const assignLeads = async () => {
-        if (!selectedTeamMember) {
-            alert('Please select a team member.');
-            return;
-        }
-        if (!selectedLeads.length) {
-            alert('No leads selected.');
-            return;
-        }
-
+    // ───────── assign selected leads: one person / equal split / percentage split ─────────
+    const [assignOpen, setAssignOpen] = useState(false);
+    const assignLeads = async (plan) => {
         try {
             const auth = getAuth();
             const user = auth.currentUser;
-            if (!user) throw new Error('User not authenticated.');
+            if (!user) throw new Error('Please sign in again.');
             const token = await user.getIdToken();
 
+            const body = plan.mode === 'single' ? { user_id: plan.members[0].user_id, leads: selectedLeads } : { distribution: plan, leads: selectedLeads };
             const res = await fetch(`${API_URL}/api/admin/assign`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ user_id: selectedTeamMember, leads: selectedLeads }),
+                body: JSON.stringify(body),
             });
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.message || 'Failed to assign leads.');
-            }
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || 'Could not assign the leads. Please try again.');
 
-            showNotification({ title: 'Success', message: 'Leads assigned successfully', color: 'green' });
+            showNotification({ title: 'Leads assigned', message: `${data.assigned ?? selectedLeads.length} lead(s) assigned.`, color: 'green' });
             setSelectedLeads([]);
-            setSelectedTM(null);
-            fetchLeads(); // refresh list silently
+            fetchLeads();
         } catch (err) {
             console.error(err);
-            showNotification({ title: 'Error', message: err.message, color: 'red' });
+            showNotification({ title: 'Could not assign', message: err.message, color: 'red' });
+            throw err;
         }
     };
 
@@ -688,19 +680,8 @@ const LeadTable = ({ profile, userId }) => {
             <Text size="sm" weight={600}>{selectedLeads.length} selected</Text>
             {teamMembers.length > 0 && (
                 <>
-                    <Select
-                        data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
-                        value={selectedTeamMember}
-                        onChange={setSelectedTM}
-                        placeholder="Assign to..."
-                        searchable
-                        clearable
-                        size="xs"
-                        radius="xl"
-                        style={{ minWidth: 170 }}
-                    />
-                    <Button size="xs" radius="xl" color="blue" onClick={() => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
-                        Assign
+                    <Button size="xs" radius="xl" color="blue" leftIcon={<IconUserCheck size={14} />} onClick={() => setAssignOpen(true)} disabled={!selectedLeads.length}>
+                        Assign…
                     </Button>
                 </>
             )}
@@ -1529,11 +1510,14 @@ const LeadTable = ({ profile, userId }) => {
                 }}
             />
 
+            <BulkAssignModal opened={assignOpen} onClose={() => setAssignOpen(false)} teamMembers={teamMembers} count={selectedLeads.length} onSubmit={assignLeads} />
+
             {/* csv import */}
             <LeadImportModal
                 opened={csvOpen}
                 onClose={() => setCsvOpen(false)}
                 folders={folders}
+                teamMembers={teamMembers}
                 defaultFolderId={typeof activeFolder === 'number' ? activeFolder : null}
                 historyHref="/leadtable/import-history"
                 onDone={() => {

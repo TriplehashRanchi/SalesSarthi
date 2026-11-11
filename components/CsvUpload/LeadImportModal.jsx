@@ -15,6 +15,7 @@ import Papa from 'papaparse';
 import Link from 'next/link';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import AssignPicker, { EMPTY_ASSIGN, assignError, toPayload } from '@/components/assign/AssignPicker';
 import { importCheck, importCommit, errorMessage } from '@/components/Leadtable/leadFolders';
 
 const REQUIRED_HEADERS = ['full_name', 'phone_number'];
@@ -54,7 +55,8 @@ const matchText = (dup, m) =>
         .join(' · ');
 
 // historyHref: where "View Import History" goes after an import.
-const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, onCreateFolder, historyHref }) => {
+// teamMembers: [{ id, username, role }] the user may assign to (admin / manager). Empty = no assign option.
+const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, onCreateFolder, historyHref, teamMembers = [] }) => {
     const isPhone = useMediaQuery('(max-width: 639px)');
     const [step, setStep] = useState('pick'); // pick | review | done
     const [file, setFile] = useState(null);
@@ -66,6 +68,8 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
     const [busy, setBusy] = useState(false);
     const [confirmReplace, setConfirmReplace] = useState(false);
     const [summary, setSummary] = useState(null);
+    const [assignOn, setAssignOn] = useState(false);
+    const [assignVal, setAssignVal] = useState(EMPTY_ASSIGN);
 
     const reset = () => {
         setStep('pick');
@@ -77,6 +81,8 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
         setBusy(false);
         setConfirmReplace(false);
         setSummary(null);
+        setAssignOn(false);
+        setAssignVal(EMPTY_ASSIGN);
     };
 
     useEffect(() => {
@@ -154,7 +160,8 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
     }, [decisions, dupByIndex]);
 
     const folderName = folders.find((f) => String(f.id) === folderId)?.name;
-    const canImport = !!folderId && counts.needsPick === 0 && !busy;
+    const assignOk = !assignOn || !assignError(assignVal);
+    const canImport = !!folderId && counts.needsPick === 0 && assignOk && !busy;
 
     /* ───── step 3: import ───── */
     const runImport = async () => {
@@ -165,6 +172,7 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
                 rows,
                 folder_id: Number(folderId),
                 file_name: file?.name,
+                assignment: assignOn ? toPayload(assignVal) : undefined,
                 fields, // column order for the stored error report
                 file_text: await file.text().catch(() => ''), // original CSV, kept 30 days in Import History
                 decisions: Object.entries(decisions).map(([row_index, d]) => ({ row_index: Number(row_index), action: d.action, target_id: d.target_id })),
@@ -274,6 +282,25 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
                             )}
                         </div>
 
+                        {/* assign / distribute */}
+                        {teamMembers.length > 0 && (
+                            <div className="mb-4">
+                                <Text size="sm" weight={500} mb={4}>Assign new leads</Text>
+                                <SegmentedControl
+                                    fullWidth
+                                    size="xs"
+                                    value={assignOn ? 'yes' : 'no'}
+                                    onChange={(v) => setAssignOn(v === 'yes')}
+                                    data={[{ value: 'no', label: "Don't assign" }, { value: 'yes', label: 'Assign to team' }]}
+                                />
+                                {assignOn && (
+                                    <div className="mt-2">
+                                        <AssignPicker value={assignVal} onChange={setAssignVal} teamMembers={teamMembers} total={check.new_count} />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {check.invalid.length > 0 && (
                             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
                                 {check.invalid.length} row{check.invalid.length === 1 ? '' : 's'} have missing or invalid data and will be skipped. An error report with their original data and the reason will download automatically after the import.
@@ -359,6 +386,7 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
                                 <tbody>
                                     <tr><td>Total uploaded</td><td className="text-right font-semibold">{summary.total}</td></tr>
                                     <tr><td>Successfully imported</td><td className="text-right font-semibold text-green-600">{summary.imported}</td></tr>
+                                    {summary.assigned > 0 && <tr><td>Assigned to team</td><td className="text-right font-semibold">{summary.assigned}</td></tr>}
                                     <tr><td>Existing leads updated</td><td className="text-right font-semibold">{summary.updated}</td></tr>
                                     <tr><td>Existing leads deleted & replaced</td><td className="text-right font-semibold">{summary.deleted}</td></tr>
                                     <tr><td>Duplicates skipped</td><td className="text-right font-semibold">{summary.skipped_duplicates}</td></tr>

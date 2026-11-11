@@ -29,6 +29,7 @@ import SortSelect from '@/components/Leadtable/SortSelect';
 import { usePersonalFolders, PersonalFolderBar, MoveToFolderItems } from '@/components/Leadtable/PersonalFolders';
 
 import { getAuth } from 'firebase/auth';
+import BulkAssignModal from '@/components/assign/BulkAssignModal';
 import IconChecks from '../icon/icon-checks';
 import IconClock from '../icon/icon-clock';
 import IconX from '../icon/icon-x';
@@ -52,7 +53,7 @@ const LeadTable = ({ userId }) => {
 
   const [teamMembers, setTeamMembers]         = useState([]);
   const [selectedLeads, setSelectedLeads]     = useState([]);
-  const [selectedTeamMember, setSelectedTM]   = useState(null);
+  const [assignOpen, setAssignOpen]             = useState(false);
 
   const [csvOpen, setCsvOpen] = useState(false);
 
@@ -97,6 +98,29 @@ const LeadTable = ({ userId }) => {
 
   const router   = useRouter();
   const API_URL  = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  // Assign selected leads: one person / equal split / percentage split.
+  const assignLeads = async (plan) => {
+    try {
+      const user = getAuth().currentUser;
+      if (!user) throw new Error('Please sign in again.');
+      const token = await user.getIdToken();
+      const body = plan.mode === 'single' ? { user_id: plan.members[0].user_id, leads: selectedLeads } : { distribution: plan, leads: selectedLeads };
+      const res = await fetch(`${API_URL}/api/admin/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not assign the leads. Please try again.');
+      showNotification({ title: 'Leads assigned', message: `${data.assigned ?? selectedLeads.length} lead(s) assigned.`, color: 'green' });
+      setSelectedLeads([]);
+      fetchLeads();
+    } catch (err) {
+      showNotification({ title: 'Could not assign', message: err.message, color: 'red' });
+      throw err;
+    }
+  };
 
   const statusOptions = [
     { value: 'Cold Lead',      label: 'Cold Lead' },
@@ -400,17 +424,8 @@ function formatDateWithOrdinal(dateString) {
           {/* assign dropdown */}
           {teamMembers.length > 0 && (
               <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
-                  <Select
-                      data={teamMembers.map((u) => ({ value: u.id.toString(), label: `${u.username} (${u.role})` }))}
-                      value={selectedTeamMember}
-                      onChange={setSelectedTM}
-                      placeholder="Assign selected to..."
-                      searchable
-                      clearable
-                      style={{ minWidth: '200px' }}
-                  />
-                  <Button onClick={/* assignLeads */ () => assignLeads()} disabled={!selectedTeamMember || !selectedLeads.length}>
-                      Assign ({selectedLeads.length})
+                  <Button onClick={() => setAssignOpen(true)} disabled={!selectedLeads.length}>
+                      Assign… ({selectedLeads.length})
                   </Button>
                   <Button color="red" variant="outline" onClick={deleteLeads} disabled={!selectedLeads.length}>
                       Delete ({selectedLeads.length})
@@ -915,11 +930,14 @@ function formatDateWithOrdinal(dateString) {
               ) : null}
           </Drawer>
 
+          <BulkAssignModal opened={assignOpen} onClose={() => setAssignOpen(false)} teamMembers={teamMembers} count={selectedLeads.length} onSubmit={assignLeads} />
+
           {/* csv modal */}
           <LeadImportModal
               opened={csvOpen}
               onClose={() => setCsvOpen(false)}
               folders={pf.folders}
+              teamMembers={teamMembers}
               defaultFolderId={pf.activeFolder !== 'all' ? pf.activeFolder : null}
               historyHref="/userleadtable/import-history"
               onDone={() => {
