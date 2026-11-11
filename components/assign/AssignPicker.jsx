@@ -1,7 +1,8 @@
 'use client';
 // Who gets the leads: one person, equal split, or percentage split.
 // Controlled: value = { mode: 'single' | 'equal' | 'percent', ids: ['12', ...], percents: { '12': 40 } }
-import { Button, Group, MultiSelect, NumberInput, SegmentedControl, Text } from '@mantine/core';
+import { Button, Group, MultiSelect, NumberInput, Text } from '@mantine/core';
+import PillToggle from './PillToggle';
 
 export const EMPTY_ASSIGN = { mode: 'single', ids: [], percents: {} };
 
@@ -58,9 +59,7 @@ const AssignPicker = ({ value, onChange, teamMembers, total }) => {
 
     return (
         <div>
-            <SegmentedControl
-                fullWidth
-                size="xs"
+            <PillToggle
                 value={value.mode}
                 onChange={(mode) => onChange({ ...EMPTY_ASSIGN, mode })}
                 data={[

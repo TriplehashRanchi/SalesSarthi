@@ -15,6 +15,7 @@ import Papa from 'papaparse';
 import Link from 'next/link';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import PillToggle from '@/components/assign/PillToggle';
 import AssignPicker, { EMPTY_ASSIGN, assignError, toPayload } from '@/components/assign/AssignPicker';
 import { importCheck, importCommit, errorMessage } from '@/components/Leadtable/leadFolders';
 
@@ -286,9 +287,7 @@ const LeadImportModal = ({ opened, onClose, onDone, folders, defaultFolderId, on
                         {teamMembers.length > 0 && (
                             <div className="mb-4">
                                 <Text size="sm" weight={500} mb={4}>Assign new leads</Text>
-                                <SegmentedControl
-                                    fullWidth
-                                    size="xs"
+                                <PillToggle
                                     value={assignOn ? 'yes' : 'no'}
                                     onChange={(v) => setAssignOn(v === 'yes')}
                                     data={[{ value: 'no', label: "Don't assign" }, { value: 'yes', label: 'Assign to team' }]}
