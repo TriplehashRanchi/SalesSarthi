@@ -54,6 +54,14 @@ import IconChecks from '../icon/icon-checks';
 import IconClock from '../icon/icon-clock';
 import IconPhone from '../icon/icon-phone';
 
+// Phone action row: icon on top, label below, four equal columns (nothing gets cut off on narrow screens).
+const MOBILE_ACTION_STYLES = {
+    root: { height: 'auto', padding: '8px 2px' },
+    inner: { flexDirection: 'column', gap: 4 },
+    leftIcon: { margin: 0 },
+    label: { fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'visible' },
+};
+
 const LeadTable = ({ profile, userId }) => {
     console.log('profile in leadtable', profile);
     /* ───────────────────── state ───────────────────── */
@@ -876,20 +884,17 @@ const LeadTable = ({ profile, userId }) => {
                     )}
                 </div>
                 <SortSelect sortStatus={sortStatus} onChange={setSortStatus} className="mb-2" />
-                <div className="flex items-center py-1">
-                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconBrandFacebook size={18} />} onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
+                <div className="grid grid-cols-4 items-stretch gap-1 py-1">
+                    <Button className="min-w-0" styles={MOBILE_ACTION_STYLES} variant="subtle" color="blue" leftIcon={<IconBrandFacebook size={20} />} onClick={() => pollFacebookLeads(true)} disabled={isPolling}>
                         Facebook
                     </Button>
-                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconUpload size={18} />} onClick={() => setCsvOpen(true)}>
+                    <Button className="min-w-0" styles={MOBILE_ACTION_STYLES} variant="subtle" color="blue" leftIcon={<IconUpload size={20} />} onClick={() => setCsvOpen(true)}>
                         Upload CSV
                     </Button>
-                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconHistory size={18} />} onClick={() => router.push('/leadtable/import-history')}>
+                    <Button className="min-w-0" styles={MOBILE_ACTION_STYLES} variant="subtle" color="blue" leftIcon={<IconHistory size={20} />} onClick={() => router.push('/leadtable/import-history')}>
                         History
                     </Button>
-                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={exportCSV}>
+                    <Button className="min-w-0" styles={MOBILE_ACTION_STYLES} variant="subtle" color="blue" leftIcon={<IconDownload size={20} />} onClick={exportCSV}>
                         Export
                     </Button>
                 </div>

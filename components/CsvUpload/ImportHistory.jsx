@@ -266,7 +266,7 @@ const ImportHistory = ({ backHref }) => {
                     </Menu>
                 )}
                 <Tooltip label={`Files are deleted automatically on ${fmtDate(r.files_expire_at)}`} withinPortal>
-                    <Text size="xs" color={left <= 3 ? 'red' : 'dimmed'} className="whitespace-nowrap">{left <= 0 ? 'today' : `${left}d left`}</Text>
+                    <Text size="xs" color={left <= 3 ? 'red' : 'dimmed'} className="w-full whitespace-nowrap">{left <= 0 ? 'today' : `${left}d left`}</Text>
                 </Tooltip>
             </div>
         );
@@ -369,7 +369,7 @@ const ImportHistory = ({ backHref }) => {
             </div>
 
             {/* desktop table */}
-            <div className="hidden md:block">
+            <div className="hidden lg:block [&_th]:!whitespace-nowrap [&_th]:!px-2 [&_td]:!px-2">
                 <DataTable
                     withBorder
                     borderRadius="md"
@@ -393,25 +393,25 @@ const ImportHistory = ({ backHref }) => {
                     columns={[
                         {
                             accessor: 'select',
-                            width: 40,
+                            width: 36,
                             title: <Checkbox size="xs" checked={allOnPage} indeterminate={someOnPage && !allOnPage} onChange={(e) => togglePage(e.currentTarget.checked)} aria-label="Select page" />,
                             render: (r) => <Checkbox size="xs" checked={selected.includes(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.file_name}`} />,
                         },
-                        { accessor: 'created_at', title: 'Uploaded', sortable: true, width: 170, render: (r) => <span className="whitespace-nowrap">{fmtDateTime(r.created_at)}</span> },
-                        { accessor: 'file_name', title: 'File name', sortable: true, ellipsis: true, render: (r) => <span title={r.file_name} className="font-medium">{r.file_name}</span> },
-                        { accessor: 'folder_name', title: 'Folder', sortable: true, ellipsis: true, render: folderCell },
-                        { accessor: 'total_rows', title: 'Total', sortable: true, textAlignment: 'right', width: 70 },
-                        { accessor: 'imported', title: 'Imported', sortable: true, textAlignment: 'right', width: 85, render: (r) => <span className="font-semibold text-green-600">{r.imported}</span> },
-                        { accessor: 'duplicates', title: 'Duplicates', textAlignment: 'right', width: 95, render: (r) => r.duplicates || 0 },
-                        { accessor: 'skipped', title: 'Skipped', textAlignment: 'right', width: 80, render: (r) => <span className={r.skipped ? 'text-red-600' : ''}>{r.skipped}</span> },
-                        { accessor: 'status', title: 'Status', sortable: true, width: 160, render: statusBadge },
-                        { accessor: 'files', title: 'Files', width: 190, render: filesCell },
+                        { accessor: 'created_at', title: 'Uploaded', sortable: true, width: 125, render: (r) => { const [d, ...t] = fmtDateTime(r.created_at).split(', '); return <div className="leading-tight"><div className="whitespace-nowrap">{d}</div><div className="whitespace-nowrap text-xs text-gray-500">{t.join(', ')}</div></div>; } },
+                        { accessor: 'file_name', title: 'File name', sortable: true, ellipsis: true, width: 170, render: (r) => <span title={r.file_name} className="font-medium">{r.file_name}</span> },
+                        { accessor: 'folder_name', title: 'Folder', sortable: true, ellipsis: true, width: 120, render: folderCell },
+                        { accessor: 'total_rows', title: 'Total', sortable: true, textAlignment: 'right', width: 78 },
+                        { accessor: 'imported', title: 'Imported', sortable: true, textAlignment: 'right', width: 100, render: (r) => <span className="font-semibold text-green-600">{r.imported}</span> },
+                        { accessor: 'duplicates', title: 'Duplicates', textAlignment: 'right', width: 100, render: (r) => r.duplicates || 0 },
+                        { accessor: 'skipped', title: 'Skipped', textAlignment: 'right', width: 84, render: (r) => <span className={r.skipped ? 'text-red-600' : ''}>{r.skipped}</span> },
+                        { accessor: 'status', title: 'Status', sortable: true, width: 150, render: statusBadge },
+                        { accessor: 'files', title: 'Files', width: 150, render: filesCell },
                     ]}
                 />
             </div>
 
             {/* phone: cards */}
-            <div className="md:hidden">
+            <div className="lg:hidden">
                 {selected.length === 0 && rows.length > 0 && (
                     <Checkbox size="xs" mb="xs" label="Select this page" checked={allOnPage} indeterminate={someOnPage && !allOnPage} onChange={(e) => togglePage(e.currentTarget.checked)} />
                 )}
