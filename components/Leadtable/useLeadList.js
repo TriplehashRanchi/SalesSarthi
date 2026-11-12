@@ -20,6 +20,10 @@ const toParams = (p) => {
     if (p.q) out.q = p.q;
     if (p.status) out.status = p.status;
     if (p.assigned) out.assigned = p.assigned;
+    if (p.kpi) {
+        out.kpi = p.kpi;
+        if (p.since) out.since = p.since;
+    }
     if (p.userId) out.user_id = p.userId;
     if (p.sort) out.sort = p.sort;
     if (p.dir) out.dir = p.dir;
@@ -33,6 +37,20 @@ export const fetchLeadKpis = async ({ folder, userId, since }) =>
     (await axios.get(`${API_URL}/api/lead-list/kpis`, { headers: await authHeaders(), params: { folder: folder ?? 'all', ...(userId ? { user_id: userId } : {}), ...(since ? { since } : {}) } })).data;
 
 export const fetchLeadExport = async (p) => (await axios.get(`${API_URL}/api/lead-list/export`, { headers: await authHeaders(), params: toParams(p) })).data.rows;
+
+// true only after `flag` has stayed true for `ms` - quick loads never flash a loading overlay.
+export const useDelayedFlag = (flag, ms = 350) => {
+    const [on, setOn] = useState(false);
+    useEffect(() => {
+        if (!flag) {
+            setOn(false);
+            return undefined;
+        }
+        const t = setTimeout(() => setOn(true), ms);
+        return () => clearTimeout(t);
+    }, [flag, ms]);
+    return on;
+};
 
 export const useDebounced = (value, ms = 300) => {
     const [v, setV] = useState(value);

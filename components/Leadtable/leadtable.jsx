@@ -45,7 +45,7 @@ import { DeleteFolderModal, EmptyFolderState, FolderNameModal, FolderTabs, MoveR
 import LeadDetailView from './LeadDetailView';
 import { FolderKpis } from './LeadKpis';
 import SortSelect from './SortSelect';
-import { useLeadList, useDebounced, fetchLeadExport } from './useLeadList';
+import { useLeadList, useDebounced, useDelayedFlag, fetchLeadExport } from './useLeadList';
 import { fetchFolders, createFolder, renameFolder, deleteFolder, reorderFolders, moveLeadsWithReport, folderIdOf } from './leadFolders';
 
 import { getAuth } from 'firebase/auth';
@@ -93,6 +93,8 @@ const LeadTable = ({ profile, userId }) => {
 
 
     const [assignedUserFilter, setAssignedUserFilter] = useState(null);
+    const [kpiPick, setKpiPick] = useState(''); // KPI card currently filtering the list
+    const [kpiSince, setKpiSince] = useState(null); // start of the KPI time range
 
     /* ───────── folders ───────── */
     const [folders, setFolders] = useState([]);
@@ -159,11 +161,13 @@ const LeadTable = ({ profile, userId }) => {
             q: debouncedSearch,
             status: statusFilter || '',
             assigned: !userId && assignedUserFilter ? assignedUserFilter : '',
+            kpi: !userId ? kpiPick : '',
+            since: kpiSince || '',
             userId: userId || '',
             sort: sortStatus.columnAccessor,
             dir: sortStatus.direction,
         }),
-        [userId, activeFolder, debouncedSearch, statusFilter, assignedUserFilter, sortStatus]
+        [userId, activeFolder, debouncedSearch, statusFilter, assignedUserFilter, kpiPick, kpiSince, sortStatus]
     );
     const desktopList = useLeadList({ filters: listFilters, page, pageSize, mode: 'page', enabled: isPhone === false });
     const phoneList = useLeadList({ filters: listFilters, pageSize: 20, mode: 'append', enabled: isPhone === true });
@@ -171,6 +175,7 @@ const LeadTable = ({ profile, userId }) => {
     const recordsData = desktopList.rows;
     const totalFilteredRecords = list.total;
     const loading = list.loading;
+    const showLoader = useDelayedFlag(loading || isPolling);
     const [kpiKey, setKpiKey] = useState(0);
     const refreshFolders = () => fetchFolders().then(setFolders).catch((err) => console.error('Failed to load folders:', err));
 
@@ -192,7 +197,7 @@ const LeadTable = ({ profile, userId }) => {
     // Search / filter / sort change -> back to page 1.
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, statusFilter, assignedUserFilter, sortStatus]);
+    }, [debouncedSearch, statusFilter, assignedUserFilter, kpiPick, kpiSince, sortStatus]);
 
     const pollFacebookLeads = async (manual = false) => {
         if (isPolling) return false;
@@ -769,7 +774,7 @@ const LeadTable = ({ profile, userId }) => {
                 </>
             )}
 
-            {!userId && <FolderKpis key={String(activeFolder)} folder={activeFolder} reloadKey={kpiKey} title={folderTitle} />}
+            {!userId && <FolderKpis key={String(activeFolder)} folder={activeFolder} reloadKey={kpiKey} title={folderTitle} activeKey={kpiPick} onSelect={(key) => setKpiPick((cur) => (cur === key ? '' : key))} onRangeChange={setKpiSince} />}
 
             {/* desktop controls */}
             <div className="mb-4 hidden flex-wrap items-center gap-3 md:flex">
@@ -791,6 +796,7 @@ const LeadTable = ({ profile, userId }) => {
                     value={statusFilter}
                     onChange={(v) => {
                         setStatusFilter(v);
+                        setKpiPick('');
                         setPage(1);
                     }}
                     clearable
@@ -811,6 +817,7 @@ const LeadTable = ({ profile, userId }) => {
                         value={assignedUserFilter}
                         onChange={(v) => {
                             setAssignedUserFilter(v);
+                            setKpiPick('');
                             setPage(1);
                         }}
                         clearable
@@ -857,6 +864,7 @@ const LeadTable = ({ profile, userId }) => {
                         value={statusFilter}
                         onChange={(v) => {
                             setStatusFilter(v);
+                            setKpiPick('');
                             setPage(1);
                         }}
                         clearable
@@ -876,6 +884,7 @@ const LeadTable = ({ profile, userId }) => {
                             value={assignedUserFilter}
                             onChange={(v) => {
                                 setAssignedUserFilter(v);
+                                setKpiPick('');
                                 setPage(1);
                             }}
                             clearable
@@ -1185,7 +1194,7 @@ const LeadTable = ({ profile, userId }) => {
                     onSortStatusChange={setSortStatus}
                     minHeight={120}
                     noRecordsText="No leads found"
-                    fetching={loading || isPolling}
+                    fetching={showLoader}
                     paginationText={({ from, to, totalRecords }) => `Showing ${from} to ${to} of ${totalRecords} leads`}
                     styles={(currentTheme) => {
                         // Only apply these overrides if in dark mode to avoid breaking light mode

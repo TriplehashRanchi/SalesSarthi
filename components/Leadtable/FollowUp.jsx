@@ -4,13 +4,13 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Box, Paper, LoadingOverlay, Alert, Title, Modal, Group, Button, Select, Grid, Text, Stack, Avatar, Badge, Blockquote, SegmentedControl, ThemeIcon } from '@mantine/core';
 import { IconAlertCircle, IconPlus, IconCalendarEvent, IconClock, IconCircleCheck, IconListCheck, IconPencil, IconCalendar, IconList } from '@tabler/icons-react';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 
+import FollowupListView, { relativeLabel } from './FollowupListView';
 import FollowupForm from '@/components/forms/followupform'; // Adjust path if needed
 import { useAuth } from '@/context/AuthContext';
 
@@ -19,7 +19,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 // The follow-up view the user last picked is remembered per user, so the page reopens the same way.
 // Keeps the Calendar/List switch and the Add button exactly the same height.
 const HEADER_CONTROL_HEIGHT = 42;
-const VIEWS = ['dayGridMonth', 'timeGridWeek', 'listWeek'];
+const VIEWS = ['dayGridMonth', 'timeGridWeek'];
+const modeKey = (userId) => `followups_mode_${userId}`;
 const DEFAULT_VIEW = 'dayGridMonth';
 const viewKey = (userId) => `followups_default_view_${userId}`;
 const readSavedView = (userId) => {
@@ -67,6 +68,8 @@ const useFollowupData = (events) => {
                         start: event.start,
                         backgroundColor: event.backgroundColor,
                         creatorName: event.extendedProps.creatorName,
+                        status: status,
+                        raw: event,
                     });
                 }
             }
@@ -77,7 +80,7 @@ const useFollowupData = (events) => {
         upcoming.sort((a, b) => new Date(a.start) - new Date(b.start));
         return {
             stats: { total: events.length, pending, completed, dueToday },
-            upcoming: upcoming.slice(0, 5),
+            upcoming: upcoming.slice(0, 8),
         };
     }, [events]);
 };
@@ -134,6 +137,7 @@ export default function FollowupsCalendar() {
 
     const calendarRef = useRef(null);
     const [currentView, setCurrentView] = useState(DEFAULT_VIEW);
+    const [mode, setMode] = useState('calendar'); // 'calendar' | 'list'
     const userId = user?.uid;
 
     // Load the saved choice once we know who the user is.
@@ -142,6 +146,10 @@ export default function FollowupsCalendar() {
         const saved = readSavedView(userId);
         setCurrentView(saved);
         calendarRef.current?.getApi().changeView(saved);
+        try {
+            const m = window.localStorage.getItem(modeKey(userId));
+            if (m === 'list' || m === 'calendar') setMode(m);
+        } catch {}
     }, [userId]);
 
     const rememberView = (view) => {
@@ -150,10 +158,11 @@ export default function FollowupsCalendar() {
     };
 
     // Calendar / List toggle above the calendar
-    const handleViewToggle = (mode) => {
-        const next = mode === 'list' ? 'listWeek' : currentView === 'listWeek' ? DEFAULT_VIEW : currentView;
-        calendarRef.current?.getApi().changeView(next);
-        rememberView(next);
+    const handleViewToggle = (next) => {
+        setMode(next);
+        try {
+            if (userId) window.localStorage.setItem(modeKey(userId), next);
+        } catch {}
     };
 
     // This is the new fetchData function
@@ -271,7 +280,7 @@ export default function FollowupsCalendar() {
                             root: { height: narrow ? 38 : HEADER_CONTROL_HEIGHT, padding: 3 },
                             label: { height: (narrow ? 38 : HEADER_CONTROL_HEIGHT) - 6, padding: '0 14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
                         }}
-                        value={currentView === 'listWeek' ? 'list' : 'calendar'}
+                        value={mode}
                         onChange={handleViewToggle}
                         data={[
                             {
@@ -317,7 +326,17 @@ export default function FollowupsCalendar() {
                 </Grid.Col>
             </Grid>
 
-            <Grid gutter={narrow ? 0 : 'xl'}>
+            {mode === 'list' && !loading && !error && (
+                <Paper withBorder={!narrow} radius="lg" p={narrow ? 0 : 'md'} style={narrow ? { background: 'transparent', border: 0 } : undefined}>
+                    <FollowupListView events={events} onOpen={(e) => openEventDetails({ id: e.id, ...e.extendedProps, title: e.title, follow_up_date: e.start })} />
+                </Paper>
+            )}
+            {mode === 'list' && loading && <LoadingOverlay visible overlayBlur={2} />}
+            {mode === 'list' && error && (
+                <Alert icon={<IconAlertCircle size="1rem" />} title="Error!" color="red">{error}</Alert>
+            )}
+
+            <Grid gutter={narrow ? 0 : 'xl'} style={mode === 'list' ? { display: 'none' } : undefined}>
                 <Grid.Col lg={8}>
                     <Paper
                         shadow={narrow ? undefined : 'sm'}
@@ -382,11 +401,11 @@ export default function FollowupsCalendar() {
                                 {error}
                             </Alert>
                         )}
-                        {!loading && !error && (
+                        {!loading && !error && mode === 'calendar' && (
                             <>
                             <FullCalendar
                                 ref={calendarRef}
-                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                 initialView={readSavedView(userId)}
                                 datesSet={(info) => rememberView(info.view.type)}
                                 headerToolbar={{
@@ -525,6 +544,7 @@ export default function FollowupsCalendar() {
                                             </Text>
                                             {event.creatorName && <Text color="dimmed" size="xs">by {event.creatorName}</Text>}
                                         </div>
+                                        <Badge size="xs" variant="light" color="blue" className="flex-shrink-0">{relativeLabel({ start: event.start, extendedProps: { status: event.status } })}</Badge>
                                     </div>
                                 ))
                             ) : (

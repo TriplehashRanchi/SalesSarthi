@@ -7,13 +7,29 @@ import axios from 'axios';
 import sortBy from 'lodash/sortBy';
 import { Menu, Button, Badge, Text, Tabs, LoadingOverlay, Alert, ActionIcon, Avatar } from '@mantine/core';
 import { useRouter } from 'next/navigation';
-import { IconArrowLeft, IconPencil, IconAlertCircle, IconCalendarDue, IconCalendarCheck, IconCalendarCancel } from '@tabler/icons-react';
+import { IconArrowLeft, IconPencil, IconAlertCircle, IconCalendarDue, IconCalendarCheck, IconCalendarCancel, IconCalendarOff } from '@tabler/icons-react';
 import AppointmentEditDrawer from './AppointmentEditDrawer';
 import { getAuth } from 'firebase/auth';
 import { isFuture, isPast, parseISO, format, isValid } from 'date-fns';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const PAGE_SIZES = [10, 20, 30, 50, 100];
+
+// Shown instead of an empty table: clear message + a shortcut to the tab that does have appointments.
+const EmptyState = ({ title, hint, actionLabel, onAction }) => (
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-300 px-4 py-12 text-center dark:border-gray-700">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-500 dark:bg-gray-800">
+            <IconCalendarOff size={28} />
+        </div>
+        <Text weight={600}>{title}</Text>
+        {hint && <Text size="sm" color="dimmed" className="max-w-sm">{hint}</Text>}
+        {actionLabel && (
+            <Button variant="light" radius="xl" size="xs" mt={6} onClick={onAction}>
+                {actionLabel}
+            </Button>
+        )}
+    </div>
+);
 
 const AppointmentTable = () => {
     const router = useRouter();
@@ -235,11 +251,19 @@ const AppointmentTable = () => {
                     {/* Mobile View - Cards */}
                     <div className="md:hidden">
                         {upcomingAppointments.map(appt => <AppointmentCard key={appt.id || appt.appointment_date} appointment={appt} />)}
-                        {upcomingAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No upcoming appointments found</Text>}
+                        {upcomingAppointments.length === 0 && !loading && <EmptyState title="No upcoming appointments" hint="Nothing is scheduled ahead right now." {...(() => {
+                            const other = [['upcoming', upcomingAppointments.length, 'Upcoming'], ['completed', completedAppointments.length, 'Completed'], ['past_missed', pastMissedAppointments.length, 'Past / Missed']].find(([k, n]) => k !== 'upcoming' && n > 0);
+                            return other ? { actionLabel: `View ${other[2]} (${other[1]})`, onAction: () => setActiveTab(other[0]) } : {};
+                        })()} />}
                     </div>
                     {/* Desktop View - Table */}
                     <div className="hidden md:block">
+                        {upcomingAppointments.length === 0 && !loading ? <EmptyState title="No upcoming appointments" hint="Nothing is scheduled ahead right now." {...(() => {
+                            const other = [['upcoming', upcomingAppointments.length, 'Upcoming'], ['completed', completedAppointments.length, 'Completed'], ['past_missed', pastMissedAppointments.length, 'Past / Missed']].find(([k, n]) => k !== 'upcoming' && n > 0);
+                            return other ? { actionLabel: `View ${other[2]} (${other[1]})`, onAction: () => setActiveTab(other[0]) } : {};
+                        })()} /> : (
                         <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedUpcoming} columns={commonColumns} totalRecords={upcomingAppointments.length} recordsPerPage={upcomingPageSize} page={upcomingPage} onPageChange={setUpcomingPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setUpcomingPageSize, setUpcomingPage)} sortStatus={upcomingSortStatus} onSortStatusChange={setUpcomingSortStatus} minHeight={120} paginationColor="blue" noRecordsText="No upcoming appointments found" fetching={loading} />
+                        )}
                     </div>
                 </Tabs.Panel>
 
@@ -248,11 +272,19 @@ const AppointmentTable = () => {
                     {/* Mobile View - Cards */}
                     <div className="md:hidden">
                         {completedAppointments.map(appt => <AppointmentCard key={appt.id || appt.appointment_date} appointment={appt} />)}
-                         {completedAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No completed appointments found</Text>}
+                        {completedAppointments.length === 0 && !loading && <EmptyState title="No completed appointments" hint="Appointments you mark as completed will show up here." {...(() => {
+                            const other = [['upcoming', upcomingAppointments.length, 'Upcoming'], ['completed', completedAppointments.length, 'Completed'], ['past_missed', pastMissedAppointments.length, 'Past / Missed']].find(([k, n]) => k !== 'completed' && n > 0);
+                            return other ? { actionLabel: `View ${other[2]} (${other[1]})`, onAction: () => setActiveTab(other[0]) } : {};
+                        })()} />}
                     </div>
                     {/* Desktop View - Table */}
                     <div className="hidden md:block">
+                        {completedAppointments.length === 0 && !loading ? <EmptyState title="No completed appointments" hint="Appointments you mark as completed will show up here." {...(() => {
+                            const other = [['upcoming', upcomingAppointments.length, 'Upcoming'], ['completed', completedAppointments.length, 'Completed'], ['past_missed', pastMissedAppointments.length, 'Past / Missed']].find(([k, n]) => k !== 'completed' && n > 0);
+                            return other ? { actionLabel: `View ${other[2]} (${other[1]})`, onAction: () => setActiveTab(other[0]) } : {};
+                        })()} /> : (
                         <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedCompleted} columns={commonColumns} totalRecords={completedAppointments.length} recordsPerPage={completedPageSize} page={completedPage} onPageChange={setCompletedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setCompletedPageSize, setCompletedPage)} sortStatus={completedSortStatus} onSortStatusChange={setCompletedSortStatus} minHeight={120} paginationColor="blue" noRecordsText="No completed appointments found" fetching={loading} />
+                        )}
                     </div>
                 </Tabs.Panel>
 
@@ -261,11 +293,19 @@ const AppointmentTable = () => {
                     {/* Mobile View - Cards */}
                     <div className="md:hidden">
                         {pastMissedAppointments.map(appt => <AppointmentCard key={appt.id || appt.appointment_date} appointment={appt} />)}
-                         {pastMissedAppointments.length === 0 && !loading && <Text align="center" color="dimmed" py={40}>No past due or missed appointments found</Text>}
+                        {pastMissedAppointments.length === 0 && !loading && <EmptyState title="No past or missed appointments" hint="Nothing was missed. Nice work!" {...(() => {
+                            const other = [['upcoming', upcomingAppointments.length, 'Upcoming'], ['completed', completedAppointments.length, 'Completed'], ['past_missed', pastMissedAppointments.length, 'Past / Missed']].find(([k, n]) => k !== 'past_missed' && n > 0);
+                            return other ? { actionLabel: `View ${other[2]} (${other[1]})`, onAction: () => setActiveTab(other[0]) } : {};
+                        })()} />}
                     </div>
                     {/* Desktop View - Table */}
                     <div className="hidden md:block">
+                        {pastMissedAppointments.length === 0 && !loading ? <EmptyState title="No past or missed appointments" hint="Nothing was missed. Nice work!" {...(() => {
+                            const other = [['upcoming', upcomingAppointments.length, 'Upcoming'], ['completed', completedAppointments.length, 'Completed'], ['past_missed', pastMissedAppointments.length, 'Past / Missed']].find(([k, n]) => k !== 'past_missed' && n > 0);
+                            return other ? { actionLabel: `View ${other[2]} (${other[1]})`, onAction: () => setActiveTab(other[0]) } : {};
+                        })()} /> : (
                         <DataTable highlightOnHover verticalSpacing="sm" className="table-hover whitespace-nowrap" records={paginatedPastMissed} columns={commonColumns} totalRecords={pastMissedAppointments.length} recordsPerPage={pastMissedPageSize} page={pastMissedPage} onPageChange={setPastMissedPage} recordsPerPageOptions={PAGE_SIZES} onRecordsPerPageChange={handlePageSizeChange(setPastMissedPageSize, setPastMissedPage)} sortStatus={pastMissedSortStatus} onSortStatusChange={setPastMissedSortStatus} minHeight={120} paginationColor="blue" noRecordsText="No past due or missed appointments found" fetching={loading} />
+                        )}
                     </div>
                 </Tabs.Panel>
             </Tabs>

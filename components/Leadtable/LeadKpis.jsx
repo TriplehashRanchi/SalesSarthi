@@ -156,7 +156,7 @@ const Stat = ({ label, value, sub, warn }) => (
     </div>
 );
 
-const Card = ({ label, value, sub, tone = 'gray' }) => {
+const Card = ({ label, value, sub, tone = 'gray', active, onClick }) => {
     const tones = {
         gray: 'bg-gray-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100',
         red: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200',
@@ -164,12 +164,27 @@ const Card = ({ label, value, sub, tone = 'gray' }) => {
         amber: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
         blue: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200',
     };
-    return (
-        <div className={`rounded-xl px-3 py-2.5 ${tones[tone]}`}>
+    const body = (
+        <>
             <div className="text-[11px] font-medium uppercase tracking-wide opacity-70">{label}</div>
             <div className="text-xl font-bold leading-tight sm:text-2xl">{value}</div>
             {sub != null && <div className="text-[11px] opacity-70">{sub}</div>}
-        </div>
+        </>
+    );
+    if (!onClick) return <div className={`rounded-xl px-3 py-2.5 ${tones[tone]}`}>{body}</div>;
+    // Clickable: shows that card's leads in the list below (click again to clear).
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={!!active}
+            title={active ? 'Click to clear this filter' : `Show ${label.toLowerCase()} leads`}
+            className={`rounded-xl px-3 py-2.5 text-left transition-shadow duration-150 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${tones[tone]} ${
+                active ? 'ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-gray-900' : ''
+            }`}
+        >
+            {body}
+        </button>
     );
 };
 
@@ -236,7 +251,8 @@ const sinceFor = (range) => {
 
 const EMPTY_KPIS = computeKpis([]);
 
-export const FolderKpis = ({ folder, userId, reloadKey, title }) => {
+// activeKey: which card is filtering the list ('' = none); onSelect(key) / onRangeChange(sinceISO) tell the page.
+export const FolderKpis = ({ folder, userId, reloadKey, title, activeKey = '', onSelect, onRangeChange }) => {
     const [open, setOpen] = useState(true);
     const [range, setRange] = useState('all');
     const [view, setView] = useState('cards');
@@ -252,6 +268,11 @@ export const FolderKpis = ({ folder, userId, reloadKey, title }) => {
             window.localStorage.setItem('leadKpiView', v);
         } catch {}
     };
+
+    useEffect(() => {
+        onRangeChange?.(sinceFor(range));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [range]);
 
     const [raw, setRaw] = useState(null);
     useEffect(() => {
@@ -294,14 +315,15 @@ export const FolderKpis = ({ folder, userId, reloadKey, title }) => {
 
             {open && view === 'cards' && (
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
-                    <Card label="Total leads" value={k.total} tone="blue" />
-                    <Card label="Untouched" value={k.untouched} sub={`${pct(k.untouched, k.total)}% not worked`} tone="amber" />
-                    <Card label="Hot" value={k.hot} sub={`${pct(k.hot, k.total)}%`} tone="red" />
-                    <Card label="Qualified" value={k.qualified} sub={`${pct(k.qualified, k.total)}%`} tone="blue" />
-                    <Card label="Follow-up" value={k.followup} sub={`${pct(k.followup, k.total)}%`} />
-                    <Card label="Lost" value={k.lost} sub={`${pct(k.lost, k.total)}%`} />
+                    <Card label="Total leads" value={k.total} tone="blue" active={!!onSelect && !activeKey} onClick={onSelect && (() => onSelect(''))} />
+                    <Card label="Untouched" value={k.untouched} sub={`${pct(k.untouched, k.total)}% not worked`} tone="amber" active={activeKey === 'untouched'} onClick={onSelect && (() => onSelect('untouched'))} />
+                    <Card label="Hot" value={k.hot} sub={`${pct(k.hot, k.total)}%`} tone="red" active={activeKey === 'hot'} onClick={onSelect && (() => onSelect('hot'))} />
+                    <Card label="Qualified" value={k.qualified} sub={`${pct(k.qualified, k.total)}%`} tone="blue" active={activeKey === 'qualified'} onClick={onSelect && (() => onSelect('qualified'))} />
+                    <Card label="Follow-up" value={k.followup} sub={`${pct(k.followup, k.total)}%`} active={activeKey === 'followup'} onClick={onSelect && (() => onSelect('followup'))} />
+                    <Card label="Lost" value={k.lost} sub={`${pct(k.lost, k.total)}%`} active={activeKey === 'lost'} onClick={onSelect && (() => onSelect('lost'))} />
+                    {/* Converted leads live on the Customers page, not in this list, so this card is info only. */}
                     <Card label="Converted" value={k.converted} sub={`${k.conversion}% conversion`} tone="green" />
-                    <Card label="Unassigned" value={k.unassigned} sub={`${pct(k.unassigned, k.total)}% of leads`} tone={k.unassigned ? 'amber' : 'gray'} />
+                    <Card label="Unassigned" value={k.unassigned} sub={`${pct(k.unassigned, k.total)}% of leads`} tone={k.unassigned ? 'amber' : 'gray'} active={activeKey === 'unassigned'} onClick={onSelect && (() => onSelect('unassigned'))} />
                 </div>
             )}
 
