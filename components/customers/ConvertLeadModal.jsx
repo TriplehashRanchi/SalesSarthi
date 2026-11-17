@@ -9,29 +9,30 @@ import ProductLineSelect from './ProductLineSelect';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const fromLead = (lead) => ({
+const fromLead = (lead, prefill) => ({
   full_name: lead?.full_name || '',
   email: lead?.email || '',
   phone_number: lead?.phone_number || '',
-  product_name: '',
+  product_name: prefill?.product_name || '',
   policy_number: '',
-  premium: '',
+  premium: prefill?.premium ?? '',
 });
 
 // Lead → Customer: the user checks the details and picks the product line(s).
 // If a customer with the same phone/email already exists, the backend merges into it.
-export default function ConvertLeadModal({ lead, onClose, onConverted }) {
-  const [form, setForm] = useState(fromLead(lead));
+// prefill (optional): { product_name, premium }, e.g. from an accepted proposal.
+export default function ConvertLeadModal({ lead, prefill, onClose, onConverted }) {
+  const [form, setForm] = useState(fromLead(lead, prefill));
   const [folderIds, setFolderIds] = useState([]);
   const [folderError, setFolderError] = useState('');
   const [saving, setSaving] = useState(false);
   const isPhone = useMediaQuery('(max-width: 639px)');
 
   useEffect(() => {
-    setForm(fromLead(lead));
+    setForm(fromLead(lead, prefill));
     setFolderIds([]);
     setFolderError('');
-  }, [lead]);
+  }, [lead, prefill]);
 
   // Read the value now: e.currentTarget is null by the time React runs the state updater.
   const set = (key) => (e) => {

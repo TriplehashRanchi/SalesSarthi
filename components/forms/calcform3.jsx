@@ -657,6 +657,7 @@ const FinancialHealthCalculator = () => {
           // --- 1. NEW LOGIC: Save the full checkup to the database ---
     // This try/catch block ensures that even if this API call fails,
     // the rest of your code will still run and the app will not crash.
+    let savedCheckupId = null; // lets the report offer "Create Proposal"
     try {
         const auth = getAuth();
         if (auth.currentUser) {
@@ -674,9 +675,10 @@ const FinancialHealthCalculator = () => {
                     clientId: clientIdFromUrl ? parseInt(clientIdFromUrl, 10) : null, // Add/overwrite clientId
                     clientType: clientTypeFromUrl || null, // Add/overwrite clientType
                 };
-            await axios.post(`${API_URL}/api/checkups`, payload, {
+            const { data: savedCheckup } = await axios.post(`${API_URL}/api/checkups`, payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            savedCheckupId = savedCheckup?.id ?? savedCheckup?.data?.id ?? null;
         } else {
             // Silently skip if user is not logged in
             console.log("User not logged in, skipping save to history.");
@@ -686,6 +688,7 @@ const FinancialHealthCalculator = () => {
         // This is a non-blocking error, so we just log it and continue.
     }
         const reportData = {
+            checkupId: savedCheckupId,
             // Updated/Added Fields
             clientName: formData.clientName,
             financialDoctorName: formData.financialDoctorName, // Use the new name
