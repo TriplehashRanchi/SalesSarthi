@@ -1,6 +1,7 @@
   'use client';
 
   import { useEffect, useMemo, useState } from 'react';
+  import Link from 'next/link';
   import { Capacitor } from '@capacitor/core';
   import { Directory, Filesystem } from '@capacitor/filesystem';
   import { Share } from '@capacitor/share';
@@ -958,7 +959,13 @@ const reportData = useMemo(() => {
           <button onClick={() => router.back()} className="flex items-center space-x-2 text-stone-500 hover:text-stone-900 transition-colors">
             <Icons.ArrowLeft /> <span className="text-sm font-medium">Back</span>
           </button>
-          <div className="flex w-full sm:w-auto items-center justify-end gap-3">
+          <div className="flex w-full sm:w-auto flex-wrap items-center justify-end gap-3">
+            <Link
+              href={`/proposals/new?source=kundli&id=${id}`}
+              className="flex items-center space-x-2 bg-emerald-700 text-white px-4 sm:px-5 py-2.5 rounded-full text-sm font-medium hover:bg-emerald-800 shadow-xl shadow-stone-200"
+            >
+              <span>Create Proposal</span>
+            </Link>
             <button
               onClick={sharePdf}
               disabled={isDownloading}

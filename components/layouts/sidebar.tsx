@@ -291,6 +291,9 @@ const Sidebar = () => {
                                         <li>
                                             <Link href="/fhclog">{t('History')}</Link>
                                         </li>
+                                        <li>
+                                            <Link href="/proposals">{t('Proposals')}</Link>
+                                        </li>
                                     </ul>
                                 </AnimateHeight>
                             </li>
@@ -315,6 +318,9 @@ const Sidebar = () => {
                                         </li>
                                         <li>
                                             <Link href="/financehistory">{t('History')}</Link>
+                                        </li>
+                                        <li>
+                                            <Link href="/proposals">{t('Proposals')}</Link>
                                         </li>
                                     </ul>
                                 </AnimateHeight>

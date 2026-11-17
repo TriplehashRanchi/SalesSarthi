@@ -212,7 +212,7 @@ const CheckupHistory = () => {
   const handleViewReport = (checkup) => {
     const report = prepareReportData(checkup.formData);
     if (report) {
-      setSelectedReportData(report);
+      setSelectedReportData({ ...report, checkupId: checkup.id });
       setIsReportModalOpen(true);
     }
   };
