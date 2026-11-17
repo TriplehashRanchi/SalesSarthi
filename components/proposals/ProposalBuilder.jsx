@@ -10,7 +10,11 @@ import { showNotification } from '@mantine/notifications';
 import {
     IconAlertCircle,
     IconArrowLeft,
+    IconBrandWhatsapp,
     IconCheck,
+    IconExternalLink,
+    IconLink,
+    IconPhone,
     IconCircleCheck,
     IconCircleX,
     IconCopy,
@@ -40,6 +44,7 @@ import {
     prefillProposal,
     reviseProposal,
     setProposalStatus,
+    shareProposal,
     updateProposal,
 } from './proposalsApi';
 import { emptyItem, inr, inrShort, itemFromSuggestion, itemToApi, itemToForm, REJECT_REASONS, saveBlob, shortDate, SOURCE_LABEL, STATUS, totals } from './proposalUi';
@@ -55,16 +60,25 @@ const blobToBase64 = (blob) =>
     });
 
 const snapshot = (client, items) => JSON.stringify({ client, items: items.map(itemToApi) });
+const clientForm = (c = {}) => ({ name: c.name || '', age: c.age ?? '', city: c.city || '', family: c.family || '', phone: c.phone || '' });
+const linkFor = (p) => (p?.share_token ? `${window.location.origin}/p/${p.share_token}` : '');
+// 98765 43210 → 919876543210 for wa.me
+const waNumber = (phone) => {
+    const d = String(phone || '').replace(/\D/g, '');
+    if (d.length === 10) return `91${d}`;
+    if (d.length === 11 && d.startsWith('0')) return `91${d.slice(1)}`;
+    return d;
+};
 
 export default function ProposalBuilder({ proposalId = null, sourceType = null, sourceId = null }) {
     const router = useRouter();
-    const isNew = !proposalId;
 
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
     const [proposal, setProposal] = useState(null); // saved row (null while new)
     const [source, setSource] = useState(null); // { type, id }
-    const [client, setClient] = useState({ name: '', age: '', city: '', family: '' });
+    const [client, setClient] = useState(clientForm());
+    const [share, setShare] = useState(null); // { url, text } while the share dialog is open
     const [items, setItems] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
     const [versions, setVersions] = useState([]);
@@ -75,6 +89,7 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
     const [convert, setConvert] = useState(null); // { lead, prefill }
     const saved = useRef('');
 
+    const isNew = !proposal; // not saved yet
     const status = proposal?.status || 'draft';
     const readOnly = status !== 'draft';
     const dirty = !readOnly && snapshot(client, items) !== saved.current;
@@ -82,7 +97,7 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
     const added = useMemo(() => new Set(items.map((i) => i.suggestion_key).filter(Boolean)), [items]);
 
     const applyProposal = (p) => {
-        const c = { name: p.client?.name || '', age: p.client?.age ?? '', city: p.client?.city || '', family: p.client?.family || '' };
+        const c = clientForm(p.client);
         const its = (p.items || []).map(itemToForm);
         setProposal(p);
         setClient(c);
@@ -96,9 +111,9 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
         setLoading(true);
         setLoadError('');
         try {
-            if (isNew) {
+            if (!proposalId) {
                 const pre = await prefillProposal(sourceType, sourceId);
-                const c = { name: pre.client?.name || '', age: pre.client?.age ?? '', city: pre.client?.city || '', family: pre.client?.family || '' };
+                const c = clientForm(pre.client);
                 setSource(pre.source);
                 setClient(c);
                 setItems([]);
@@ -123,7 +138,7 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
         } finally {
             setLoading(false);
         }
-    }, [isNew, proposalId, sourceType, sourceId]);
+    }, [proposalId, sourceType, sourceId]);
 
     useEffect(() => {
         load();
@@ -180,8 +195,10 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
             let p;
             if (isNew) {
                 p = await createProposal({ ...body, source_type: sourceType, source_id: Number(sourceId) });
-                saved.current = snapshot(client, items);
-                router.replace(`/proposals/${p.id}`);
+                applyProposal(p);
+                setVersions((v) => [p, ...v]);
+                // Address becomes /proposals/<id> without reloading the page (keeps an open share dialog etc.).
+                window.history.replaceState(null, '', `/proposals/${p.id}`);
             } else {
                 p = await updateProposal(proposal.id, body);
                 applyProposal(p);
@@ -254,6 +271,52 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
             if (err?.name !== 'AbortError') showNotification({ title: 'Could not share', message: userMessage(err), color: 'red' });
         } finally {
             setBusy('');
+        }
+    };
+
+    /* ───────── share link ─────────
+       One tap: save, get the proposal's link (made once, then reused), open the phone's share sheet with a ready message.
+       Where there is no share sheet (desktop), a dialog offers Copy / WhatsApp the client / open the page. */
+    const shareLink = async () => {
+        setBusy('link');
+        setErrors({});
+        try {
+            let p = proposal;
+            if (!p?.share_token || dirty || isNew) {
+                const id = await ensureSaved();
+                if (!id) return;
+                p = await shareProposal(id);
+                applyProposal(p);
+            }
+            const url = p.share_url || linkFor(p);
+            const first = (client.name || '').trim().split(/\s+/)[0] || 'there';
+            const text = `Dear ${first}, your financial plan proposal is ready. You can view it and download the PDF here:`;
+            try {
+                if (Capacitor.isNativePlatform()) {
+                    await Share.share({ title: 'Your financial proposal', text, url, dialogTitle: 'Share proposal' });
+                    return;
+                }
+                if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
+                    await navigator.share({ title: 'Your financial proposal', text, url });
+                    return;
+                }
+            } catch (err) {
+                if (err?.name === 'AbortError') return; // closed the share sheet
+            }
+            setShare({ url, text });
+        } catch (err) {
+            showErrors(err, 'Could not share');
+        } finally {
+            setBusy('');
+        }
+    };
+
+    const copyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(share.url);
+            showNotification({ title: 'Link copied', message: 'Paste it in WhatsApp, SMS or email.', color: 'green', icon: <IconCheck size={18} /> });
+        } catch {
+            showNotification({ title: 'Copy the link by hand', message: share.url, color: 'blue' });
         }
     };
 
@@ -339,9 +402,9 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
 
     const SummaryCard = (
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-[#1b2e4b] dark:bg-[#0e1726]">
-            <div className="bg-gradient-to-br from-[#0b1f4b] via-[#1d4ed8] to-[#4361ee] p-5 text-white">
-                <p className="text-xs uppercase tracking-widest text-white/70">Yearly investment</p>
-                <p className="mt-1 text-3xl font-bold">{inr(sum.yearly)}</p>
+            <div className="border-b-[3px] border-[#0f7a4f] bg-[#0c2340] p-5 text-white">
+                <p className="text-sm text-white/65">Yearly investment</p>
+                <p className="mt-0.5 text-3xl font-semibold tracking-tight">{inr(sum.yearly)}</p>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div>
                         <p className="text-white/60">Plans</p>
@@ -363,24 +426,33 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
             </div>
 
             <div className="space-y-2 p-4">
-                {!readOnly && (
-                    <Button fullWidth leftIcon={<IconDeviceFloppy size={18} />} onClick={() => save()} loading={busy === 'save'} disabled={!!busy && busy !== 'save'} variant={dirty || isNew ? 'filled' : 'light'}>
-                        {isNew ? 'Save draft' : dirty ? 'Save changes' : 'Saved'}
-                    </Button>
+                {status !== 'revised' && (
+                    <Tooltip
+                        label={status === 'draft' ? 'Saves, locks this version and opens WhatsApp / the share sheet with a link to the proposal.' : 'Opens WhatsApp / the share sheet with the proposal link.'}
+                        withArrow
+                        multiline
+                        width={250}
+                    >
+                        <Button fullWidth size="md" color="teal" leftIcon={<IconShare size={18} />} onClick={shareLink} loading={busy === 'link'} disabled={!!busy && busy !== 'link'}>
+                            Share with client
+                        </Button>
+                    </Tooltip>
                 )}
-                <div className="grid grid-cols-2 gap-2">
+                <div className={`grid gap-2 ${readOnly ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    {!readOnly && (
+                        <Button leftIcon={<IconDeviceFloppy size={18} />} onClick={() => save()} loading={busy === 'save'} disabled={!!busy && busy !== 'save'} variant={dirty || isNew ? 'filled' : 'light'}>
+                            {isNew ? 'Save draft' : dirty ? 'Save' : 'Saved'}
+                        </Button>
+                    )}
                     <Button variant="light" leftIcon={<IconFileTypePdf size={18} />} onClick={downloadPdf} loading={busy === 'pdf'} disabled={!!busy && busy !== 'pdf'}>
                         PDF
-                    </Button>
-                    <Button variant="light" color="teal" leftIcon={<IconShare size={18} />} onClick={sharePdf} loading={busy === 'share'} disabled={!!busy && busy !== 'share'}>
-                        Share
                     </Button>
                 </div>
 
                 {status === 'draft' && (
-                    <Tooltip label="Checks the proposal is complete, then locks it. Changes after this make a new version." withArrow multiline width={240}>
-                        <Button fullWidth color="indigo" variant="outline" leftIcon={<IconSend size={18} />} onClick={() => changeStatus('shared')} loading={busy === 'status'} disabled={!!busy && busy !== 'status'}>
-                            Mark as shared with client
+                    <Tooltip label="If you sent it another way (printed, email). Checks the proposal is complete, then locks it." withArrow multiline width={240}>
+                        <Button fullWidth color="gray" variant="subtle" size="xs" leftIcon={<IconSend size={14} />} onClick={() => changeStatus('shared')} loading={busy === 'status'} disabled={!!busy && busy !== 'status'}>
+                            Mark as shared without a link
                         </Button>
                     </Tooltip>
                 )}
@@ -431,7 +503,7 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
     );
 
     return (
-        <div className="pb-28 lg:pb-8">
+        <div className={status !== 'revised' ? 'pb-28 lg:pb-8' : 'pb-8'}>
             {/* header */}
             <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -506,7 +578,18 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
                                 onChange={(e) => setClient({ ...client, family: e.currentTarget.value })}
                                 readOnly={readOnly}
                                 maxLength={300}
-                                className="sm:col-span-2 lg:col-span-4"
+                                className="sm:col-span-2 lg:col-span-2"
+                            />
+                            <TextInput
+                                label="WhatsApp number"
+                                description="Only used to send the link; not shown on the proposal"
+                                icon={<IconPhone size={15} />}
+                                type="tel"
+                                value={client.phone}
+                                onChange={(e) => setClient({ ...client, phone: e.currentTarget.value })}
+                                readOnly={readOnly}
+                                maxLength={20}
+                                className="sm:col-span-2 lg:col-span-2"
                             />
                         </div>
                     </section>
@@ -596,18 +679,73 @@ export default function ProposalBuilder({ proposalId = null, sourceType = null, 
                 <div className="lg:hidden">{SummaryCard}</div>
             </div>
 
-            {/* phone: total + save always in reach */}
-            {!readOnly && (
+            {/* phone: total, save and share always in reach */}
+            {status !== 'revised' && (
                 <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-[#1b2e4b] dark:bg-[#0e1726]/95 lg:hidden" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
-                    <div>
-                        <p className="text-[11px] uppercase tracking-wide text-gray-500">Per year</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{inr(sum.yearly)}</p>
+                    <div className="min-w-0">
+                        <p className="text-[11px] text-gray-500">Per year</p>
+                        <p className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">{inr(sum.yearly)}</p>
                     </div>
-                    <Button leftIcon={<IconDeviceFloppy size={18} />} onClick={() => save()} loading={busy === 'save'} disabled={!!busy && busy !== 'save'}>
-                        {isNew ? 'Save draft' : 'Save'}
-                    </Button>
+                    <div className="flex gap-2">
+                        {!readOnly && (
+                            <Button variant={dirty || isNew ? 'filled' : 'light'} onClick={() => save()} loading={busy === 'save'} disabled={!!busy && busy !== 'save'} px="sm" aria-label="Save">
+                                <IconDeviceFloppy size={18} />
+                            </Button>
+                        )}
+                        <Button color="teal" leftIcon={<IconShare size={18} />} onClick={shareLink} loading={busy === 'link'} disabled={!!busy && busy !== 'link'}>
+                            Share
+                        </Button>
+                    </div>
                 </div>
             )}
+
+            {/* share link (desktop / no share sheet) */}
+            <Modal opened={!!share} onClose={() => setShare(null)} title="Share with client" centered radius="lg">
+                {share && (
+                    <div className="space-y-3">
+                        <p className="text-sm text-gray-500">Your client opens this link on any phone to see the proposal and download the PDF. No login needed.</p>
+                        <div className="flex gap-2">
+                            <TextInput value={share.url} readOnly className="flex-1" onFocus={(e) => e.currentTarget.select()} icon={<IconLink size={15} />} />
+                            <Button variant="light" onClick={copyLink}>
+                                Copy
+                            </Button>
+                        </div>
+                        {waNumber(client.phone) && (
+                            <Button
+                                component="a"
+                                href={`https://wa.me/${waNumber(client.phone)}?text=${encodeURIComponent(`${share.text} ${share.url}`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                fullWidth
+                                size="md"
+                                color="green"
+                                leftIcon={<IconBrandWhatsapp size={18} />}
+                            >
+                                WhatsApp {client.name.split(' ')[0] || 'client'}
+                            </Button>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button
+                                component="a"
+                                href={`https://wa.me/?text=${encodeURIComponent(`${share.text} ${share.url}`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                variant={waNumber(client.phone) ? 'default' : 'filled'}
+                                color="green"
+                                leftIcon={<IconBrandWhatsapp size={16} />}
+                            >
+                                {waNumber(client.phone) ? 'Other chat' : 'WhatsApp'}
+                            </Button>
+                            <Button component="a" href={share.url} target="_blank" rel="noopener noreferrer" variant="default" leftIcon={<IconExternalLink size={16} />}>
+                                Open page
+                            </Button>
+                        </div>
+                        <button type="button" onClick={sharePdf} disabled={!!busy} className="w-full pt-1 text-center text-xs text-gray-500 underline-offset-2 hover:text-primary hover:underline">
+                            {busy === 'share' ? 'Preparing PDF…' : 'Send the PDF file instead'}
+                        </button>
+                    </div>
+                )}
+            </Modal>
 
             {/* rejected: reason */}
             <Modal opened={rejectOpen} onClose={() => setRejectOpen(false)} title="Why did the client reject it?" centered>

@@ -16,6 +16,8 @@ export const updateProposal = async (id, body) => (await axios.put(url(`/${id}`)
 export const reviseProposal = async (id) => (await axios.post(url(`/${id}/revise`), {}, await opts())).data;
 export const setProposalStatus = async (id, status, extra = {}) => (await axios.post(url(`/${id}/status`), { status, ...extra }, await opts())).data;
 export const deleteProposal = async (id) => (await axios.delete(url(`/${id}`), await opts())).data;
+// → proposal + share_url (marks a draft shared; the link stays the same afterwards)
+export const shareProposal = async (id) => (await axios.post(url(`/${id}/share`), {}, await opts())).data;
 
 // → { blob, fileName }
 export const fetchProposalPdf = async (id) => {
