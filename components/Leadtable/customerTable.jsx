@@ -20,7 +20,15 @@ import IconListCheck from '../icon/icon-list-check';
 import IconHeart from '../icon/icon-heart';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
 import { CustomerFolderSelect } from '@/components/customers/CustomerFolders';
-import { IconEye, IconPlus, IconCalendarPlus, IconArrowLeft, IconSearch, IconDownload } from '@tabler/icons-react';
+import { IconEye, IconPlus, IconCalendarPlus, IconArrowLeft, IconSearch, IconDownload, IconGitMerge, IconColumns } from '@tabler/icons-react';
+import CustomerStatusBadge from '@/components/customers/CustomerStatusBadge';
+import { useProductExpansion, productsSummary } from '@/components/customers/CustomerProductsRow';
+import AssignCustomersModal from '@/components/customers/AssignCustomersModal';
+import ToolbarButton from '@/components/customers/ToolbarButton';
+import CustomerExportModal from '@/components/customers/CustomerExportModal';
+import { buildCustomerColumns, CustomerColumnsModal, useCustomerColumns } from '@/components/customers/CustomerColumns';
+import { useCustomerFolders } from '@/components/customers/customerFolderApi';
+import { IconUserCheck } from '@tabler/icons-react';
 
 const AVATAR_COLORS = ['blue', 'cyan', 'orange', 'teal', 'pink', 'green'];
 
@@ -47,6 +55,8 @@ const CustomerTable = ({ profile }) => {
   /* ─────────── NEW state ─────────── */
   const [selectedIds, setSelectedIds] = useState([]); // checkbox picks
   const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const fileRef = useRef(null);
 
@@ -96,141 +106,6 @@ const CustomerTable = ({ profile }) => {
     router.push(`/edit-customer/${customer.id}`);
   };
 
-  const handleExportData = () => {
-    const dataToExport = customers; // Exports ALL customers from your 'customers' state
-
-    if (dataToExport.length === 0) {
-      alert('No data to export.'); // Replace with Mantine Notification if desired
-      return;
-    }
-
-    // 1. DEFINE YOUR HEADERS - Based on your database schema
-    const headers = [
-      'Customer ID',       // id
-      'Admin ID',          // admin_id (Consider if this is needed for end-user export)
-      'User ID',           // user_id (Consider if this is needed for end-user export)
-      'Full Name',         // full_name
-      'Email',             // email
-      'Phone Number',      // phone_number
-      'Gender',            // gender
-      'Date of Birth',     // date_of_birth
-      'Anniversary',       // anniversary
-      'Address',           // address
-      'Company Name',      // company_name
-      'Product Name',      // product_name
-      'Policy Number',     // policy_number
-      'Premium',           // premium
-      'Coverage Amount',   // coverage_amount
-      'Renewal Date',      // renewal_date
-      'Status',            // status
-      'Source',            // source
-      'Referrer',          // referrer
-      'Notes',             // notes
-      'Created At',        // created_at
-      'Updated At',        // updated_at
-      'Next Appointment Date', // Derived from customer.appointments if available
-      // Add more custom/derived headers if needed
-    ];
-
-    // Helper to safely format CSV cell content (remains the same)
-    const formatCsvCell = (value) => {
-      const stringValue = String(value ?? ''); // Handle null/undefined by converting to empty string
-      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    };
-
-    // Helper to format dates (YYYY-MM-DD) or return empty if invalid/null
-    const formatDateForCsv = (dateString) => {
-      if (!dateString) return '';
-      try {
-        const date = new Date(dateString);
-        // Check if date is valid
-        if (isNaN(date.getTime())) return '';
-        // Format to YYYY-MM-DD
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      } catch (e) {
-        return ''; // Return empty string if parsing fails
-      }
-    };
-
-    // Helper to format timestamps (YYYY-MM-DD HH:MM:SS) or return empty if invalid/null
-    const formatTimestampForCsv = (timestampString) => {
-      if (!timestampString) return '';
-      try {
-        const date = new Date(timestampString);
-        if (isNaN(date.getTime())) return '';
-        return date.toLocaleString(); // Or a more specific format if needed
-      } catch (e) {
-        return '';
-      }
-    };
-
-
-    // Start with the header row
-    const csvRows = [
-      headers.map(formatCsvCell).join(','),
-    ];
-
-    // Add data rows
-    dataToExport.forEach(customer => {
-      // Assuming getNextAppointment is a helper you have that processes `customer.appointments`
-      const nextAppt = getNextAppointment(customer.appointments);
-      const nextAppointmentDate = nextAppt ? formatDateForCsv(nextAppt.appointment_date) : '';
-
-      const row = [
-        customer.id,
-        customer.admin_id || '',
-        customer.user_id || '',
-        customer.full_name || '',
-        customer.email || '',
-        customer.phone_number || '',
-        customer.gender || '',
-        formatDateForCsv(customer.date_of_birth),
-        formatDateForCsv(customer.anniversary),
-        customer.address || '',
-        customer.company_name || '',
-        customer.product_name || '',
-        customer.policy_number || '',
-        customer.premium || '',         // Decimals will be converted to string by formatCsvCell
-        customer.coverage_amount || '', // Decimals will be converted to string by formatCsvCell
-        formatDateForCsv(customer.renewal_date),
-        customer.status || '',
-        customer.source || '',
-        customer.referrer || '',
-        customer.notes || '',
-        formatTimestampForCsv(customer.created_at),
-        formatTimestampForCsv(customer.updated_at),
-        nextAppointmentDate,
-        // Ensure the order here matches the order in `headers`
-      ].map(formatCsvCell);
-      csvRows.push(row.join(','));
-    });
-
-    // Join all rows with a newline character (remains the same)
-    const csvString = csvRows.join('\n');
-
-    // Create a Blob and trigger download (remains the same)
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
-      link.setAttribute('download', `customers_export_${timestamp}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } else {
-      alert('CSV export is not supported in your browser.');
-    }
-  };
 
   /* ─────────── NEW delete helpers ─────────── */
   const deleteCustomer = async (id) => {
@@ -359,41 +234,41 @@ const CustomerTable = ({ profile }) => {
     return upcoming.length ? upcoming[0] : null;
   };
 
+  const productRows = useProductExpansion();
+  const { config: columnConfig, setConfig: setColumnConfig, view: columnView } = useCustomerColumns();
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const { folders: allFolders } = useCustomerFolders();
+  const folderName = Object.fromEntries((allFolders || []).map((f) => [f.id, f.name]));
+
   /* ─────────── JSX ─────────── */
   return (
-    <div className="panel mt-0 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
+    <div className="panel mt-0 md:!px-3 md:!pb-3 md:!pt-4 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
       {/* ⬇︎ Header / toolbar */}
-      <div className="mb-5 hidden flex-wrap items-center gap-4 md:flex">
-        <div className="mr-2">
-          <h5 className="text-xl font-semibold leading-tight dark:text-white-light">Customers</h5>
-          <div className="text-sm text-gray-500">{customers.length} {customers.length === 1 ? 'Customer' : 'Customers'}</div>
-        </div>
-
+      {/* One line on every desktop/tablet width: search takes the free space; on smaller screens the secondary
+          buttons become icons (name on hover) so nothing wraps to a second line. */}
+      <div className="mb-3 hidden flex-nowrap items-center gap-2 md:flex xl:gap-3">
         <TextInput
           icon={<IconSearch size={16} />}
           placeholder="Search by name, email or phone"
           radius="xl"
-          className="w-full max-w-xs flex-1"
+          className="min-w-[140px] max-w-md flex-1"
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
         />
 
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+        <div className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-2">
           {selectedIds.length > 0 && (
-            <Button color="red" variant="light" leftIcon={<IconTrash size={16} />} onClick={deleteSelected}>
-              Delete ({selectedIds.length})
-            </Button>
+            <ToolbarButton icon={<IconUserCheck size={16} />} label={`Assign (${selectedIds.length})`} onClick={() => setAssignOpen(true)} showFrom="lg" />
           )}
-          <CustomerFolderSelect className="w-52" />
-          <Button variant="light" color="blue" leftIcon={<IconUpload size={16} />} onClick={() => setCsvModalOpen(true)}>
-            Upload CSV
-          </Button>
-          <Button variant="light" color="blue" leftIcon={<IconDownload size={16} />} onClick={handleExportData}>
-            Export
-          </Button>
-          <Button color="blue" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/create-customer')}>
-            Add Customer
-          </Button>
+          {selectedIds.length > 0 && (
+            <ToolbarButton color="red" icon={<IconTrash size={16} />} label={`Delete (${selectedIds.length})`} onClick={deleteSelected} showFrom="lg" />
+          )}
+          <CustomerFolderSelect className="w-40 xl:w-52" />
+          <ToolbarButton icon={<IconUpload size={16} />} label="Upload CSV" onClick={() => setCsvModalOpen(true)} />
+          <ToolbarButton icon={<IconDownload size={16} />} label="Export" onClick={() => setExportOpen(true)} />
+          <ToolbarButton icon={<IconColumns size={16} />} label="Columns" onClick={() => setColumnsOpen(true)} />
+          <ToolbarButton icon={<IconGitMerge size={16} />} label="Duplicates" onClick={() => router.push('/customer-duplicates')} />
+          <ToolbarButton variant="filled" icon={<IconPlus size={16} />} label="Add Customer" onClick={() => router.push('/create-customer')} showFrom="lg" />
         </div>
       </div>
 
@@ -402,10 +277,12 @@ const CustomerTable = ({ profile }) => {
         <DataTable
           highlightOnHover
           verticalSpacing="sm"
+          horizontalSpacing="xs"
           onRowClick={(record) => router.push(`/view-customer/${record.id}`)}
           rowStyle={() => ({ cursor: 'pointer' })}
           className="table-hover whitespace-nowrap"
           records={recordsData}
+          rowExpansion={productRows.rowExpansion}
           columns={[
             /* NEW checkbox column */
             {
@@ -424,48 +301,12 @@ const CustomerTable = ({ profile }) => {
               ),
               width: 48,
             },
-            {
-              accessor: 'full_name',
-              title: 'Name',
-              sortable: true,
-              render: (record) => {
-                const initial = (record.full_name || '?').trim().charAt(0).toUpperCase();
-                return (
-                  <div className="flex items-center gap-3">
-                    <Avatar color={AVATAR_COLORS[(initial.charCodeAt(0) || 0) % AVATAR_COLORS.length]} variant="light" radius="xl" size="md" src={record.avatar_url || record.image_url || record.photo_url || null}>
-                      {initial}
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="font-medium">{record.full_name || 'N/A'}</div>
-                      <div className="text-xs text-gray-500">{record.phone_number}</div>
-                    </div>
-                  </div>
-                );
-              },
-            },
-            { accessor: 'email', title: 'Email', sortable: true },
-            {
-              accessor: 'next_appointment',
-              title: 'Next Appointment',
-              render: (record) => {
-                const nextAppt = getNextAppointment(record.appointments);
-                return nextAppt ? (
-                  <Badge color="blue" variant="light">
-                    {new Date(nextAppt.appointment_date).toLocaleString()} - {nextAppt.appointment_type}
-                  </Badge>
-                ) : (
-                  <Text color="dimmed" size="sm">—</Text>
-                );
-              },
-            },
-            {
-              accessor: 'quick_actions',
-              title: 'Quick Actions',
-              render: (record) => <CustomerQuickActions customer={record} onAppointment={handleManageAppointments} size="lg" plain />,
-            },
+            // The person's chosen columns (#10), in their order.
+            ...buildCustomerColumns(columnView, { productRows, folderName, getNextAppointment, onAppointment: handleManageAppointments }),
             {
               accessor: 'actions',
-              title: 'Actions',
+              title: '',
+              width: 44,
               render: (record) => (
                 <div onClick={(e) => e.stopPropagation()}>
                 <Menu withinPortal shadow="md" width={200}>
@@ -546,6 +387,9 @@ const CustomerTable = ({ profile }) => {
           <Group className="px-1 py-2" position="apart" noWrap>
             <Text size="sm" weight={500}>{selectedIds.length} selected</Text>
             <Group spacing="xs" noWrap>
+              <Button size="xs" color="blue" variant="light" leftIcon={<IconUserCheck size={14} />} onClick={() => setAssignOpen(true)}>
+                Assign
+              </Button>
               <Button size="xs" color="red" leftIcon={<IconTrash size={14} />} onClick={deleteSelected}>
                 Delete
               </Button>
@@ -564,10 +408,15 @@ const CustomerTable = ({ profile }) => {
               Upload CSV
             </Button>
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-            <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={handleExportData}>
+            <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={() => setExportOpen(true)}>
               Export
             </Button>
           </div>
+        )}
+        {!selectionMode && (
+          <button type="button" onClick={() => router.push('/customer-duplicates')} className="mb-2 flex w-full items-center justify-center gap-1.5 py-1 text-sm text-blue-600">
+            <IconGitMerge size={16} /> Find duplicate customers
+          </button>
         )}
 
         <div className="px-1">
@@ -595,7 +444,12 @@ const CustomerTable = ({ profile }) => {
 
                 <div className="flex-1 min-w-0">
                   <Text weight={500} lineClamp={1}>{cust.full_name}</Text>
-                  <Text size="xs" color="dimmed">{cust.phone_number}</Text>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Text size="xs" color="dimmed">{cust.phone_number}</Text>
+                    <CustomerStatusBadge status={cust.status} size="xs" />
+                  </div>
+                  {cust.products?.length > 0 && <Text size="xs" color="dimmed" lineClamp={1}>{productsSummary(cust.products)}</Text>}
+                  {cust.assigned_to_name && <Text size="xs" color="dimmed" lineClamp={1}>Assigned to {cust.assigned_to_name}</Text>}
                 </div>
 
                 {!selectionMode && (
@@ -690,6 +544,20 @@ const CustomerTable = ({ profile }) => {
         opened={csvModalOpen}
         onClose={() => setCsvModalOpen(false)}
         onSuccess={fetchCustomers} // refresh after import
+      />
+
+      <CustomerExportModal opened={exportOpen} onClose={() => setExportOpen(false)} selectedIds={selectedIds} />
+      <CustomerColumnsModal opened={columnsOpen} onClose={() => setColumnsOpen(false)} config={columnConfig} onSaved={setColumnConfig} />
+
+      <AssignCustomersModal
+        opened={assignOpen}
+        customers={customers.filter((c) => selectedIds.includes(c.id))}
+        onClose={() => setAssignOpen(false)}
+        onDone={() => {
+          setSelectedIds([]);
+          setSelectionMode(false);
+          fetchCustomers();
+        }}
       />
     </div>
   );

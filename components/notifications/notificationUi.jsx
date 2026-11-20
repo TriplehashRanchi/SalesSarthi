@@ -1,6 +1,6 @@
 'use client';
 // Shared look of notifications: icon + colour per type / severity, "5 min ago", day groups.
-import { IconAlertTriangle, IconArrowsExchange, IconBell, IconCircleCheck, IconCircleX, IconFileImport, IconFileTime, IconTrash } from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowsExchange, IconBell, IconCalendarEvent, IconCalendarExclamation, IconCircleCheck, IconCircleX, IconFileImport, IconFileTime, IconTrash } from '@tabler/icons-react';
 
 export const TYPE_META = {
     bulk_move: { label: 'Bulk lead movement', icon: IconArrowsExchange },
@@ -10,6 +10,8 @@ export const TYPE_META = {
     import_failed: { label: 'Bulk lead import', icon: IconCircleX },
     import_files_expiring: { label: 'Import files', icon: IconFileTime },
     import_files_deleted: { label: 'Import files', icon: IconFileTime },
+    appointment_reminder: { label: 'Appointment reminder', icon: IconCalendarEvent },
+    appointment_overdue: { label: 'Appointment overdue', icon: IconCalendarExclamation },
     test: { label: 'Test', icon: IconBell },
 };
 
@@ -19,6 +21,7 @@ export const TYPE_FILTERS = [
     { value: 'folder_delete', label: 'Folder deletion' },
     { value: 'bulk_import', label: 'Bulk lead import' },
     { value: 'import_files', label: 'Import files' },
+    { value: 'appointments', label: 'Appointments' },
 ];
 
 const TONE = {

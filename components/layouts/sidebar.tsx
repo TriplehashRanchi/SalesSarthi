@@ -437,6 +437,9 @@ const Sidebar = () => {
                                         <li>
                                             <Link href="/emails">{t('Email')}</Link>
                                         </li>
+                                        <li>
+                                            <Link href="/message-templates">{t('Message Templates')}</Link>
+                                        </li>
                                     </ul>
                                 </AnimateHeight>
                             </li>

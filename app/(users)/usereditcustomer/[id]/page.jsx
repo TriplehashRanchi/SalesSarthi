@@ -5,7 +5,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { Loader, Notification, ActionIcon, Avatar, Button } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import axios from 'axios';
+import { authHeaders } from '@/utils/authHeaders';
 import CustomerForm from '@/components/forms/customerform';
+import CustomerPolicies from '@/components/customers/CustomerPolicies';
+import CustomerHistory from '@/components/customers/CustomerHistory';
+import CustomerOverview from '@/components/customers/CustomerOverview';
+import CustomerAppointments from '@/components/customers/CustomerAppointments';
+import CustomerTimeline from '@/components/customers/CustomerTimeline';
+import CustomerDocuments from '@/components/customers/CustomerDocuments';
 
 const EditCustomer = () => {
     const { id } = useParams();
@@ -13,13 +20,17 @@ const EditCustomer = () => {
     const [customerData, setCustomerData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [overviewKey, setOverviewKey] = useState(0);
+    const [addProduct, setAddProduct] = useState(0);
+    const [addAppointment, setAddAppointment] = useState(0);
+    const refreshOverview = () => setOverviewKey((k) => k + 1);
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     useEffect(() => {
         const fetchCustomer = async () => {
             try {
-                const response = await axios.get(`${API_URL}/api/customers/${id}`);
+                const response = await axios.get(`${API_URL}/api/customers/${id}`, { headers: await authHeaders() });
                 setCustomerData(response.data);
             } catch (err) {
                 setError('Failed to fetch customer data.');
@@ -32,10 +43,11 @@ const EditCustomer = () => {
 
     const handleUpdateCustomer = async (updatedData) => {
         try {
-            await axios.put(`${API_URL}/api/customers/${id}`, updatedData);
-            router.push('/customers');  // Redirect after update
+            await axios.put(`${API_URL}/api/customers/${id}`, updatedData, { headers: await authHeaders() });
+            router.push('/usercustomers');  // Redirect after update
         } catch (err) {
-            setError('Failed to update customer.');
+            // Thrown on so the form shows its error message instead of "Success".
+            throw err;
         }
     };
 
@@ -59,7 +71,19 @@ const EditCustomer = () => {
                     Cancel
                 </Button>
             </div>
+            <CustomerOverview
+                customer={customerData}
+                reloadKey={overviewKey}
+                onAddProduct={() => setAddProduct((n) => n + 1)}
+                onAddAppointment={() => setAddAppointment((n) => n + 1)}
+                onActivity={refreshOverview}
+            />
             <CustomerForm customerData={customerData} onSubmit={handleUpdateCustomer} />
+            <CustomerPolicies customer={customerData} editable addSignal={addProduct} onChanged={refreshOverview} />
+            <CustomerAppointments customer={customerData} isAdmin={false} addSignal={addAppointment} onChange={refreshOverview} />
+            <CustomerDocuments customer={customerData} isAdmin={false} onChange={refreshOverview} />
+            <CustomerTimeline customer={customerData} reloadKey={overviewKey} onCallSaved={refreshOverview} />
+            <CustomerHistory customerId={customerData.id} />
         </div>
     );
 };

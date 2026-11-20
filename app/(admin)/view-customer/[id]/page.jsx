@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader, Notification, Avatar, ActionIcon, Button } from '@mantine/core';
+import { Loader, Notification, ActionIcon, Button } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import axios from 'axios';
-import CustomerQuickActions from '@/components/common/CustomerQuickActions';
+import { authHeaders } from '@/utils/authHeaders';
 import LinkedFinancialKundli from '@/components/common/LinkedFinancialKundli';
 import LinkedFinHealthCheckups from '@/components/common/LinkedFinHealthCheckups';
-import AppointmentDrawer from '@/components/Leadtable/AppointmentDrawer';
+import CustomerAppointments from '@/components/customers/CustomerAppointments';
+import CustomerTimeline from '@/components/customers/CustomerTimeline';
+import CustomerDocuments from '@/components/customers/CustomerDocuments';
+import CustomerPolicies from '@/components/customers/CustomerPolicies';
+import CustomerHistory from '@/components/customers/CustomerHistory';
+import AssignCustomersModal from '@/components/customers/AssignCustomersModal';
+import CustomerOverview from '@/components/customers/CustomerOverview';
 
 const fmtDate = (v) => {
     if (!v) return '';
@@ -22,22 +28,29 @@ const ViewCustomer = () => {
     const [customer, setCustomer] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [openDrawer, setOpenDrawer] = useState(false);
+    const [addAppointment, setAddAppointment] = useState(0);
+    const [assignOpen, setAssignOpen] = useState(false);
+    const [historyKey, setHistoryKey] = useState(0);
+    const [overviewKey, setOverviewKey] = useState(0);
+    const [addProduct, setAddProduct] = useState(0);
+    const refreshOverview = () => setOverviewKey((k) => k + 1);
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+    const fetchCustomer = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/api/customers/${id}`, { headers: await authHeaders() });
+            setCustomer(response.data);
+        } catch (err) {
+            setError('Could not load this customer. Please refresh the page.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchCustomer = async () => {
-            try {
-                const response = await axios.get(`${API_URL}/api/customers/${id}`);
-                setCustomer(response.data);
-            } catch (err) {
-                setError('Failed to fetch customer data.');
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchCustomer();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     if (loading) return <Loader />;
@@ -72,19 +85,12 @@ const ViewCustomer = () => {
 
     return (
         <div className="panel max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
-            {/* Header */}
-            <div className="flex flex-wrap items-center gap-3 pb-4">
+            {/* Top bar: back + page actions */}
+            <div className="flex items-center gap-2 pb-3">
                 <ActionIcon variant="subtle" color="dark" onClick={() => router.push('/customers')} aria-label="Back">
                     <IconArrowLeft size={22} />
                 </ActionIcon>
-                <Avatar color="blue" variant="light" radius="xl" size="lg">
-                    {(customer.full_name || '?').trim().charAt(0).toUpperCase()}
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                    <div className="truncate text-lg font-semibold leading-tight dark:text-white-light md:text-xl">{customer.full_name}</div>
-                    <div className="text-sm text-gray-500">{customer.phone_number}</div>
-                </div>
-                <CustomerQuickActions customer={customer} onAppointment={() => setOpenDrawer(true)} size="xl" plain />
+                <div className="min-w-0 flex-1 truncate text-sm text-gray-500">Customer profile</div>
                 <div className="hidden items-center gap-2 md:flex">
                     <Button variant="light" color="blue" onClick={openFinCheckup}>
                         Fin-Health Checkup
@@ -94,6 +100,17 @@ const ViewCustomer = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Overview: who, products & premium, what is due, staff, quick actions */}
+            <CustomerOverview
+                customer={customer}
+                reloadKey={overviewKey}
+                onAddProduct={() => setAddProduct((n) => n + 1)}
+                onAddAppointment={() => setAddAppointment((n) => n + 1)}
+                onActivity={refreshOverview}
+                onChangeStaff={() => setAssignOpen(true)}
+            />
+
             <div className="flex gap-2 pb-4 md:hidden">
                 <Button className="flex-1" variant="light" color="blue" onClick={openFinCheckup}>
                     Fin-Health Checkup
@@ -124,7 +141,26 @@ const ViewCustomer = () => {
                     );
                 })}
             </div>
-            <AppointmentDrawer customer={customer} opened={openDrawer} onClose={() => setOpenDrawer(false)} />
+            <div id="products">
+                <CustomerPolicies customer={customer} editable editPath={`/edit-customer/${customer.id}`} addSignal={addProduct} onChanged={refreshOverview} />
+            </div>
+
+            <CustomerAppointments customer={customer} isAdmin={true} addSignal={addAppointment} onChange={refreshOverview} />
+            <CustomerDocuments customer={customer} isAdmin={true} onChange={refreshOverview} />
+            <CustomerTimeline customer={customer} reloadKey={overviewKey} onCallSaved={refreshOverview} />
+
+            <CustomerHistory customerId={customer.id} reloadKey={historyKey} />
+
+            <AssignCustomersModal
+                opened={assignOpen}
+                customers={[customer]}
+                onClose={() => setAssignOpen(false)}
+                onDone={() => {
+                    fetchCustomer();
+                    setHistoryKey((k) => k + 1);
+                    refreshOverview();
+                }}
+            />
         </div>
     );
 };

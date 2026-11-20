@@ -6,9 +6,16 @@ import { Autocomplete, ActionIcon, Avatar, Button, Loader, Menu, Select, Text, T
 import { showNotification } from '@mantine/notifications';
 import {
   IconArrowLeft, IconDotsVertical, IconDownload, IconEye, IconFolder, IconFolderMinus, IconPencil, IconPlus, IconSearch, IconUpload,
+  IconSettings, IconFolders,
 } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
+import CustomerExportModal from '@/components/customers/CustomerExportModal';
+import CustomerCategoryManager from '@/components/customers/CustomerCategoryManager';
+import ToolbarButton from './ToolbarButton';
 import { fetchFolderCustomers, removeFromFolder, saveFolderResponse, useCustomerFolders } from './customerFolderApi';
+import { useFolderList } from './personalFolderApi';
+import FolderLayoutManager from './FolderLayoutManager';
+import PersonalFolderView from './PersonalFolderView';
 
 const RESPONSE_SUGGESTIONS = ['Interested', 'Not Interested', 'Call Back', 'Purchased', 'Renewal Due', 'Documents Pending'];
 const AVATAR_COLORS = ['blue', 'blue', 'orange', 'teal', 'pink', 'green'];
@@ -106,22 +113,25 @@ function ResponseField({ row, folderId, editable, onSaved }) {
 
 const FolderContext = createContext(null);
 
-// "All Customers / Life Insurance (3) / ..." dropdown. Works anywhere inside <CustomerFolders>;
-// renders nothing outside it or when there are no folders.
+// "All Customers / Life Insurance (3) / My folder (2) ..." dropdown, in the person's own order (#11).
+// Works anywhere inside <CustomerFolders>; renders nothing outside it.
 export function CustomerFolderSelect({ className = '', ...rest }) {
   const ctx = useContext(FolderContext);
-  if (!ctx || !ctx.folders.length) return null;
-  const { folders, activeId, setActiveId } = ctx;
+  const [manage, setManage] = useState(false);
+  if (!ctx) return null;
+  const { items, activeKey, setActiveKey, isAdmin, openLayout } = ctx;
   const data = [
     { value: 'all', label: 'All Customers' },
-    ...folders.map((f) => ({ value: String(f.id), label: `${f.name} (${f.customer_count})` })),
+    ...items.map((f) => ({ value: f.key, label: `${f.type === 'personal' ? '📁 ' : ''}${f.name} (${f.customer_count})` })),
   ];
+  const btnSize = rest.size === 'md' ? 'xl' : 'lg';
   return (
+    <>
     <Select
       aria-label="Customer folder"
       data={data}
-      value={activeId ? String(activeId) : 'all'}
-      onChange={(v) => setActiveId(!v || v === 'all' ? null : Number(v))}
+      value={activeKey || 'all'}
+      onChange={(v) => setActiveKey(!v || v === 'all' ? null : v)}
       icon={<IconFolder size={16} />}
       radius="md"
       withinPortal
@@ -135,6 +145,28 @@ export function CustomerFolderSelect({ className = '', ...rest }) {
       className={className}
       {...rest}
     />
+    {isAdmin ? (
+      <>
+        {/* One button (keeps the phone toolbar roomy): my folders + the admin's category settings. */}
+        <Menu withinPortal shadow="md" width={210} position="bottom-end">
+          <Menu.Target>
+            <ActionIcon variant="light" color="blue" size={btnSize} radius={rest.radius || 'md'} aria-label="Folder settings" title="Folder settings" className="shrink-0">
+              <IconSettings size={18} />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item icon={<IconFolders size={16} />} onClick={openLayout}>My folders &amp; order</Menu.Item>
+            <Menu.Item icon={<IconSettings size={16} />} onClick={() => setManage(true)}>Manage categories</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+        <CustomerCategoryManager opened={manage} onClose={() => setManage(false)} />
+      </>
+    ) : (
+      <ActionIcon variant="light" color="blue" size={btnSize} radius={rest.radius || 'md'} onClick={openLayout} aria-label="My folders" title="My folders: create and arrange" className="shrink-0">
+        <IconFolders size={18} />
+      </ActionIcon>
+    )}
+    </>
   );
 }
 
@@ -147,6 +179,7 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -190,20 +223,6 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
 
   const pageRows = visible.slice((page - 1) * pageSize, page * pageSize);
 
-  const exportCsv = () => {
-    if (!visible.length) return showNotification({ title: 'No data', message: 'Nothing to export.', color: 'yellow' });
-    const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const lines = [['Name', 'Phone', 'Email', 'Response', 'Added'].map(cell).join(',')];
-    visible.forEach((r) => lines.push([r.full_name, r.phone_number, r.email, r.response, formatDate(r.added_at)].map(cell).join(',')));
-    const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${folder.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase()}_customers.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  };
 
   const actionsMenu = (row, size = 18) => (
     <div onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
@@ -235,34 +254,26 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
   return (
     <div className="panel mt-0 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
       {/* Header / toolbar — same as All Customers */}
-      <div className="mb-5 hidden flex-wrap items-center gap-4 md:flex">
-        <div className="mr-2">
-          <h5 className="text-xl font-semibold leading-tight dark:text-white-light">{folder.name}</h5>
-          <div className="text-sm text-gray-500">{countText}</div>
+      <div className="mb-5 hidden flex-nowrap items-center gap-2 md:flex xl:gap-3">
+        <div className="mr-1 min-w-0 max-w-[220px] shrink-0">
+          <h5 className="truncate text-xl font-semibold leading-tight dark:text-white-light">{folder.name}</h5>
+          <div className="whitespace-nowrap text-sm text-gray-500">{countText}</div>
         </div>
 
         <TextInput
           icon={<IconSearch size={16} />}
           placeholder="Search by name, phone or response"
           radius="xl"
-          className="w-full max-w-xs flex-1"
+          className="min-w-[140px] max-w-md flex-1"
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
         />
 
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <CustomerFolderSelect className="w-52" />
-          {isAdmin && (
-            <Button variant="light" color="blue" leftIcon={<IconUpload size={16} />} onClick={() => setCsvOpen(true)}>
-              Upload CSV
-            </Button>
-          )}
-          <Button variant="light" color="blue" leftIcon={<IconDownload size={16} />} onClick={exportCsv}>
-            Export
-          </Button>
-          <Button color="blue" leftIcon={<IconPlus size={16} />} onClick={addCustomer}>
-            Add Customer
-          </Button>
+        <div className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-2">
+          <CustomerFolderSelect className="w-40 xl:w-52" />
+          {isAdmin && <ToolbarButton icon={<IconUpload size={16} />} label="Upload CSV" onClick={() => setCsvOpen(true)} />}
+          <ToolbarButton icon={<IconDownload size={16} />} label="Export" onClick={() => setExportOpen(true)} />
+          <ToolbarButton variant="filled" icon={<IconPlus size={16} />} label="Add Customer" onClick={addCustomer} showFrom="lg" />
         </div>
       </div>
 
@@ -352,7 +363,7 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
             </>
           )}
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-          <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={exportCsv}>
+          <Button className="flex-1" variant="subtle" color="blue" leftIcon={<IconDownload size={18} />} onClick={() => setExportOpen(true)}>
             Export
           </Button>
         </div>
@@ -404,6 +415,8 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
         </ActionIcon>
       </div>
 
+      <CustomerExportModal opened={exportOpen} onClose={() => setExportOpen(false)} defaultFolderIds={[folder.id]} />
+
       {isAdmin && (
         <CsvCustomersUpload
           opened={csvOpen}
@@ -419,22 +432,49 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
   );
 }
 
-// Wraps the customers page. "All Customers" shows the normal table (children);
-// a folder shows the customers in that product line with their response.
+// Wraps the customers page. "All Customers" shows the normal table (children); a category shows the customers
+// in that product line with their response; a personal folder (#11/#12) shows the person's own list.
+// Folders appear in the order the person arranged (categories and their own folders mixed).
 export default function CustomerFolders({ isAdmin = false, children }) {
   const { folders, reload } = useCustomerFolders();
-  const [activeId, setActiveId] = useState(null);
-  const active = folders.find((f) => f.id === activeId) || null;
+  const list = useFolderList();
+  const [activeKey, setActiveKey] = useState(null);
+  const [layoutOpen, setLayoutOpen] = useState(false);
 
-  // A folder deleted by the Super Admin while open → back to all customers.
+  // If the personal-folder list could not load, fall back to the plain category list.
+  const items = useMemo(() => {
+    if (list.items.length) return list.items;
+    return folders.map((f) => ({ type: 'category', id: f.id, key: `c:${f.id}`, name: f.name, customer_count: f.customer_count }));
+  }, [list.items, folders]);
+  const active = items.find((i) => i.key === activeKey) || null;
+  const category = active?.type === 'category' ? folders.find((f) => f.id === active.id) || active : null;
+
+  // A folder deleted (by the Super Admin, or by the person in "My folders") while open → back to all customers.
   useEffect(() => {
-    if (activeId && folders.length && !active) setActiveId(null);
-  }, [folders, activeId, active]);
+    if (activeKey && !list.loading && items.length && !active) setActiveKey(null);
+  }, [items, activeKey, active, list.loading]);
+
+  const onChanged = () => { reload(); list.reload(); };
+
+  let body = children;
+  if (active?.type === 'personal') {
+    body = (
+      <PersonalFolderView
+        key={active.key}
+        folder={active}
+        isAdmin={isAdmin}
+        folderSelect={<CustomerFolderSelect className="w-52" />}
+      />
+    );
+  } else if (category) {
+    body = <FolderCustomerList key={active.key} folder={category} isAdmin={isAdmin} onChanged={onChanged} />;
+  }
 
   // The dropdown (CustomerFolderSelect) sits in the customers table toolbar and in the folder view header.
   return (
-    <FolderContext.Provider value={{ folders, activeId, setActiveId }}>
-      {active ? <FolderCustomerList key={active.id} folder={active} isAdmin={isAdmin} onChanged={reload} /> : children}
+    <FolderContext.Provider value={{ items, activeKey, setActiveKey, isAdmin, openLayout: () => setLayoutOpen(true) }}>
+      {body}
+      <FolderLayoutManager opened={layoutOpen} onClose={() => setLayoutOpen(false)} />
     </FolderContext.Provider>
   );
 }

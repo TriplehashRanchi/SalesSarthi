@@ -1,6 +1,7 @@
 'use client';
 
 import { DataTable } from 'mantine-datatable';
+import { useProductExpansion, productsSummary } from '@/components/customers/CustomerProductsRow';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import sortBy from 'lodash/sortBy';
@@ -13,8 +14,11 @@ import IconTrash from '../icon/icon-trash-lines';
 import AppointmentDrawer from './AppointmentDrawer';
 import IconMailDot from '../icon/icon-mail-dot';
 import { getAuth } from 'firebase/auth';
-import { IconDotsVertical, IconFileExport, IconUpload, IconPlus } from '@tabler/icons-react';
+import { IconDotsVertical, IconFileExport, IconUpload, IconPlus, IconColumns } from '@tabler/icons-react';
 import CsvCustomersUpload from '@/components/CsvUpload/CsvCustomerUpload';
+import CustomerExportModal from '@/components/customers/CustomerExportModal';
+import { buildCustomerColumns, CustomerColumnsModal, useCustomerColumns } from '@/components/customers/CustomerColumns';
+import { useCustomerFolders } from '@/components/customers/customerFolderApi';
 import { Pagination } from '@mantine/core';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
 import { CustomerFolderSelect } from '@/components/customers/CustomerFolders';
@@ -39,6 +43,7 @@ const CustomerTable = () => {
     /* ─────────── NEW state ─────────── */
     const [selectedIds, setSelectedIds] = useState([]); // checkbox picks
     const [csvModalOpen, setCsvModalOpen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
 
     const fileRef = useRef(null);
 
@@ -119,6 +124,12 @@ const CustomerTable = () => {
     };
 
     /* ─────────── JSX ─────────── */
+    const productRows = useProductExpansion();
+    const { config: columnConfig, setConfig: setColumnConfig, view: columnView } = useCustomerColumns();
+    const [columnsOpen, setColumnsOpen] = useState(false);
+    const { folders: allFolders } = useCustomerFolders();
+    const folderName = Object.fromEntries((allFolders || []).map((f) => [f.id, f.name]));
+
     return (
         <div className="panel mt-6">
             {/* ⬇︎ Header / toolbar */}
@@ -129,6 +140,12 @@ const CustomerTable = () => {
 
                 <div className="ml-auto flex gap-2">
                     <CustomerFolderSelect className="w-52" />
+                    <Button variant="light" color="blue" leftIcon={<IconColumns size={16} />} onClick={() => setColumnsOpen(true)}>
+                        Columns
+                    </Button>
+                    <Button variant="light" color="blue" leftIcon={<IconFileExport size={16} />} onClick={() => setExportOpen(true)}>
+                        Export
+                    </Button>
                     <Button color="blue" leftIcon={<IconPlus size={16} />} onClick={() => router.push('/useraddcustomer')}>
                         Add Customer
                     </Button>
@@ -141,30 +158,10 @@ const CustomerTable = () => {
                     highlightOnHover
                     className="table-hover whitespace-nowrap"
                     records={recordsData}
+                    rowExpansion={productRows.rowExpansion}
                     columns={[
-                        /* NEW checkbox column */
-                        { accessor: 'full_name', title: 'Name', sortable: true },
-                        { accessor: 'email', title: 'Email', sortable: true },
-                        { accessor: 'phone_number', title: 'Phone', sortable: true },
-                        {
-                            accessor: 'next_appointment',
-                            title: 'Next Appointment',
-                            render: (record) => {
-                                const nextAppt = getNextAppointment(record.appointments);
-                                return nextAppt ? (
-                                    <Badge color="blue">
-                                        {new Date(nextAppt.appointment_date).toLocaleString()} - {nextAppt.appointment_type}
-                                    </Badge>
-                                ) : (
-                                    <Text>No Upcoming Appointment</Text>
-                                );
-                            },
-                        },
-                        {
-                            accessor: 'quick_actions',
-                            title: 'Quick Actions',
-                            render: (record) => <CustomerQuickActions customer={record} onAppointment={handleManageAppointments} />,
-                        },
+                        // The team member's chosen columns (#10), limited to what their admin allows.
+                        ...buildCustomerColumns(columnView, { productRows, folderName, getNextAppointment, onAppointment: handleManageAppointments }),
                         {
                             accessor: 'actions',
                             title: 'Actions',
@@ -234,6 +231,11 @@ const CustomerTable = () => {
                                     <Text size="xs" color="dimmed">
                                         {cust.phone_number}
                                     </Text>
+                                    {cust.products?.length > 0 && (
+                                        <Text size="xs" color="dimmed" lineClamp={1}>
+                                            {productsSummary(cust.products)}
+                                        </Text>
+                                    )}
                                     {nextAppt && (
                                         <Badge size="xs" color="blue" variant="light" mt="xs">
                                             {new Date(nextAppt.appointment_date).toLocaleDateString()} @{' '}
@@ -276,6 +278,8 @@ const CustomerTable = () => {
             {/* ⬇︎ Existing appointment drawer */}
             <AppointmentDrawer customer={selectedCustomer} opened={openDrawer} onClose={() => setOpenDrawer(false)} />
 
+            <CustomerExportModal opened={exportOpen} onClose={() => setExportOpen(false)} selectedIds={selectedIds} />
+            <CustomerColumnsModal opened={columnsOpen} onClose={() => setColumnsOpen(false)} config={columnConfig} onSaved={setColumnConfig} />
             <CsvCustomersUpload
                 opened={csvModalOpen}
                 onClose={() => setCsvModalOpen(false)}

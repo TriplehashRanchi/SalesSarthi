@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import ProductLineSelect from '@/components/customers/ProductLineSelect';
+import { customerStatusOptions, normalizeCustomerStatus } from '@/utils/customerStatus';
+import ProductFieldsInputs, { detailsForRef, missingRequired, useProductFields } from '@/components/customers/ProductFields';
 
 // DB values can be null, a short code ("F"), or a zero date; the inputs need clean strings.
 const normalizeGender = (v) => {
@@ -12,10 +14,7 @@ const normalizeGender = (v) => {
   return '';
 };
 
-const normalizeStatus = (v) => {
-  const found = ['Active', 'Inactive', 'Lapsed'].find((o) => o.toLowerCase() === String(v ?? '').trim().toLowerCase());
-  return found || 'Active';
-};
+const normalizeStatus = normalizeCustomerStatus;
 
 const toDateInput = (v) => {
   if (!v) return '';
@@ -45,8 +44,12 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
     referrer: customerData?.referrer ?? '',
     notes: customerData?.notes ?? '',
     folder_ids: customerData?.folder_ids ?? [],
+    // Product-specific details (#05) of the customer's own product, per product line.
+    product_fields: detailsForRef(customerData?.product_details, 0),
   });
   const [folderError, setFolderError] = useState('');
+  const [detailsError, setDetailsError] = useState('');
+  const { byId: productLines } = useProductFields();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -60,8 +63,17 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
       setFolderError('Select at least one product line');
       return;
     }
+    const missing = missingRequired(productLines, formData.folder_ids, formData.product_fields);
+    if (missing.length) {
+      setDetailsError(`Please fill in: ${missing.join(', ')}.`);
+      return;
+    }
+    setDetailsError('');
     try {
-      await onSubmit(formData);  // Calls the passed onSubmit function with formData
+      // onSubmit returns false when it is not done yet (e.g. a duplicate to review) or already showed an error:
+      // the form then keeps what was typed and shows nothing.
+      const done = await onSubmit(formData);
+      if (done === false) return;
       Swal.fire('Success', 'Customer data processed successfully!', 'success');
       setFormData({
         id: Math.floor(Math.random() * 100000000),
@@ -83,6 +95,7 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
         referrer: '',
         notes: '',
         folder_ids: [],
+        product_fields: {},
       });
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -117,7 +130,6 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
             value={formData.email}
             onChange={handleInputChange}
             className="form-input w-full"
-            required
           />
         </div>
 
@@ -148,6 +160,17 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
             error={folderError}
             placeholder="Select product line"
           />
+        </div>
+
+        {/* Fields of the chosen product line(s), e.g. Sum Assured for Life Insurance */}
+        <div className="col-span-2 min-w-0 empty:hidden lg:col-span-3">
+          <ProductFieldsInputs
+            folderIds={formData.folder_ids}
+            value={formData.product_fields}
+            onChange={(next) => { setFormData((prev) => ({ ...prev, product_fields: next })); setDetailsError(''); }}
+            idPrefix="cust"
+          />
+          {detailsError && <p className="mt-1 text-sm text-red-600">{detailsError}</p>}
         </div>
 
         <div className="min-w-0">
@@ -271,9 +294,9 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
             onChange={handleInputChange}
             className="form-select w-full"
           >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Lapsed">Lapsed</option>
+            {customerStatusOptions(formData.status).map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
           </select>
         </div>
 

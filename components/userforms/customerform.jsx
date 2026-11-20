@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { customerStatusOptions, normalizeCustomerStatus } from '@/utils/customerStatus';
 
 const CustomerForm = ({ customerData, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ const CustomerForm = ({ customerData, onSubmit }) => {
     premium: customerData ? customerData.premium : '',
     coverage_amount: customerData ? customerData.coverage_amount : '',
     renewal_date: customerData ? customerData.renewal_date : '',
-    status: customerData ? customerData.status : 'Active',
+    status: normalizeCustomerStatus(customerData?.status),
     source: customerData ? customerData.source : '',
     referrer: customerData ? customerData.referrer : '',
     notes: customerData ? customerData.notes : '',
@@ -90,7 +91,6 @@ const CustomerForm = ({ customerData, onSubmit }) => {
             value={formData.email}
             onChange={handleInputChange}
             className="form-input w-full"
-            required
           />
         </div>
 
@@ -228,9 +228,9 @@ const CustomerForm = ({ customerData, onSubmit }) => {
             onChange={handleInputChange}
             className="form-select w-full"
           >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Lapsed">Lapsed</option>
+            {customerStatusOptions(formData.status).map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
           </select>
         </div>
 

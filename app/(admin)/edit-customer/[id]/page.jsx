@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Loader, Notification, ActionIcon, Avatar, Button } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import axios from 'axios';
+import { authHeaders } from '@/utils/authHeaders';
 import CustomerForm from '@/components/forms/customerform';
 
 const EditCustomer = () => {
@@ -19,7 +20,7 @@ const EditCustomer = () => {
     useEffect(() => {
         const fetchCustomer = async () => {
             try {
-                const response = await axios.get(`${API_URL}/api/customers/${id}`);
+                const response = await axios.get(`${API_URL}/api/customers/${id}`, { headers: await authHeaders() });
                 setCustomerData(response.data);
             } catch (err) {
                 setError('Failed to fetch customer data.');
@@ -32,10 +33,11 @@ const EditCustomer = () => {
 
     const handleUpdateCustomer = async (updatedData) => {
         try {
-            await axios.put(`${API_URL}/api/customers/${id}`, updatedData);
+            await axios.put(`${API_URL}/api/customers/${id}`, updatedData, { headers: await authHeaders() });
             router.push('/customers');  // Redirect after update
         } catch (err) {
-            setError('Failed to update customer.');
+            // Thrown on so the form shows its error message instead of "Success".
+            throw err;
         }
     };
 

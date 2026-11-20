@@ -960,7 +960,7 @@ function formatDateWithOrdinal(dateString) {
                   </Button>
               </Group>
           </Modal>
-          <ConvertLeadModal lead={convertLead} onClose={() => setConvertLead(null)} onConverted={handleLeadConverted} />
+          <ConvertLeadModal lead={convertLead} onClose={() => setConvertLead(null)} onConverted={handleLeadConverted} profilePath={(id) => `/usereditcustomer/${id}`} />
       </div>
   );
 };

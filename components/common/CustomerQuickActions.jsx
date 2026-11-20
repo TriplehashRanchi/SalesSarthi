@@ -11,20 +11,28 @@ const toTenDigitMobile = (raw) => {
     return /^[6-9]\d{9}$/.test(ten) ? ten : null;
 };
 
+const warn = (message) => showNotification({ title: 'Cannot continue', message, color: 'red' });
+
+// Shared with the profile overview's quick actions. Returns true when the phone's dialer was opened.
+export const callCustomer = (customer) => {
+    const digits = String(customer?.phone_number || '').replace(/[^\d+]/g, '');
+    if (!digits) {
+        warn('This customer has no phone number saved.');
+        return false;
+    }
+    window.open(`tel:${digits}`, '_self');
+    return true;
+};
+
+export const whatsappCustomer = (customer) => {
+    const ten = toTenDigitMobile(customer?.phone_number);
+    if (!ten) return warn('This phone number is not a valid Indian mobile number, so WhatsApp cannot be opened.');
+    window.open(`https://wa.me/91${ten}?text=${encodeURIComponent(`Hello ${customer.full_name || ''},`)}`, '_blank');
+};
+
 const CustomerQuickActions = ({ customer, onAppointment, size = 'md', hideAppointment = false, plain = false }) => {
-    const warn = (message) => showNotification({ title: 'Cannot continue', message, color: 'red' });
-
-    const handleCall = () => {
-        const digits = String(customer.phone_number || '').replace(/[^\d+]/g, '');
-        if (!digits) return warn('Phone number is missing.');
-        window.open(`tel:${digits}`, '_self');
-    };
-
-    const handleMessage = () => {
-        const ten = toTenDigitMobile(customer.phone_number);
-        if (!ten) return warn('Invalid Indian mobile number.');
-        window.open(`https://wa.me/91${ten}?text=${encodeURIComponent(`Hello ${customer.full_name},`)}`, '_blank');
-    };
+    const handleCall = () => callCustomer(customer);
+    const handleMessage = () => whatsappCustomer(customer);
 
     return (
         <Group spacing={6} noWrap onClick={(e) => e.stopPropagation()}>

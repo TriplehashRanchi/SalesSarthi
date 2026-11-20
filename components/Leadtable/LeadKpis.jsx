@@ -58,8 +58,12 @@ const niceMax = (v) => {
     return 10 * step;
 };
 
+// Statuses the lead list can filter by (Converted leads are on the Customers page, so that column is info only).
+const FILTERABLE = ['untouched', 'cold', 'hot', 'followup', 'qualified', 'lost'];
+
 // Column chart: one column per status, in funnel order, with a value on top and the label below.
-const StatusChart = ({ k }) => {
+// With onSelect, clicking a column filters the list below (like the cards); click again to clear.
+const StatusChart = ({ k, activeKey = '', onSelect }) => {
     const [hover, setHover] = useState(null);
     const [grown, setGrown] = useState(false);
     useEffect(() => {
@@ -95,18 +99,38 @@ const StatusChart = ({ k }) => {
                         {SEGMENTS.map((s) => {
                             const v = k[s.key];
                             const h = (v / max) * 100;
-                            const dim = hover && hover !== s.key;
+                            const canFilter = !!onSelect && FILTERABLE.includes(s.key);
+                            const picked = activeKey === s.key;
+                            // A picked column stays bright and the rest fade, so the filter is visible at a glance.
+                            const dim = hover ? hover !== s.key : !!activeKey && !picked;
+                            const pick = () => {
+                                if (canFilter) onSelect(s.key);
+                                else setHover((x) => (x === s.key ? null : s.key));
+                            };
                             return (
                                 <div
                                     key={s.key}
-                                    className="group relative flex h-full flex-1 cursor-pointer items-end justify-center"
+                                    className={`group relative flex h-full flex-1 items-end justify-center ${canFilter ? 'cursor-pointer' : 'cursor-default'} rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400`}
                                     onMouseEnter={() => setHover(s.key)}
-                                    onClick={() => setHover((x) => (x === s.key ? null : s.key))}
-                                    role="img"
+                                    onClick={pick}
+                                    {...(canFilter
+                                        ? {
+                                              role: 'button',
+                                              tabIndex: 0,
+                                              'aria-pressed': picked,
+                                              title: picked ? 'Click to clear this filter' : `Show ${s.label.toLowerCase()} leads`,
+                                              onKeyDown: (e) => {
+                                                  if (e.key === 'Enter' || e.key === ' ') {
+                                                      e.preventDefault();
+                                                      pick();
+                                                  }
+                                              },
+                                          }
+                                        : { role: 'img' })}
                                     aria-label={`${s.label}: ${v} leads (${pct(v, k.total)}%)`}
                                 >
                                     {/* hover column wash */}
-                                    <div className={`absolute inset-x-0 bottom-0 top-0 rounded-md bg-blue-100/50 transition-opacity dark:bg-white/5 ${hover === s.key ? 'opacity-100' : 'opacity-0'}`} />
+                                    <div className={`absolute inset-x-0 bottom-0 top-0 rounded-md bg-blue-100/50 transition-opacity dark:bg-white/5 ${hover === s.key || picked ? 'opacity-100' : 'opacity-0'} ${picked ? 'ring-2 ring-blue-500' : ''}`} />
                                     <div
                                         className={`relative w-full max-w-[44px] rounded-t-[4px] transition-all duration-700 ease-out ${s.cls} ${dim ? 'opacity-30' : ''}`}
                                         style={{ height: grown ? `${v ? Math.max(h, 2) : 0}%` : '0%' }}
@@ -125,6 +149,8 @@ const StatusChart = ({ k }) => {
                                             <div className="tabular-nums opacity-80">
                                                 {v} leads · {pct(v, k.total)}%
                                             </div>
+                                            {canFilter && <div className="opacity-70">{picked ? 'Click to clear' : 'Click to see these leads'}</div>}
+                                            {s.key === 'converted' && <div className="opacity-70">Shown on the Customers page</div>}
                                         </div>
                                     )}
                                 </div>
@@ -136,7 +162,7 @@ const StatusChart = ({ k }) => {
                 {/* x labels */}
                 <div className="mt-1.5 flex gap-1.5 px-1 sm:gap-3 sm:px-2">
                     {SEGMENTS.map((s) => (
-                        <div key={s.key} className={`flex-1 text-center text-[10px] leading-tight sm:text-xs ${hover === s.key ? 'font-semibold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <div key={s.key} className={`flex-1 text-center text-[10px] leading-tight sm:text-xs ${hover === s.key || activeKey === s.key ? 'font-semibold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
                             {s.label}
                         </div>
                     ))}
@@ -146,15 +172,30 @@ const StatusChart = ({ k }) => {
     );
 };
 
-const Stat = ({ label, value, sub, warn }) => (
-    <div className="min-w-0">
-        <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">{label}</div>
-        <div className="flex items-baseline gap-1">
-            <span className={`text-xl font-bold leading-tight tabular-nums ${warn ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'}`}>{value}</span>
-            {sub && <span className="text-xs text-gray-400">{sub}</span>}
-        </div>
-    </div>
-);
+const Stat = ({ label, value, sub, warn, active, onClick }) => {
+    const body = (
+        <>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">{label}</div>
+            <div className="flex items-baseline gap-1">
+                <span className={`text-xl font-bold leading-tight tabular-nums ${warn ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'}`}>{value}</span>
+                {sub && <span className="text-xs text-gray-400">{sub}</span>}
+            </div>
+        </>
+    );
+    if (!onClick) return <div className="min-w-0">{body}</div>;
+    // Clickable like the cards: filters the list below (click again to clear).
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={!!active}
+            title={active ? 'Click to clear this filter' : `Show ${label.toLowerCase()} leads`}
+            className={`-m-1.5 min-w-0 rounded-lg p-1.5 text-left transition-colors hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:hover:bg-gray-800 ${active ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-gray-800' : ''}`}
+        >
+            {body}
+        </button>
+    );
+};
 
 const Card = ({ label, value, sub, tone = 'gray', active, onClick }) => {
     const tones = {
@@ -330,12 +371,12 @@ export const FolderKpis = ({ folder, userId, reloadKey, title, activeKey = '', o
             {open && view === 'graph' && (
                 <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-6">
                     <div className="grid flex-shrink-0 grid-cols-3 gap-3 lg:w-44 lg:grid-cols-1 lg:content-center lg:gap-4 lg:border-r lg:border-gray-200 lg:pr-6 lg:dark:border-gray-700">
-                        <Stat label="Leads" value={k.total} />
+                        <Stat label="Leads" value={k.total} active={!!onSelect && !activeKey} onClick={onSelect && (() => onSelect(''))} />
                         <Stat label="Converted" value={`${k.conversion}%`} sub={`${k.converted} leads`} />
-                        <Stat label="Unassigned" value={k.unassigned} warn={k.unassigned > 0} />
+                        <Stat label="Unassigned" value={k.unassigned} warn={k.unassigned > 0} active={activeKey === 'unassigned'} onClick={onSelect && (() => onSelect('unassigned'))} />
                     </div>
                     <div className="min-w-0 flex-1 pt-4">
-                        <StatusChart key={range} k={k} />
+                        <StatusChart key={range} k={k} activeKey={activeKey} onSelect={onSelect} />
                     </div>
                 </div>
             )}

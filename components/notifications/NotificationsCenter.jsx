@@ -37,6 +37,7 @@ const SETTING_HELP = {
     folder_delete: 'When a folder is deleted after its leads were moved.',
     bulk_import: 'When a CSV import finishes, partly finishes or fails.',
     import_files: '3 days before stored import files are deleted, and after they are deleted.',
+    appointments: 'A day before and an hour before your appointments, and when one is overdue without an outcome.',
 };
 
 /* ───────────────────────── list ───────────────────────── */

@@ -1,40 +1,20 @@
 'use client'
 import CustomerForm from "@/components/forms/customerform";
-import { showNotification } from "@mantine/notifications";
 import { ActionIcon } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
-import axios from "axios";
-import { getAuth } from "firebase/auth";
+import DuplicateCustomerModal from "@/components/customers/DuplicateCustomerModal";
+import useCreateCustomer from "@/components/customers/useCreateCustomer";
 import { useRouter } from "next/navigation";
 
 export default function UserAddCustomer() {
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     const router = useRouter();
+    const { submit, duplicate, modalProps } = useCreateCustomer({ endpoint: '/api/customers/user', onSaved: () => router.push('/usercustomers') });
 
+    // false → not saved yet (duplicate to review, or an error was shown); the form keeps what was typed.
     const onSubmit = async (data) => {
-        try {
-            const auth = getAuth();
-            const token = await auth.currentUser?.getIdToken();
-
-            const { id, ...body } = data;
-            const res = await axios.post(`${API_URL}/api/customers/user`, body, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            showNotification(
-                res.data?.merged
-                    ? { title: 'Merged', message: 'This customer already existed (same phone/email). Added the product line(s) to that customer.', color: 'blue' }
-                    : { title: 'Success', message: 'Customer created successfully', color: 'green' },
-            );
-            router.push('/usercustomers');
-
-        } catch (error) {
-           showNotification({ title: 'Error', message: error.message, color: 'red' });
-        }
-    
+        const { id, ...body } = data;
+        return submit(body);
     };
 
     return (
@@ -46,6 +26,7 @@ export default function UserAddCustomer() {
                 <h2 className="min-w-0 truncate text-lg font-semibold text-gray-800 dark:text-white-light sm:text-xl">Add New Customer</h2>
             </div>
             <CustomerForm onSubmit={onSubmit} customerData={null} hideTitle />
+            <DuplicateCustomerModal duplicate={duplicate} profilePath={(id) => `/usereditcustomer/${id}`} {...modalProps} />
         </div>
     );
 }

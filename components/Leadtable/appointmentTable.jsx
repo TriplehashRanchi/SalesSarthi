@@ -91,17 +91,17 @@ const AppointmentTable = () => {
     };
 
     const upcomingAppointments = useMemo(() =>
-        filterAndSortData(allAppointments, appt => appt?.appointment_date && appt.status?.toLowerCase() === 'scheduled' && isFuture(parseISO(appt.appointment_date)), upcomingSortStatus),
+        filterAndSortData(allAppointments, appt => (appt?.state ? appt.state === 'upcoming' : appt?.appointment_date && appt.status?.toLowerCase() === 'scheduled' && isFuture(parseISO(appt.appointment_date))), upcomingSortStatus),
         [allAppointments, upcomingSortStatus]
     );
 
     const completedAppointments = useMemo(() =>
-        filterAndSortData(allAppointments, appt => appt?.status?.toLowerCase() === 'completed', completedSortStatus),
+        filterAndSortData(allAppointments, appt => (appt?.state ? appt.state === 'completed' : appt?.status?.toLowerCase() === 'completed'), completedSortStatus),
         [allAppointments, completedSortStatus]
     );
 
     const pastMissedAppointments = useMemo(() =>
-        filterAndSortData(allAppointments, appt => appt?.appointment_date && appt.status?.toLowerCase() !== 'completed' && isPast(parseISO(appt.appointment_date)), pastMissedSortStatus),
+        filterAndSortData(allAppointments, appt => (appt?.state ? appt.state === 'overdue' || appt.state === 'cancelled' : appt?.appointment_date && appt.status?.toLowerCase() !== 'completed' && isPast(parseISO(appt.appointment_date))), pastMissedSortStatus),
         [allAppointments, pastMissedSortStatus]
     );
 
@@ -146,6 +146,7 @@ const AppointmentTable = () => {
             case 'scheduled': return <Badge color="blue" variant="light">Scheduled</Badge>;
             case 'completed': return <Badge color="green" variant="light">Completed</Badge>;
             case 'missed': return <Badge color="red" variant="light">Missed</Badge>;
+            case 'overdue': return <Badge color="red" variant="filled">Overdue</Badge>;
             case 'cancelled': return <Badge color="gray" variant="light">Cancelled</Badge>;
             default: return <Badge color="orange" variant="light">{status || 'Unknown'}</Badge>;
         }
@@ -161,7 +162,7 @@ const AppointmentTable = () => {
                 <span className="font-medium">{r.full_name || 'N/A'}</span>
             </div>
         ) },
-        { accessor: 'status', title: 'Status', render: (r) => getStatusBadge(r.status), sortable: true, width: 120 },
+        { accessor: 'status', title: 'Status', render: (r) => getStatusBadge(r.state === 'overdue' ? 'overdue' : r.status), sortable: true, width: 120 },
         { accessor: 'notes', title: 'Notes', render: (r) => <Text truncate>{r.notes || '-'}</Text>, width: 'auto' },
         { accessor: 'actions', title: 'Actions', textAlign: 'right', width: 100, render: (r) => (
             <Menu withinPortal shadow="md" width={200} position="bottom-end">
@@ -183,7 +184,7 @@ const AppointmentTable = () => {
                 <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                         <Text weight={500} lineClamp={1} className="dark:text-white">{name}</Text>
-                        {getStatusBadge(appointment.status)}
+                        {getStatusBadge(appointment.state === 'overdue' ? 'overdue' : appointment.status)}
                     </div>
                     <Text size="xs" color="dimmed">{appointment.full_name && appointment.appointment_type ? `${when} · ${appointment.appointment_type}` : when}</Text>
                     {appointment.notes && <Text size="sm" lineClamp={2} mt={4} className="text-gray-600 dark:text-gray-300">{appointment.notes}</Text>}
@@ -229,7 +230,7 @@ const AppointmentTable = () => {
                         {[
                             { value: 'upcoming', label: 'Upcoming', icon: <IconCalendarDue size="1rem" />, count: upcomingAppointments.length },
                             { value: 'completed', label: 'Completed', icon: <IconCalendarCheck size="1rem" />, count: completedAppointments.length },
-                            { value: 'past_missed', label: 'Past / Missed', icon: <IconCalendarCancel size="1rem" />, count: pastMissedAppointments.length },
+                            { value: 'past_missed', label: 'Overdue / Cancelled', icon: <IconCalendarCancel size="1rem" />, count: pastMissedAppointments.length },
                         ].map((t) => (
                             <Tabs.Tab
                                 key={t.value}
