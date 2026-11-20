@@ -26,20 +26,23 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const FIELDS = ['full_name', 'phone_number', 'email', 'gender', 'date_of_birth', 'address', 'company_name', 'product_name', 'policy_number', 'premium', 'coverage_amount', 'source', 'referrer', 'notes'];
 
 // Form values from the lead (and, once loaded, the server's fuller copy of it).
-const fromLead = (lead) => {
+// prefill (optional): { product_name, premium }, e.g. from an accepted proposal; it wins over the lead's values.
+const fromLead = (lead, prefill) => {
   const out = Object.fromEntries(FIELDS.map((f) => [f, lead?.[f] ?? '']));
   out.product_name = lead?.product_name || lead?.preferred_plan || lead?.insurance_type || '';
   out.source = lead?.source || lead?.lead_source || '';
   out.gender = gender(lead?.gender);
   out.date_of_birth = toDateInput(lead?.date_of_birth);
+  if (prefill?.product_name) out.product_name = prefill.product_name;
+  if (prefill?.premium !== undefined && prefill?.premium !== null && prefill?.premium !== '') out.premium = prefill.premium;
   ['premium', 'coverage_amount'].forEach((f) => { out[f] = out[f] === null || out[f] === undefined ? '' : String(out[f]); });
   return out;
 };
 
 // Lead → Customer (smart conversion): the user checks and edits every detail, sees what will move over,
 // then confirms. A matching customer (same phone/email) is offered before anything is saved.
-export default function ConvertLeadModal({ lead, onClose, onConverted, profilePath = (id) => `/view-customer/${id}` }) {
-  const [form, setForm] = useState(fromLead(lead));
+export default function ConvertLeadModal({ lead, prefill, onClose, onConverted, profilePath = (id) => `/view-customer/${id}` }) {
+  const [form, setForm] = useState(fromLead(lead, prefill));
   const [folderIds, setFolderIds] = useState([]);
   const [folderError, setFolderError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -50,7 +53,7 @@ export default function ConvertLeadModal({ lead, onClose, onConverted, profilePa
   const isPhone = useMediaQuery('(max-width: 639px)');
 
   useEffect(() => {
-    setForm(fromLead(lead));
+    setForm(fromLead(lead, prefill));
     setFolderIds([]);
     setFolderError('');
     setDuplicate(null);
@@ -77,7 +80,7 @@ export default function ConvertLeadModal({ lead, onClose, onConverted, profilePa
       }
     })();
     return () => { live = false; };
-  }, [lead]);
+  }, [lead, prefill]);
 
   // Read the value now: e.currentTarget is null by the time React runs the state updater.
   const set = (key) => (e) => {

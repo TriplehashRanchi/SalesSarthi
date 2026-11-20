@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList,
     RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, CartesianGrid
@@ -388,6 +389,14 @@ const FinancialHealthReport = ({ data, onClose }) => {
 
                 {/* --- Action Buttons (Outside the captured ref) --- */}
                 <div className="export-buttons flex flex-wrap items-center justify-center gap-2 px-4 pb-6 text-center md:px-8 md:gap-4">
+                    {data.checkupId && (
+                        <Link
+                            href={`/proposals/new?source=fhc&id=${data.checkupId}`}
+                            className="rounded-lg bg-emerald-600 px-5 py-2 font-semibold text-white shadow-md transition hover:bg-emerald-700"
+                        >
+                            Create Proposal
+                        </Link>
+                    )}
                     <button onClick={handleExportPDF} className="rounded-lg hidden md:block bg-indigo-600 px-5 py-2 font-semibold text-white shadow-md transition hover:bg-indigo-700">
                         Export PDF
                     </button>
