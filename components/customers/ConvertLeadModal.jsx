@@ -99,7 +99,9 @@ export default function ConvertLeadModal({ lead, prefill, onClose, onConverted, 
     showNotification(
       data?.merged
         ? { title: 'Added to existing customer', message: `${form.full_name} was already a customer. The lead and its history were added to their profile; their saved details were not changed.${moved}`, color: 'blue', autoClose: 7000 }
-        : { title: 'Converted', message: `${form.full_name} is now a customer. Remarks and history came along.${moved}`, color: 'green', autoClose: 7000 },
+        : data?.customer?.needs_review
+          ? { title: 'Converted, saved separately', message: `${form.full_name} is now a customer and is listed in Duplicate Customers, to compare and merge if it is the same person.${moved}`, color: 'orange', autoClose: 8000 }
+          : { title: 'Converted', message: `${form.full_name} is now a customer. Remarks and history came along.${moved}`, color: 'green', autoClose: 7000 },
     );
     setDuplicate(null);
     onConverted?.(lead, data);

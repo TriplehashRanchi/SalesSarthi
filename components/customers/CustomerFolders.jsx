@@ -16,6 +16,7 @@ import { fetchFolderCustomers, removeFromFolder, saveFolderResponse, useCustomer
 import { useFolderList } from './personalFolderApi';
 import FolderLayoutManager from './FolderLayoutManager';
 import PersonalFolderView from './PersonalFolderView';
+import ProductLineSummary from './ProductLineSummary';
 
 const RESPONSE_SUGGESTIONS = ['Interested', 'Not Interested', 'Call Back', 'Purchased', 'Renewal Due', 'Documents Pending'];
 const AVATAR_COLORS = ['blue', 'blue', 'orange', 'teal', 'pink', 'green'];
@@ -473,6 +474,7 @@ export default function CustomerFolders({ isAdmin = false, children }) {
   // The dropdown (CustomerFolderSelect) sits in the customers table toolbar and in the folder view header.
   return (
     <FolderContext.Provider value={{ items, activeKey, setActiveKey, isAdmin, openLayout: () => setLayoutOpen(true) }}>
+      <ProductLineSummary items={items} activeKey={activeKey} onSelect={setActiveKey} />
       {body}
       <FolderLayoutManager opened={layoutOpen} onClose={() => setLayoutOpen(false)} />
     </FolderContext.Provider>

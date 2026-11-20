@@ -31,7 +31,9 @@ export default function useCreateCustomer({ endpoint, onSaved }) {
     showNotification(
       data?.added_to_existing
         ? { title: 'Added to existing customer', message: 'The product was added to the customer\'s profile. Their saved details were not changed.', color: 'blue' }
-        : { title: 'Success', message: 'Customer created successfully', color: 'green' },
+        : data?.needs_review
+          ? { title: 'Saved separately', message: 'This customer is now listed in Duplicate Customers. Compare the records there and merge them if they are the same person.', color: 'orange', autoClose: 8000 }
+          : { title: 'Success', message: 'Customer created successfully', color: 'green' },
     );
     onSaved?.(data);
   };

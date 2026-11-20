@@ -44,6 +44,8 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
     referrer: customerData?.referrer ?? '',
     notes: customerData?.notes ?? '',
     folder_ids: customerData?.folder_ids ?? [],
+    // The person's own folders (#11/#12) to put a new customer in, e.g. "Loan".
+    personal_folder_ids: [],
     // Product-specific details (#05) of the customer's own product, per product line.
     product_fields: detailsForRef(customerData?.product_details, 0),
   });
@@ -59,7 +61,7 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // A new customer must go into at least one product line. Existing ones may be saved without.
-    if (!customerData && !formData.folder_ids.length) {
+    if (!customerData && !formData.folder_ids.length && !formData.personal_folder_ids.length) {
       setFolderError('Select at least one product line');
       return;
     }
@@ -95,6 +97,7 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
         referrer: '',
         notes: '',
         folder_ids: [],
+        personal_folder_ids: [],
         product_fields: {},
       });
     } catch (error) {
@@ -157,6 +160,13 @@ const CustomerForm = ({ customerData, onSubmit, hideTitle = false }) => {
               setFormData((prev) => ({ ...prev, folder_ids: ids }));
               if (ids.length) setFolderError('');
             }}
+            {...(!customerData && {
+              personalValue: formData.personal_folder_ids,
+              onPersonalChange: (ids) => {
+                setFormData((prev) => ({ ...prev, personal_folder_ids: ids }));
+                if (ids.length) setFolderError('');
+              },
+            })}
             error={folderError}
             placeholder="Select product line"
           />
