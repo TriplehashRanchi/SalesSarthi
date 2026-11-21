@@ -7,7 +7,7 @@ import {
   ActionIcon, Badge, Button, Checkbox, Loader, Modal, MultiSelect, NumberInput, Tabs, Text, TextInput,
 } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
-import { IconFilter, IconPencil, IconPlus, IconSearch, IconTrash, IconUserMinus, IconUserPlus } from '@tabler/icons-react';
+import { IconArrowLeft, IconFilter, IconPencil, IconPlus, IconSearch, IconTrash, IconUserMinus, IconUserPlus } from '@tabler/icons-react';
 import { notifyFoldersChanged } from './customerFolderApi';
 import {
   addRule, addToPersonalFolder, deleteRule, describeRule, fetchKeptOut, fetchPersonalFolder, fetchRuleOptions, letBackIn,
@@ -231,7 +231,7 @@ export function RuleEditor({ opened, folder, rule, options, onClose, onSaved }) 
 }
 
 /* ───────── The folder screen ───────── */
-export default function PersonalFolderView({ folder, isAdmin, folderSelect }) {
+export default function PersonalFolderView({ folder, isAdmin, folderSelect, onBack }) {
   const router = useRouter();
   const [data, setData] = useState({ customers: [], rules: [] });
   const [loading, setLoading] = useState(true);
@@ -305,6 +305,11 @@ export default function PersonalFolderView({ folder, isAdmin, folderSelect }) {
   return (
     <div className="panel mt-0 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
       <div className="mb-4 flex flex-wrap items-center gap-3">
+        {onBack && (
+          <ActionIcon className="md:hidden" variant="subtle" color="dark" onClick={onBack} aria-label="Back to all customers">
+            <IconArrowLeft size={22} />
+          </ActionIcon>
+        )}
         <div className="mr-2 min-w-0">
           <h5 className="truncate text-xl font-semibold leading-tight dark:text-white-light">{folder.name}</h5>
           <div className="text-sm text-gray-500">{count} {count === 1 ? 'Customer' : 'Customers'} · My folder</div>

@@ -66,7 +66,7 @@
                       </div>
                   </MainContainer>
 
-                  <DelphiFloatingLauncher />
+                  {/* Floating call button hidden for now (desktop + mobile). Re-enable: <DelphiFloatingLauncher /> */}
               </div>
           </>
       );

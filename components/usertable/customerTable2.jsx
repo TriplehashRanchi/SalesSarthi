@@ -21,7 +21,7 @@ import { buildCustomerColumns, CustomerColumnsModal, useCustomerColumns } from '
 import { useCustomerFolders } from '@/components/customers/customerFolderApi';
 import { Pagination } from '@mantine/core';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
-import { CustomerFolderSelect } from '@/components/customers/CustomerFolders';
+import { CustomerFolderSelect, CustomerSummaryCards } from '@/components/customers/CustomerFolders';
 
 const CustomerTable = () => {
     /* ─────────── existing state ─────────── */
@@ -132,6 +132,8 @@ const CustomerTable = () => {
 
     return (
         <div className="panel mt-6">
+            <CustomerSummaryCards />
+
             {/* ⬇︎ Header / toolbar */}
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center">
                 <h5 className="text-lg font-semibold dark:text-white-light">Customer Table</h5>

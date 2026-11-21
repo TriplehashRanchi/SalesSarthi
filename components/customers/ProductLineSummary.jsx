@@ -1,46 +1,62 @@
 'use client';
-// How many customers each product line has (Life Insurance 120, Health Insurance 45 …), as cards above the
-// customer list. Clicking a card opens that product line's customers; clicking a customer opens their profile.
-// Clicking the open card again (or "All customers") goes back to the full list.
-import { useMantineTheme } from '@mantine/core';
-import { IconUsers } from '@tabler/icons-react';
-import { chipColor } from './CustomerProductsRow';
+// Folder tabs above the customers list, same look as the leads page: "All Customers" then one pill per
+// category / own folder with its customer count. The open one is a solid blue pill; clicking the open pill
+// again goes back to all customers. On a phone the row scrolls sideways; on desktop ‹ › arrows scroll it.
+import { useEffect, useRef, useState } from 'react';
+import { ActionIcon } from '@mantine/core';
+import { IconChevronLeft, IconChevronRight, IconFolder } from '@tabler/icons-react';
 
 export default function ProductLineSummary({ items = [], activeKey, onSelect }) {
-  const theme = useMantineTheme();
-  const lines = items.filter((i) => i.type === 'category');
-  if (!lines.length) return null;
+  const scroller = useRef(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
 
-  const card = ({ key, name, count, color, icon }) => {
-    const picked = (activeKey || null) === key;
-    const c = theme.colors[color] || theme.colors.blue;
-    return (
-      <button
-        key={key || 'all'}
-        type="button"
-        onClick={() => onSelect(picked && key ? null : key)}
-        aria-pressed={picked}
-        aria-label={count === undefined ? `${name}: show all customers` : `${name}: ${count} customers`}
-        title={count === undefined ? 'Show all customers' : `Show the ${count} customer(s) in ${name}`}
-        className="flex min-w-[140px] shrink-0 snap-start items-center gap-3 rounded-lg border bg-white px-3 py-2.5 text-left transition hover:shadow-md focus:outline-none focus-visible:ring-2 dark:bg-[#0e1726] sm:min-w-0"
-        style={{ borderColor: picked ? c[6] : theme.colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[3], boxShadow: picked ? `0 0 0 1px ${c[6]}` : undefined }}
-      >
-        <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: c[6] }} aria-hidden />
-        <span className="min-w-0">
-          <span className="block truncate text-xs text-gray-500 dark:text-gray-400">{name}</span>
-          <span className="flex items-center gap-1 text-lg font-semibold leading-tight text-gray-800 dark:text-white-light">
-            {icon}
-            {count === undefined ? 'Show all' : count}
-          </span>
-        </span>
-      </button>
-    );
+  const updateEdges = () => {
+    const el = scroller.current;
+    if (!el) return;
+    setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
   };
+  useEffect(() => {
+    updateEdges();
+    const el = scroller.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(updateEdges);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [items.length]);
+
+  if (!items.length) return null;
+
+  const scrollBy = (dir) => scroller.current?.scrollBy({ left: dir * Math.max(200, (scroller.current.clientWidth || 400) * 0.7), behavior: 'smooth' });
+  const chip = (on) =>
+    `flex h-8 flex-shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-full py-1 pl-3 pr-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+      on ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:ring-blue-300 dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-700'
+    }`;
+  const badge = (on) => `rounded-full px-1.5 text-[11px] font-semibold leading-5 ${on ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`;
+  const arrow = (dir) => (
+    <ActionIcon className="hidden flex-shrink-0 md:flex" variant="subtle" radius="xl" size="md" onClick={() => scrollBy(dir)} disabled={dir < 0 ? !edges.left : !edges.right} aria-label={dir < 0 ? 'Scroll folders left' : 'Scroll folders right'}>
+      {dir < 0 ? <IconChevronLeft size={16} /> : <IconChevronRight size={16} />}
+    </ActionIcon>
+  );
 
   return (
-    <div className="-mx-1 mb-3 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible md:grid-cols-4 xl:grid-cols-6" role="group" aria-label="Customers by product line">
-      {card({ key: null, name: 'All customers', count: undefined, color: 'gray', icon: <IconUsers size={16} /> })}
-      {lines.map((l) => card({ key: l.key, name: l.name, count: Number(l.customer_count) || 0, color: chipColor(l.name) }))}
+    <div className="mb-3 flex min-w-0 items-center gap-1 rounded-2xl bg-gray-50 p-2 dark:bg-gray-800/60" role="group" aria-label="Customer folders">
+      {arrow(-1)}
+      <div ref={scroller} onScroll={updateEdges} className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scroll-smooth px-0.5 py-0.5" style={{ scrollbarWidth: 'none' }}>
+        <button type="button" aria-pressed={!activeKey} onClick={() => onSelect(null)} className={chip(!activeKey)}>
+          All Customers
+        </button>
+        {items.map((f) => {
+          const on = activeKey === f.key;
+          return (
+            <button key={f.key} type="button" aria-pressed={on} onClick={() => onSelect(on ? null : f.key)} className={chip(on)} title={`${f.name} (${Number(f.customer_count) || 0})`}>
+              <IconFolder size={15} className="flex-shrink-0 opacity-80" />
+              <span className="max-w-[160px] truncate lg:max-w-[200px]">{f.name}</span>
+              <span className={badge(on)}>{Number(f.customer_count) || 0}</span>
+            </button>
+          );
+        })}
+      </div>
+      {arrow(1)}
     </div>
   );
 }

@@ -116,6 +116,14 @@ const FolderContext = createContext(null);
 
 // "All Customers / Life Insurance (3) / My folder (2) ..." dropdown, in the person's own order (#11).
 // Works anywhere inside <CustomerFolders>; renders nothing outside it.
+// The product-line cards. The customers table renders this inside its own panel, above the toolbar
+// (like the leads page); renders nothing outside <CustomerFolders>.
+export function CustomerSummaryCards() {
+  const ctx = useContext(FolderContext);
+  if (!ctx) return null;
+  return <ProductLineSummary items={ctx.items} activeKey={ctx.activeKey} onSelect={ctx.setActiveKey} />;
+}
+
 export function CustomerFolderSelect({ className = '', ...rest }) {
   const ctx = useContext(FolderContext);
   const [manage, setManage] = useState(false);
@@ -123,7 +131,7 @@ export function CustomerFolderSelect({ className = '', ...rest }) {
   const { items, activeKey, setActiveKey, isAdmin, openLayout } = ctx;
   const data = [
     { value: 'all', label: 'All Customers' },
-    ...items.map((f) => ({ value: f.key, label: `${f.type === 'personal' ? '📁 ' : ''}${f.name} (${f.customer_count})` })),
+    ...items.map((f) => ({ value: f.key, label: `${f.name} (${f.customer_count})` })),
   ];
   const btnSize = rest.size === 'md' ? 'xl' : 'lg';
   return (
@@ -172,7 +180,7 @@ export function CustomerFolderSelect({ className = '', ...rest }) {
 }
 
 // Same layout as the "All Customers" table (header, search, buttons, table, mobile list); only the data differs.
-function FolderCustomerList({ folder, isAdmin, onChanged }) {
+function FolderCustomerList({ folder, isAdmin, onChanged, onBack }) {
   const router = useRouter();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -328,7 +336,7 @@ function FolderCustomerList({ folder, isAdmin, onChanged }) {
       {/* Mobile — same as All Customers */}
       <div className="block md:hidden">
         <div className="flex items-center gap-3 pb-2">
-          <ActionIcon variant="subtle" color="dark" onClick={() => router.back()} aria-label="Back">
+          <ActionIcon variant="subtle" color="dark" onClick={onBack || (() => router.back())} aria-label="Back to all customers">
             <IconArrowLeft size={22} />
           </ActionIcon>
           <div className="min-w-0">
@@ -464,17 +472,19 @@ export default function CustomerFolders({ isAdmin = false, children }) {
         key={active.key}
         folder={active}
         isAdmin={isAdmin}
+        onBack={() => setActiveKey(null)}
         folderSelect={<CustomerFolderSelect className="w-52" />}
       />
     );
   } else if (category) {
-    body = <FolderCustomerList key={active.key} folder={category} isAdmin={isAdmin} onChanged={onChanged} />;
+    body = <FolderCustomerList key={active.key} folder={category} isAdmin={isAdmin} onChanged={onChanged} onBack={() => setActiveKey(null)} />;
   }
 
   // The dropdown (CustomerFolderSelect) sits in the customers table toolbar and in the folder view header.
   return (
     <FolderContext.Provider value={{ items, activeKey, setActiveKey, isAdmin, openLayout: () => setLayoutOpen(true) }}>
-      <ProductLineSummary items={items} activeKey={activeKey} onSelect={setActiveKey} />
+      {/* On "All customers" the table shows the cards itself (inside its panel); folder views show them here. */}
+      {body !== children && <ProductLineSummary items={items} activeKey={activeKey} onSelect={setActiveKey} />}
       {body}
       <FolderLayoutManager opened={layoutOpen} onClose={() => setLayoutOpen(false)} />
     </FolderContext.Provider>

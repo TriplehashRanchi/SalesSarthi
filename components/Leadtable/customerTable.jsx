@@ -19,7 +19,7 @@ import IconCashBanknotes from '../icon/icon-cash-banknotes';
 import IconListCheck from '../icon/icon-list-check';
 import IconHeart from '../icon/icon-heart';
 import CustomerQuickActions from '@/components/common/CustomerQuickActions';
-import { CustomerFolderSelect } from '@/components/customers/CustomerFolders';
+import { CustomerFolderSelect, CustomerSummaryCards } from '@/components/customers/CustomerFolders';
 import { IconEye, IconPlus, IconCalendarPlus, IconArrowLeft, IconSearch, IconDownload, IconGitMerge, IconColumns } from '@tabler/icons-react';
 import CustomerStatusBadge from '@/components/customers/CustomerStatusBadge';
 import { useProductExpansion, productsSummary } from '@/components/customers/CustomerProductsRow';
@@ -243,6 +243,8 @@ const CustomerTable = ({ profile }) => {
   /* ─────────── JSX ─────────── */
   return (
     <div className="panel mt-0 md:!px-3 md:!pb-3 md:!pt-4 max-md:!border-0 max-md:!bg-transparent max-md:!p-0 max-md:!shadow-none dark:max-md:!bg-transparent">
+      <CustomerSummaryCards />
+
       {/* ⬇︎ Header / toolbar */}
       {/* One line on every desktop/tablet width: search takes the free space; on smaller screens the secondary
           buttons become icons (name on hover) so nothing wraps to a second line. */}

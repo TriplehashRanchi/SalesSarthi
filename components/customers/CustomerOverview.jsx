@@ -57,15 +57,15 @@ function Tile({ icon: Icon, label, value, sub, tone = 'default', action }) {
   );
 }
 
-function QuickAction({ icon: Icon, label, color, onClick }) {
+function QuickAction({ icon: Icon, label, shortLabel, color, onClick }) {
   return (
     <UnstyledButton
       onClick={onClick}
-      className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-gray-200 px-2 py-2 text-xs font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 sm:flex-row sm:justify-center sm:gap-2 sm:px-3 sm:text-sm"
+      className="flex min-w-0 flex-col items-center justify-start gap-1 overflow-hidden rounded-lg border sm:justify-center sm:overflow-visible border-gray-200 px-1 py-2 text-[11px] font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm"
       aria-label={label}
     >
       <Icon size={20} className={`shrink-0 ${color}`} />
-      <span className="truncate">{label}</span>
+      <span className="max-w-full whitespace-nowrap text-center leading-tight sm:truncate">{shortLabel ? (<><span className="sm:hidden">{shortLabel}</span><span className="hidden sm:inline">{label}</span></>) : label}</span>
     </UnstyledButton>
   );
 }
@@ -121,11 +121,11 @@ export default function CustomerOverview({ customer, reloadKey = 0, onAddProduct
       </div>
 
       {/* Quick actions */}
-      <div className="mt-3 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
+      <div className="mt-3 grid grid-cols-4 gap-1.5 sm:gap-2 sm:flex sm:flex-wrap">
         <QuickAction icon={IconPhoneCall} label="Call" color="text-blue-600" onClick={() => { if (callCustomer(customer)) setLogOpen(true); }} />
         <QuickAction icon={IconBrandWhatsapp} label="WhatsApp" color="text-green-600" onClick={() => setMsgOpen(true)} />
         <QuickAction icon={IconPlus} label="Add Product" color="text-indigo-600" onClick={onAddProduct} />
-        <QuickAction icon={IconCalendarPlus} label="Add Appointment" color="text-orange-600" onClick={onAddAppointment} />
+        <QuickAction icon={IconCalendarPlus} label="Add Appointment" shortLabel="Appointment" color="text-orange-600" onClick={onAddAppointment} />
       </div>
 
       {/* Numbers */}
